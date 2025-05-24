@@ -5,16 +5,42 @@ import {
     GraphQLInputFieldMap,
     GraphQLInputObjectType
 } from "graphql/type";
-import {GraphQLObjectType, GraphQLNamedType} from "graphql";
+import {
+    GraphQLObjectType,
+    GraphQLNamedType,
 
-import {DefinitionProperty} from "@xyd-js/uniform";
-import {isIntrospectionType, isSpecifiedScalarType} from "graphql/index";
+    isIntrospectionType,
+    isSpecifiedScalarType
+} from "graphql";
+
+import type {DefinitionProperty, DefinitionPropertyMeta} from "@xyd-js/uniform";
+
+// TODO: one instance
+let visitedTypes: Map<string, DefinitionProperty> = new Map()
 
 // gqlFieldToUniformDefinitionProperty converts GraphQL fields (field or input field) into xyd 'uniform' definition property
 export function gqlFieldToUniformDefinitionProperty(
     fieldName: string,
     field: GraphQLField<any, any> | GraphQLInputField,
 ): DefinitionProperty {
+    // @ts-ignore
+    if (field.__visited) {
+        // @ts-ignore
+        return {
+            name: fieldName,
+            type: field.type.toJSON(),
+            context: {},
+            description: field.description || "",
+        }
+    }
+    // @ts-ignore
+    field.__visited = field
+
+    // // console.log(field.type.constructor.name, 33333, field)
+    // if (visitedTypes.has(field.type.constructor.name)) {
+    //     return visitedTypes.get(field.type.constructor.name)!
+    // }
+
     let properties;
     let graphqlTypeFlat: GraphQLNamedType | null = null
 
@@ -142,7 +168,31 @@ export function gqlFieldToUniformDefinitionProperty(
         }
     }
 
-    return {
+    const meta: DefinitionPropertyMeta[] = []
+
+    // Check if field is required (non-null)
+    if (isNonNullField(field.type) || isListOfNonNullItems(field.type)) {
+        meta.push({
+            name: "required",
+            value: "true"
+        })
+    }
+
+    // Handle directives
+    let groups: string[] = []
+    if (field.astNode?.directives) {
+        for (const directive of field.astNode.directives) {
+            // Handle @deprecated directive
+            if (directive.name.value === "deprecated") {
+                meta.push({
+                    name: "deprecated",
+                    value: "true"
+                })
+            }
+        }
+    }
+
+    const resp: DefinitionProperty = {
         name: fieldName,
         type: field.type.toJSON(),
         context: {
@@ -153,7 +203,12 @@ export function gqlFieldToUniformDefinitionProperty(
         },
         description: field.description || "",
         properties,
+        meta,
     }
+
+    visitedTypes.set(field.type.constructor.name, resp)
+
+    return resp
 }
 
 // TODO: fix any + another more safety solution?
@@ -202,5 +257,16 @@ function nestedProperties(objectType: GraphQLObjectType | GraphQLInputObjectType
     const nestedFields = objectType?.getFields?.()
 
     return deepFieldMap(nestedFields)
+}
+
+// Helper functions to check field types
+function isNonNullField(type: any): boolean {
+    return type.constructor.name === "GraphQLNonNull"
+}
+
+function isListOfNonNullItems(type: any): boolean {
+    return "ofType" in type &&
+        type.constructor.name === "GraphQLList" &&
+        type.ofType.constructor.name === "GraphQLNonNull"
 }
 

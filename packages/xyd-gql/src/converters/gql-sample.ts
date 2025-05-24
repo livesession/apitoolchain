@@ -12,6 +12,7 @@ export function simpleGraphqlExample(
     args: DefinitionProperty[],
     returns: DefinitionProperty[],
 ) {
+    return "" // TODO: FINISH
     let obj: any = {}
 
     switch (operationType) {

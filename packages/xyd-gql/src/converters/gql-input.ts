@@ -3,6 +3,7 @@ import {GraphQLInputObjectType} from "graphql/type";
 import {DefinitionProperty, Reference} from "@xyd-js/uniform";
 
 import {gqlFieldToUniformDefinitionProperty} from "./gql-field";
+import {uniformify} from "../utils";
 
 // gqlInputToUniformRef is a helper function to convert a GraphQL input object type into a 'uniform' reference.
 export function gqlInputToUniformRef(gqlType: GraphQLInputObjectType): Reference {
@@ -12,24 +13,16 @@ export function gqlInputToUniformRef(gqlType: GraphQLInputObjectType): Reference
         gqlType
     )
 
-    return {
-        title: gqlType.name,
-        description: gqlType.description || "",
-        canonical: `inputs/${gqlType.name}`, // TODO: better solution
-        context: {
-            graphqlName: gqlType.name,
-            graphqlTypeShort: "input" // TODO: better solution
-        },
-        definitions: [
+    return uniformify(
+        gqlType,
+        [
             {
                 title: "Fields",
                 properties: prop.properties || []
             }
         ],
-        examples: {
-            groups: []
-        }
-    } as Reference
+        []
+    )
 }
 
 // gqlInputToUniformDefinitionProperty is a helper function to convert a GraphQL input object into a xyd definition property.

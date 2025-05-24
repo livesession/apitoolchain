@@ -3,6 +3,7 @@ import {GraphQLObjectType} from "graphql";
 import type {DefinitionProperty} from "@xyd-js/uniform";
 
 import {gqlFieldToUniformDefinitionProperty} from "./gql-field";
+import {uniformify} from "../utils";
 
 // gqlObjectToUniformRef is a helper function to convert a GraphQL object type into a 'uniform' reference.
 export function gqlObjectToUniformRef(gqlType: GraphQLObjectType) {
@@ -14,22 +15,14 @@ export function gqlObjectToUniformRef(gqlType: GraphQLObjectType) {
         props.push(prop)
     }
 
-    return {
-        title: gqlType.name,
-        description: gqlType.description || "",
-        canonical: `objects/${gqlType.name}`, // TODO: better solution
-        context: {
-            graphqlName: gqlType.name,
-            graphqlTypeShort: "object" // TODO: better solution
-        },
-        definitions: [
+    return uniformify(
+        gqlType,
+        [
             {
                 title: "Fields",
                 properties: props
             }
         ],
-        examples: {
-            groups: []
-        }
-    }
+        []
+    )
 }

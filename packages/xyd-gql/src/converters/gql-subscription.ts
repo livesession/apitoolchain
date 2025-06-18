@@ -7,28 +7,28 @@ import type {GQLSchemaToReferencesOptions} from "../types";
 import {filterFieldsByRegions} from "../utils";
 import {gqlOperationToUniformRef} from "./gql-operation";
 
-export function graphqlQueriesToUniformReferences(
+export function graphqlSubscriptionsToUniformReferences(
     schema: GraphQLSchema,
     options?: GQLSchemaToReferencesOptions,
-): Reference[] {
+) {
     const references: Reference[] = []
 
-    const queries = schema.getRootType(OperationTypeNode.QUERY)
-    const queryFields = queries?.getFields?.()
+    const mutations = schema.getRootType(OperationTypeNode.SUBSCRIPTION)
+    const mutationFields = mutations?.getFields?.()
 
-    if (queryFields) {
-        // Filter query fields based on regions if provided
-        const filteredQueryFields = filterFieldsByRegions(
-            queryFields,
-            "query",
+    if (mutationFields) {
+        // Filter mutation fields based on regions if provided
+        const filteredMutationFields = filterFieldsByRegions(
+            mutationFields,
+            "mutation",
             options?.regions
         );
 
         references.push(...gqlOperationToUniformRef(
-            ReferenceType.GRAPHQL_QUERY,
-            filteredQueryFields,
+            ReferenceType.GRAPHQL_SUBSCRIPTION,
+            filteredMutationFields,
             schema,
-            options
+            options,
         ))
     }
 

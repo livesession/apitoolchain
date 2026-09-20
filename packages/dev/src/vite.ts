@@ -31,7 +31,7 @@ const DEV_LABEL = "com.apitoolchain.dev";
 const DEV_LABELS = { [DEV_LABEL]: "1" };
 
 /**
- * Load dev-stack config from `packages/apitoolchain-dev/{.env.example,.env}` into
+ * Load dev-stack config from `packages/dev/{.env.example,.env}` into
  * `process.env` — precedence: real env > `.env` > `.env.example`. Lets the seeded
  * creds + local-registry ports be configured without editing source (and gives
  * the registries STABLE ports so a published SDK's URL survives a restart).
@@ -49,7 +49,7 @@ function loadDevEnv(pkgs: string): void {
     }
     return out;
   };
-  const dir = resolve(pkgs, "apitoolchain-dev");
+  const dir = resolve(pkgs, "dev");
   const defaults = parse(resolve(dir, ".env.example"));
   const overrides = parse(resolve(dir, ".env"));
   for (const k of new Set([
@@ -92,7 +92,7 @@ async function startLocalRegistries(
   // start" rather than anything that looked like a broken reference.
   const verdaccioCfg = resolve(
     pkgs,
-    "apitoolchain-dev",
+    "dev",
     "verdaccio-config.yaml",
   );
   // FIXED host ports (env-overridable) so a published SDK's registry URL stays
@@ -207,7 +207,7 @@ function reapStaleContainers(log: (m: string) => void): void {
 export interface ApitoolchainViteDevOptions {
   /**
    * The xyd monorepo root (contains `apps/` + `packages/`). Defaults to two
-   * levels up from the Vite project root (i.e. `apps/apitoolchain-web` → xyd).
+   * levels up from the Vite project root (i.e. `apps/web` → xyd).
    */
   xydRoot?: string;
 }
@@ -510,7 +510,7 @@ export function apitoolchainViteDev(
     };
 
     // 2. registry-api
-    const regDir = resolve(apps, "apitoolchain-registry-api");
+    const regDir = resolve(apps, "registry-api");
     const regPort = await freePort();
     const regUrl = `http://localhost:${regPort}`;
     const regEnv: Env = {
@@ -526,7 +526,7 @@ export function apitoolchainViteDev(
     await waitHealthz(`${regUrl}/healthz`, 20000);
 
     // 3. platform-api (gateway → registry)
-    const platDir = resolve(apps, "apitoolchain-api");
+    const platDir = resolve(apps, "api");
     const platPort = await freePort();
     const platUrl = `http://localhost:${platPort}`;
     const platEnv: Env = {
@@ -551,7 +551,7 @@ export function apitoolchainViteDev(
     if (gitEnabled && gitea) {
       log("gitea: seeding admin + token + demo repo…");
       const seed = await seedGitea(gitea);
-      const gpDir = resolve(apps, "apitoolchain-gitprovider");
+      const gpDir = resolve(apps, "gitprovider");
       const gpPort = await freePort();
       const gpUrl = `http://localhost:${gpPort}`;
       log("gitproviderd: go run (first run compiles the module)…");
@@ -657,9 +657,9 @@ export function apitoolchainViteDev(
       // Config/creds from .env(.example) → process.env before anything reads them.
       loadDevEnv(pkgs);
       const profiles = loadProfiles(
-        resolve(pkgs, "apitoolchain-dev", "profiles"),
+        resolve(pkgs, "dev", "profiles"),
       );
-      const snapshotsDir = resolve(pkgs, "apitoolchain-dev", ".snapshots");
+      const snapshotsDir = resolve(pkgs, "dev", ".snapshots");
       logger.info(`${tag} ${profiles.length} dev profile(s) available`);
 
       // Dev profile picker API. Registered before boot so the picker can list

@@ -6,6 +6,6 @@
  */
 @import "tailwindcss";
 @import "@apitoolchain/design-system/theme.css";
-@source "../../../packages/apitoolchain-design-system/src";
-@source "../../../packages/apitoolchain-auth-design-system/src";
-@source "../../../packages/apitoolchain-sdkjson-wizard/src";
+@source "../../../packages/design-system/src";
+@source "../../../packages/auth-design-system/src";
+@source "../../../packages/sdkjson-wizard/src";

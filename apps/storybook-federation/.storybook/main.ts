@@ -2,7 +2,7 @@ import type { StorybookConfig } from "@storybook/react-vite";
 import tailwindcss from "@tailwindcss/vite";
 // The sdkjson-wizard's live preview runs the real opensdk emitters (Node) via a
 // dev middleware; add it here so the aggregated view can run LivePreview too.
-import { opensdkPreviewPlugin } from "../../../packages/apitoolchain-sdkjson-wizard/src/preview/middleware";
+import { opensdkPreviewPlugin } from "../../../packages/sdkjson-wizard/src/preview/middleware";
 
 /**
  * The single Storybook server for the apitoolchain design systems. It owns no
@@ -12,16 +12,16 @@ import { opensdkPreviewPlugin } from "../../../packages/apitoolchain-sdkjson-wiz
  */
 const config: StorybookConfig = {
   stories: [
-    "../../../packages/apitoolchain-design-system/src/**/*.stories.@(ts|tsx)",
-    "../../../packages/apitoolchain-auth-design-system/src/**/*.stories.@(ts|tsx)",
-    "../../../packages/apitoolchain-sdkjson-wizard/src/**/*.stories.@(ts|tsx)",
+    "../../../packages/design-system/src/**/*.stories.@(ts|tsx)",
+    "../../../packages/auth-design-system/src/**/*.stories.@(ts|tsx)",
+    "../../../packages/sdkjson-wizard/src/**/*.stories.@(ts|tsx)",
   ],
   addons: ["@storybook/addon-essentials", "@storybook/addon-interactions"],
   framework: {
     name: "@storybook/react-vite",
     options: {},
   },
-  staticDirs: ["../../../packages/apitoolchain-design-system/public"],
+  staticDirs: ["../../../packages/design-system/public"],
   viteFinal: async (viteConfig) => {
     viteConfig.plugins = [
       ...(viteConfig.plugins ?? []),

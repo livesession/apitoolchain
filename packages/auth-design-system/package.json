@@ -23,7 +23,7 @@
     "react-dom": ">=18"
   },
   "dependencies": {
-    "@apitoolchain/design-system": "file:../apitoolchain-design-system"
+    "@apitoolchain/design-system": "file:../design-system"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.2",

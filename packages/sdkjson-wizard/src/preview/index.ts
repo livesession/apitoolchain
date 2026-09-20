@@ -2,7 +2,7 @@
  * Preview backend (NODE-ONLY): runs the REAL opensdk emitters on a bundled
  * sample spec + the wizard's sdk.json options and returns the generated files +
  * the `generateUsage` snippet. Reparameterization of `generateSdkFileMap`
- * (`apps/apitoolchain-api/genframework/sdk.ts`) — in-memory, no disk.
+ * (`apps/api/genframework/sdk.ts`) — in-memory, no disk.
  *
  * This module (and everything under `src/preview/`) loads the native addon and MUST
  * NEVER be imported by the UI barrel (`src/index.ts`). It runs only in the

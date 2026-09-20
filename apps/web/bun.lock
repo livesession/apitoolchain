@@ -5,10 +5,10 @@
       "name": "@apitoolchain/web",
       "dependencies": {
         "@apidevtools/json-schema-ref-parser": "^11.7.0",
-        "@apitoolchain/auth-design-system": "file:../../packages/apitoolchain-auth-design-system",
-        "@apitoolchain/design-system": "file:../../packages/apitoolchain-design-system",
-        "@apitoolchain/filters": "file:../../packages/apitoolchain-filters",
-        "@apitoolchain/sdkjson-wizard": "file:../../packages/apitoolchain-sdkjson-wizard",
+        "@apitoolchain/auth-design-system": "file:../../packages/auth-design-system",
+        "@apitoolchain/design-system": "file:../../packages/design-system",
+        "@apitoolchain/filters": "file:../../packages/filters",
+        "@apitoolchain/sdkjson-wizard": "file:../../packages/sdkjson-wizard",
         "@code-hike/lighter": "^1.0.3",
         "@monaco-editor/react": "^4.7.0",
         "@react-router/node": "^8.1.0",
@@ -28,7 +28,7 @@
         "yaml": "^2.9.0",
       },
       "devDependencies": {
-        "@apitoolchain/dev": "file:../../packages/apitoolchain-dev",
+        "@apitoolchain/dev": "file:../../packages/dev",
         "@biomejs/biome": "^2.5.2",
         "@eslint/js": "^10.0.1",
         "@react-router/dev": "^8.1.0",
@@ -54,15 +54,15 @@
 
     "@apidevtools/json-schema-ref-parser": ["@apidevtools/json-schema-ref-parser@11.9.3", "", { "dependencies": { "@jsdevtools/ono": "^7.1.3", "@types/json-schema": "^7.0.15", "js-yaml": "^4.1.0" } }, "sha512-60vepv88RwcJtSHrD6MjIL6Ta3SOYbgfnkHb+ppAVK+o9mXprRtulx7VlRl3lN3bbvysAfCS7WMVfhUYemB0IQ=="],
 
-    "@apitoolchain/auth-design-system": ["@apitoolchain/auth-design-system@file:../../packages/apitoolchain-auth-design-system", { "dependencies": { "@apitoolchain/design-system": "file:../apitoolchain-design-system" }, "devDependencies": { "@biomejs/biome": "^2.5.2", "@storybook/react": "^8.4.7", "@types/react": "^19.2.17", "@types/react-dom": "^19.2.3", "react": "^19.2.7", "react-dom": "^19.2.7", "typescript": "^6.0.3" }, "peerDependencies": { "react": ">=18", "react-dom": ">=18" } }],
+    "@apitoolchain/auth-design-system": ["@apitoolchain/auth-design-system@file:../../packages/auth-design-system", { "dependencies": { "@apitoolchain/design-system": "file:../design-system" }, "devDependencies": { "@biomejs/biome": "^2.5.2", "@storybook/react": "^8.4.7", "@types/react": "^19.2.17", "@types/react-dom": "^19.2.3", "react": "^19.2.7", "react-dom": "^19.2.7", "typescript": "^6.0.3" }, "peerDependencies": { "react": ">=18", "react-dom": ">=18" } }],
 
-    "@apitoolchain/design-system": ["@apitoolchain/design-system@file:../../packages/apitoolchain-design-system", { "devDependencies": { "@biomejs/biome": "^2.5.2", "@storybook/addon-essentials": "^8.4.7", "@storybook/addon-interactions": "^8.4.7", "@storybook/blocks": "^8.4.7", "@storybook/react": "^8.4.7", "@storybook/react-vite": "^8.4.7", "@storybook/test": "^8.4.7", "@types/react": "^19.2.17", "@types/react-dom": "^19.2.3", "react": "^19.2.7", "react-dom": "^19.2.7", "storybook": "^8.4.7", "typescript": "^6.0.3", "vite": "^6.3.6" }, "peerDependencies": { "react": ">=18", "react-dom": ">=18" } }],
+    "@apitoolchain/design-system": ["@apitoolchain/design-system@file:../../packages/design-system", { "devDependencies": { "@biomejs/biome": "^2.5.2", "@storybook/addon-essentials": "^8.4.7", "@storybook/addon-interactions": "^8.4.7", "@storybook/blocks": "^8.4.7", "@storybook/react": "^8.4.7", "@storybook/react-vite": "^8.4.7", "@storybook/test": "^8.4.7", "@types/react": "^19.2.17", "@types/react-dom": "^19.2.3", "react": "^19.2.7", "react-dom": "^19.2.7", "storybook": "^8.4.7", "typescript": "^6.0.3", "vite": "^6.3.6" }, "peerDependencies": { "react": ">=18", "react-dom": ">=18" } }],
 
-    "@apitoolchain/dev": ["@apitoolchain/dev@file:../../packages/apitoolchain-dev", { "dependencies": { "@testcontainers/postgresql": "^12.0.4", "testcontainers": "^12.0.4" }, "devDependencies": { "@types/node": "^22.10.0", "typescript": "^5.6.2", "vite": "^8.1.3" }, "peerDependencies": { "vite": "*" } }],
+    "@apitoolchain/dev": ["@apitoolchain/dev@file:../../packages/dev", { "dependencies": { "@testcontainers/postgresql": "^12.0.4", "testcontainers": "^12.0.4" }, "devDependencies": { "@types/node": "^22.10.0", "typescript": "^5.6.2", "vite": "^8.1.3" }, "peerDependencies": { "vite": "*" } }],
 
-    "@apitoolchain/filters": ["@apitoolchain/filters@file:../../packages/apitoolchain-filters", { "dependencies": { "kysely": "^0.29.2" }, "devDependencies": { "@biomejs/biome": "^2.5.2", "@types/react": "^19.2.17", "react": "^19.2.7", "typescript": "^6.0.3", "vitest": "^2.1.8" }, "peerDependencies": { "react": ">=18" }, "optionalPeers": ["react"] }],
+    "@apitoolchain/filters": ["@apitoolchain/filters@file:../../packages/filters", { "dependencies": { "kysely": "^0.29.2" }, "devDependencies": { "@biomejs/biome": "^2.5.2", "@types/react": "^19.2.17", "react": "^19.2.7", "typescript": "^6.0.3", "vitest": "^2.1.8" }, "peerDependencies": { "react": ">=18" }, "optionalPeers": ["react"] }],
 
-    "@apitoolchain/sdkjson-wizard": ["@apitoolchain/sdkjson-wizard@file:../../packages/apitoolchain-sdkjson-wizard", { "dependencies": { "@apitoolchain/design-system": "file:../apitoolchain-design-system", "shiki": "^1.29.2" }, "devDependencies": { "@biomejs/biome": "^2.5.2", "@storybook/addon-essentials": "^8.4.7", "@storybook/addon-interactions": "^8.4.7", "@storybook/blocks": "^8.4.7", "@storybook/react": "^8.4.7", "@storybook/react-vite": "^8.4.7", "@storybook/test": "^8.4.7", "@tailwindcss/vite": "^4.3.2", "@types/node": "^22.10.0", "@types/react": "^19.2.17", "@types/react-dom": "^19.2.3", "react": "^19.2.7", "react-dom": "^19.2.7", "storybook": "^8.4.7", "tailwindcss": "^4.3.2", "typescript": "^6.0.3", "vite": "^6.3.6" }, "peerDependencies": { "react": ">=18", "react-dom": ">=18" } }],
+    "@apitoolchain/sdkjson-wizard": ["@apitoolchain/sdkjson-wizard@file:../../packages/sdkjson-wizard", { "dependencies": { "@apitoolchain/design-system": "file:../design-system", "shiki": "^1.29.2" }, "devDependencies": { "@biomejs/biome": "^2.5.2", "@storybook/addon-essentials": "^8.4.7", "@storybook/addon-interactions": "^8.4.7", "@storybook/blocks": "^8.4.7", "@storybook/react": "^8.4.7", "@storybook/react-vite": "^8.4.7", "@storybook/test": "^8.4.7", "@tailwindcss/vite": "^4.3.2", "@types/node": "^22.10.0", "@types/react": "^19.2.17", "@types/react-dom": "^19.2.3", "react": "^19.2.7", "react-dom": "^19.2.7", "storybook": "^8.4.7", "tailwindcss": "^4.3.2", "typescript": "^6.0.3", "vite": "^6.3.6" }, "peerDependencies": { "react": ">=18", "react-dom": ">=18" } }],
 
     "@babel/code-frame": ["@babel/code-frame@7.29.7", "", { "dependencies": { "@babel/helper-validator-identifier": "^7.29.7", "js-tokens": "^4.0.0", "picocolors": "^1.1.1" } }, "sha512-Aup7aUOfpbAUg2ROOJN6Iw5f9DMBlzu0mIkm/malLQFN/YQgO48wCj0Kxa3sEHJvPVFg7siR+qRInwXd2qhQKw=="],
 
@@ -1720,13 +1720,13 @@
 
     "zwitch": ["zwitch@2.0.4", "", {}, "sha512-bXE4cR/kVZhKZX/RjPEflHaKVhUVl85noU3v6b8apfQEc1x4A+zBxjZ4lN8LqGd6WZ3dl98pY4o717VFmoPp+A=="],
 
-    "@apitoolchain/auth-design-system/@apitoolchain/design-system": ["@apitoolchain/design-system@file:../../packages/apitoolchain-design-system", { "devDependencies": { "@biomejs/biome": "^2.5.2", "@storybook/addon-essentials": "^8.4.7", "@storybook/addon-interactions": "^8.4.7", "@storybook/blocks": "^8.4.7", "@storybook/react": "^8.4.7", "@storybook/react-vite": "^8.4.7", "@storybook/test": "^8.4.7", "@types/react": "^19.2.17", "@types/react-dom": "^19.2.3", "react": "^19.2.7", "react-dom": "^19.2.7", "storybook": "^8.4.7", "typescript": "^6.0.3", "vite": "^6.3.6" }, "peerDependencies": { "react": ">=18", "react-dom": ">=18" } }],
+    "@apitoolchain/auth-design-system/@apitoolchain/design-system": ["@apitoolchain/design-system@file:../../packages/design-system", { "devDependencies": { "@biomejs/biome": "^2.5.2", "@storybook/addon-essentials": "^8.4.7", "@storybook/addon-interactions": "^8.4.7", "@storybook/blocks": "^8.4.7", "@storybook/react": "^8.4.7", "@storybook/react-vite": "^8.4.7", "@storybook/test": "^8.4.7", "@types/react": "^19.2.17", "@types/react-dom": "^19.2.3", "react": "^19.2.7", "react-dom": "^19.2.7", "storybook": "^8.4.7", "typescript": "^6.0.3", "vite": "^6.3.6" }, "peerDependencies": { "react": ">=18", "react-dom": ">=18" } }],
 
     "@apitoolchain/dev/@types/node": ["@types/node@22.20.0", "", { "dependencies": { "undici-types": "~6.21.0" } }, "sha512-QWlFW2wf3nTjC13/DqRnBpR4ZO36VJH/JVBkA/vcnmbTBNQIlnObqyqZE1tUR7+Ni23Lda8R1BxMfbXRpCUx5g=="],
 
     "@apitoolchain/dev/typescript": ["typescript@5.9.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="],
 
-    "@apitoolchain/sdkjson-wizard/@apitoolchain/design-system": ["@apitoolchain/design-system@file:../../packages/apitoolchain-design-system", {}],
+    "@apitoolchain/sdkjson-wizard/@apitoolchain/design-system": ["@apitoolchain/design-system@file:../../packages/design-system", {}],
 
     "@apitoolchain/sdkjson-wizard/@types/node": ["@types/node@22.20.0", "", { "dependencies": { "undici-types": "~6.21.0" } }, "sha512-QWlFW2wf3nTjC13/DqRnBpR4ZO36VJH/JVBkA/vcnmbTBNQIlnObqyqZE1tUR7+Ni23Lda8R1BxMfbXRpCUx5g=="],
 

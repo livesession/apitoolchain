@@ -26,13 +26,13 @@
 
 /* The design system ships raw TS source under node_modules (file: link), so
    Tailwind's auto content-detection skips it — scan it explicitly for classes. */
-@source "../../../packages/apitoolchain-design-system/src";
+@source "../../../packages/design-system/src";
 /* Auth building blocks live in their own linked source package. */
-@source "../../../packages/apitoolchain-auth-design-system/src";
+@source "../../../packages/auth-design-system/src";
 /* Same for the dev widget (@apitoolchain/dev/widget) — a linked source pkg. */
-@source "../../../packages/apitoolchain-dev/src";
+@source "../../../packages/dev/src";
 /* The sdk.json wizard — a linked source pkg whose JSX class strings need scanning. */
-@source "../../../packages/apitoolchain-sdkjson-wizard/src";
+@source "../../../packages/sdkjson-wizard/src";
 
 /* The OpenAPI editor's preview pane is narrower than a full docs page, so xyd
    Atlas can overflow horizontally (long code samples, the language-tab row,

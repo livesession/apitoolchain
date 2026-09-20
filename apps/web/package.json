@@ -12,10 +12,10 @@
   },
   "dependencies": {
     "@apidevtools/json-schema-ref-parser": "^11.7.0",
-    "@apitoolchain/auth-design-system": "file:../../packages/apitoolchain-auth-design-system",
-    "@apitoolchain/design-system": "file:../../packages/apitoolchain-design-system",
-    "@apitoolchain/filters": "file:../../packages/apitoolchain-filters",
-    "@apitoolchain/sdkjson-wizard": "file:../../packages/apitoolchain-sdkjson-wizard",
+    "@apitoolchain/auth-design-system": "file:../../packages/auth-design-system",
+    "@apitoolchain/design-system": "file:../../packages/design-system",
+    "@apitoolchain/filters": "file:../../packages/filters",
+    "@apitoolchain/sdkjson-wizard": "file:../../packages/sdkjson-wizard",
     "@code-hike/lighter": "^1.0.3",
     "@monaco-editor/react": "^4.7.0",
     "@react-router/node": "^8.1.0",
@@ -35,7 +35,7 @@
     "yaml": "^2.9.0"
   },
   "devDependencies": {
-    "@apitoolchain/dev": "file:../../packages/apitoolchain-dev",
+    "@apitoolchain/dev": "file:../../packages/dev",
     "@biomejs/biome": "^2.5.2",
     "@eslint/js": "^10.0.1",
     "@react-router/dev": "^8.1.0",

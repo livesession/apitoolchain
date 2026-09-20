@@ -6,7 +6,7 @@ set -euo pipefail
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # 1. The opensdk CLI does all the work: process each source spec, generate each
-#    node target into packages/apitoolchain-<name>-node.
+#    node target into packages/<name>-node.
 #
 # This used to invoke `../xyd-opensdk-cli/dist/cli.js`, which stopped existing
 # when the toolchain became Rust-only in the `opensdk` submodule — the script
@@ -38,9 +38,9 @@ echo "using opensdk: $opensdk_bin"
 # 2. Point each generated package at src/ (bun islands consume source, no build)
 #    and ignore install + the .sdk regen manifest.
 for dir in \
-  apitoolchain-gitprovider-node \
-  apitoolchain-registry-api-node \
-  apitoolchain-api-node; do
+  gitprovider-node \
+  registry-api-node \
+  api-node; do
   pkg="$here/../$dir/package.json"
   [ -f "$pkg" ] || continue
   node -e '

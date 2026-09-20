@@ -4,7 +4,7 @@
     "": {
       "name": "@apitoolchain/auth-design-system",
       "dependencies": {
-        "@apitoolchain/design-system": "file:../apitoolchain-design-system",
+        "@apitoolchain/design-system": "file:../design-system",
       },
       "devDependencies": {
         "@biomejs/biome": "^2.5.2",
@@ -33,7 +33,7 @@
   "packages": {
     "@adobe/css-tools": ["@adobe/css-tools@4.5.0", "", {}, "sha512-6OzddxPio9UiWTCemp4N8cYLV2ZN1ncRnV1cVGtve7dhPOtRkleRyx32GQCYSwDYgaHU3USMm84tNsvKzRCa1Q=="],
 
-    "@apitoolchain/design-system": ["@apitoolchain/design-system@file:../apitoolchain-design-system", { "devDependencies": { "@apitoolchain/filters": "file:../apitoolchain-filters", "@biomejs/biome": "^2.5.2", "@eslint/js": "^10.0.1", "@storybook/react": "^8.4.7", "@types/react": "^19.2.17", "@types/react-dom": "^19.2.3", "eslint": "^10.6.0", "eslint-plugin-react": "^7.37.5", "globals": "^17.7.0", "react": "^19.2.7", "react-dom": "^19.2.7", "tailwindcss": "^4.3.2", "typescript": "^6.0.3", "typescript-eslint": "^8.62.1" }, "peerDependencies": { "react": ">=18", "react-dom": ">=18" } }],
+    "@apitoolchain/design-system": ["@apitoolchain/design-system@file:../design-system", { "devDependencies": { "@apitoolchain/filters": "file:../filters", "@biomejs/biome": "^2.5.2", "@eslint/js": "^10.0.1", "@storybook/react": "^8.4.7", "@types/react": "^19.2.17", "@types/react-dom": "^19.2.3", "eslint": "^10.6.0", "eslint-plugin-react": "^7.37.5", "globals": "^17.7.0", "react": "^19.2.7", "react-dom": "^19.2.7", "tailwindcss": "^4.3.2", "typescript": "^6.0.3", "typescript-eslint": "^8.62.1" }, "peerDependencies": { "react": ">=18", "react-dom": ">=18" } }],
 
     "@babel/code-frame": ["@babel/code-frame@7.29.7", "", { "dependencies": { "@babel/helper-validator-identifier": "^7.29.7", "js-tokens": "^4.0.0", "picocolors": "^1.1.1" } }, "sha512-Aup7aUOfpbAUg2ROOJN6Iw5f9DMBlzu0mIkm/malLQFN/YQgO48wCj0Kxa3sEHJvPVFg7siR+qRInwXd2qhQKw=="],
 
@@ -975,7 +975,7 @@
 
     "yocto-queue": ["yocto-queue@0.1.0", "", {}, "sha512-rVksvsnNCdJ/ohGc6xgPwyN8eheCxsiLM8mxuE/t/mOVqJewPuO1miLpTHQiRgTKCLexL4MeAFVagts7HmNZ2Q=="],
 
-    "@apitoolchain/design-system/@apitoolchain/filters": ["@apitoolchain/filters@file:../apitoolchain-filters", {}],
+    "@apitoolchain/design-system/@apitoolchain/filters": ["@apitoolchain/filters@file:../filters", {}],
 
     "@babel/core/semver": ["semver@6.3.1", "", { "bin": { "semver": "bin/semver.js" } }, "sha512-BR7VvDCVHO+q2xBEWskxS6DJE1qRnb7DxzUrogb71CWoSficBxYsiAGd+Kl0mmq/MprG9yArRkyrQxTO6XjMzA=="],
 

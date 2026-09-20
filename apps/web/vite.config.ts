@@ -8,7 +8,7 @@ import { fileURLToPath } from "node:url";
 import { reactRouter } from "@react-router/dev/vite";
 import tailwindcss from "@tailwindcss/vite";
 import { defineConfig, type Plugin } from "vite";
-import { apitoolchainViteDev } from "../../packages/apitoolchain-dev/src/vite";
+import { apitoolchainViteDev } from "../../packages/dev/src/vite";
 // The API-playground widget's shared CORS proxy, delivered as a prebuilt Vite
 // plugin (self-contained node dist copied from apiatlas — no source vendored).
 // Mounts POST /apiatlas-api/http/proxy so the widget can run requests against

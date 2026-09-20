@@ -5,14 +5,14 @@
 import type { Reference } from "@xyd-js/uniform";
 
 import { native } from "./native";
-import {
-    mcpUrlToReferences as jsMcpUrlToReferences,
-    resolveMcpSurface,
-    type McpUrlToReferencesOptions,
-} from "./impl-js/index";
+// Transport runs in BOTH modes (the converter crates are deliberately HTTP-free),
+// so it lives outside impl-js and survives the reap.
+import { resolveMcpSurface, type McpUrlToReferencesOptions } from "./transport";
+// The frozen JS conversion — used only when the native addon is absent.
+import { mcpUrlToReferences as jsMcpUrlToReferences } from "./impl-js/index";
 
 export type { McpTool, McpResource, JsonSchemaObject } from "./types";
-export type { McpFetcher, McpUrlToReferencesOptions } from "./impl-js/index";
+export type { McpFetcher, McpUrlToReferencesOptions } from "./transport";
 
 export async function mcpUrlToReferences(
     source: string,

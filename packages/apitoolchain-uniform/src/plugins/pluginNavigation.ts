@@ -1,5 +1,5 @@
 // Dispatcher (S6+ W3): the group-tree/sidebar core runs in Rust
-// (crates/xyd_uniform::plugins::plugin_navigation) when the native core is
+// (crates/apitoolchain_uniform::plugins::plugin_navigation) when the native core is
 // present. Only the `engine.uniform.store` flag from settings is forwarded —
 // live Settings objects can carry non-serializable values (docs.tsx), and the
 // Rust core reads nothing else.

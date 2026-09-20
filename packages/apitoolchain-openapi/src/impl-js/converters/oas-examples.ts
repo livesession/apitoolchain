@@ -16,13 +16,13 @@ import {native} from "../../native";
 const DEFAULT_CODE_LANGUAGES = ["shell", "javascript", "python", "go"]
 
 // Native (Rust) request-snippet generation — the byte-for-byte port of
-// @readme/oas-to-snippet + the httpsnippet clients in crates/xyd_oas_snippet,
+// @readme/oas-to-snippet + the httpsnippet clients in crates/apitoolchain_oas_snippet,
 // reached through @xyd-js/native. Returns null when the native core is absent
 // (the symbol is missing on older cores) OR the operation slice contains a true
 // circular schema (JSON.stringify throws) — in both cases the caller runs the
 // JS oasToSnippet below, so output is unchanged. Shared (non-circular) $refs
 // serialize fine and take the native path.
-// The Rust port (crates/xyd_oas_snippet) implements exactly the 4 default
+// The Rust port (crates/apitoolchain_oas_snippet) implements exactly the 4 default
 // httpsnippet clients (shell/curl, javascript/fetch, python/requests, go/native).
 // Custom `x-docs.codeLanguages` (e.g. java, ruby, php) are NOT ported, so they
 // fall back to the full JS oasToSnippet target set rather than a wrong native one.
@@ -271,7 +271,7 @@ function reqExamples(operation: Operation, oas: Oas, vistedExamples?: Map<JSONSc
                 }
             }
 
-            // Native-first: the Rust port (crates/xyd_oas_snippet). Byte-for-byte
+            // Native-first: the Rust port (crates/apitoolchain_oas_snippet). Byte-for-byte
             // identical to the JS oasToSnippet below, which stays the fallback.
             const nativeCode = nativeSnippetCode(oas, operation, values, lang);
             if (nativeCode !== null) {

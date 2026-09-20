@@ -10,7 +10,7 @@ import { type OpencliSpecJson, opencliToReferences } from '../src';
 // This converter (342 lines) turns an OpenCLI document into uniform
 // `Reference[]` and runs on the PAGE-COMPILE HOT PATH — `uniformProcessor.ts`
 // and `presets/cli/index.ts` call it for every CLI docs page. It has no Rust
-// counterpart yet; `crates/xyd_opencli_uniform` is a fresh port, and the day
+// counterpart yet; `crates/apitoolchain_opencli_uniform` is a fresh port, and the day
 // this package is deleted is the day its behavior stops being defined
 // anywhere. So freeze it now, while a JS oracle still exists.
 //
@@ -67,7 +67,7 @@ describe.runIf(BUILD && cases.length > 0)('generate opencliToReferences goldens'
 // The corpus size is ASSERTED, not merely enumerated. `skipIf(cases.length === 0)`
 // meant a missing or relocated __fixtures__/references made the whole suite
 // vanish and still report green — the failure mode this file exists to prevent.
-// Rust's crates/xyd_opencli_uniform/tests/references.rs asserts the same 17
+// Rust's crates/apitoolchain_opencli_uniform/tests/references.rs asserts the same 17
 // against the same corpus; keep the two numbers in step.
 const EXPECTED_CASES = 17;
 

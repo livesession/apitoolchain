@@ -1,5 +1,5 @@
 // Dispatcher (S6+ W3): uniformToInputJsonSchema converts in Rust
-// (crates/xyd_uniform::converters) when the native core is present; the
+// (crates/apitoolchain_uniform::converters) when the native core is present; the
 // frozen JS impl otherwise. uniformPropertiesToJsonSchema (the per-property
 // helper) has no separate native entry — it stays on the JS impl.
 import type { JSONSchema7 } from "json-schema";

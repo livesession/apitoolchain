@@ -63,7 +63,7 @@ describe("pluginNavigation", () => {
 });
 
 // Fixture-driven parity matrix — the oracle for the Rust port
-// (crates/xyd_uniform). Regen: UNIFORM_BUILD_FIXTURES=1 pnpm vitest run
+// (crates/apitoolchain_uniform). Regen: UNIFORM_BUILD_FIXTURES=1 pnpm vitest run
 const fixtureTests = [
     {name: "4.plugin-navigation.nested-subgroup", description: "direct pages + nested subgroup under one group"},
     {name: "4.plugin-navigation.flat-groups", description: "single-level groups stay flat"},

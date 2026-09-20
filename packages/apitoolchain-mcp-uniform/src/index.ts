@@ -1,7 +1,7 @@
 // @xyd-js/mcp-uniform public API (S6+ W3 rider shim): the JSON-RPC transport,
 // auth headers and local-manifest IO stay JS (impl-js resolveMcpSurface); the
 // surface → Reference[] conversion dispatches to the Rust core
-// (crates/xyd_mcp_uniform via @xyd-js/native) when present.
+// (crates/apitoolchain_mcp_uniform via @xyd-js/native) when present.
 import type { Reference } from "@xyd-js/uniform";
 
 import { native } from "./native";

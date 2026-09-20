@@ -10,7 +10,7 @@ import uniform from "../src/index";
 import type {Reference} from "../src/types";
 
 // Oracle regen is EXPLICIT ONLY (fixture-freeze rule): committed output.json
-// files are the parity oracle for the Rust migration (crates/xyd_uniform).
+// files are the parity oracle for the Rust migration (crates/apitoolchain_uniform).
 //   UNIFORM_BUILD_FIXTURES=1 pnpm vitest run
 const REGEN = process.env.UNIFORM_BUILD_FIXTURES === "1";
 

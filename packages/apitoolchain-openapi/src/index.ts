@@ -1,5 +1,5 @@
 // @xyd-js/openapi public API (S6+ W2 shim): the CONVERSION dispatches to the
-// Rust core (crates/xyd_openapi via @xyd-js/native) when present; endpoint
+// Rust core (crates/apitoolchain_openapi via @xyd-js/native) when present; endpoint
 // code-sample generation stays here in JS (@readme/oas-to-snippet) as a
 // post-pass over the Rust references — the exact seam the migration plan
 // prescribes (oas-schema.ts:83 had the single call site). Everything else

@@ -1,5 +1,5 @@
 // Dispatcher (S6+ W3): the view-building core runs in Rust
-// (crates/xyd_uniform::plugins::plugin_json_view) when the native core is
+// (crates/apitoolchain_uniform::plugins::plugin_json_view) when the native core is
 // present. The UniformPlugin closure contract stays JS — the factory defers
 // one native call over the full Reference[].
 import type { UniformPluginArgs, UniformPlugin } from "../index";

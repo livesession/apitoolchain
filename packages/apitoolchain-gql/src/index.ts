@@ -1,5 +1,5 @@
 // @xyd-js/gql public API (S6+ W1 shim): dispatches to the Rust core
-// (crates/xyd_gql via @xyd-js/native) when present, else to the FROZEN JS
+// (crates/apitoolchain_gql via @xyd-js/native) when present, else to the FROZEN JS
 // implementation in ./impl-js (bugfix-only; deleted at reap once
 // @xyd-js/native platform packages have shipped).
 //

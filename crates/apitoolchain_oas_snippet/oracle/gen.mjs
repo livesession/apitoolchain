@@ -1,9 +1,9 @@
-// Oracle generator for the xyd_oas_snippet parity gate.
+// Oracle generator for the apitoolchain_oas_snippet parity gate.
 //
-// For every fixture case under `crates/xyd_oas_snippet/__fixtures__/<case>/`
+// For every fixture case under `crates/apitoolchain_oas_snippet/__fixtures__/<case>/`
 // (each carrying an `input.json` descriptor: { spec, path, method, values }),
 // this runs the REAL `@readme/oas-to-snippet` (the exact call xyd's
-// `packages/xyd-openapi/src/impl-js/converters/oas-examples.ts` makes) for the
+// `packages/apitoolchain-openapi/src/impl-js/converters/oas-examples.ts` makes) for the
 // four languages xyd emits — shell/javascript/python/go — and writes the
 // byte-exact snippets to `<case>/output.json`.
 //
@@ -12,7 +12,7 @@
 // O2R_BUILD_DOCS discipline). The Rust test (tests/parity.rs) only READS it and
 // asserts byte-equality; it never rewrites it. Regen is an explicit act:
 //
-//   node crates/xyd_oas_snippet/oracle/gen.mjs
+//   node crates/apitoolchain_oas_snippet/oracle/gen.mjs
 //
 // `@readme/oas-to-snippet` and `oas` are resolved from the `@xyd-js/openapi`
 // package (which already depends on them for the JS pipeline). Override the
@@ -32,7 +32,7 @@ const fixturesDir = path.join(crateDir, "__fixtures__");
 
 const resolveBase =
   process.env.XYD_OAS_SNIPPET_RESOLVE_BASE ||
-  path.join(repoRoot, "packages", "xyd-openapi", "package.json");
+  path.join(repoRoot, "packages", "apitoolchain-openapi", "package.json");
 
 const require = createRequire(resolveBase);
 const oasToSnippet = require("@readme/oas-to-snippet");

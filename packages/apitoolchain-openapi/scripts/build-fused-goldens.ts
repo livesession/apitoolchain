@@ -14,8 +14,8 @@ if (process.env.XYD_NATIVE !== "0") {
 }
 
 const { deferencedOpenAPI, oapSchemaToReferences, uniformPluginXDocsSidebar } = await import("../src/index.ts");
-const uniformMod = await import("../../xyd-uniform/src/index.ts");
-const { pluginNavigation } = await import("../../xyd-uniform/src/plugins/pluginNavigation.ts");
+const uniformMod = await import("../../apitoolchain-uniform/src/index.ts");
+const { pluginNavigation } = await import("../../apitoolchain-uniform/src/plugins/pluginNavigation.ts");
 const uniform = uniformMod.default;
 
 const FIXTURES = path.join(import.meta.dirname, "..", "__fixtures__");

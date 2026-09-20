@@ -2,7 +2,7 @@
 // Preflight: the `opensdk` submodule must be checked out.
 //
 // It is a path-dependency of the Rust build, not an optional extra:
-// crates/xyd_openapi path-deps opensdk/crates/oas_doc (the shared spec
+// crates/apitoolchain_openapi path-deps opensdk/crates/oas_doc (the shared spec
 // loader/dereferencer), so a missing checkout doesn't degrade gracefully —
 // cargo cannot even load the workspace, and the one actionable line ends up
 // buried under a wall of cargo output. Fail early and legibly instead.
@@ -23,7 +23,7 @@ const SUBMODULES = [
     {
         name: "opensdk",
         sentinel: path.join(REPO, "opensdk", "crates", "oas_doc", "Cargo.toml"),
-        what: "the SDK/CLI toolchain; crates/xyd_openapi path-deps its oas_doc",
+        what: "the SDK/CLI toolchain; crates/apitoolchain_openapi path-deps its oas_doc",
         url: "github.com/livesession/opensdk",
     },
 ];

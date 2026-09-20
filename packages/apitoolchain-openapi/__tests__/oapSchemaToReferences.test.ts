@@ -6,7 +6,7 @@ import {uniformOpenAIMeta} from "../__fixtures__/-2.complex.openai/pluginOasOpen
 import {uniformPluginXDocsSidebar} from "../src";
 
 // The FULL fixture matrix runs — these outputs are the frozen parity oracle for
-// the Rust migration (crates/xyd_openapi). Regen is explicit only:
+// the Rust migration (crates/apitoolchain_openapi). Regen is explicit only:
 //   OAS_BUILD_FIXTURES=1 pnpm vitest run __tests__/oapSchemaToReferences.test.ts
 // Fixtures with `plugins` exercise JS-closure post-processing — the Rust tier-1
 // parity test skips those (covered by the through-shim vitest tier instead).

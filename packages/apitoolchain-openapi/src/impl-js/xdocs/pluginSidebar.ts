@@ -109,7 +109,14 @@ export function uniformPluginXDocsSidebar({
             }
 
             // Process nested groups and pages
-            processGroupPages(xDocs, group.pages, [group.group], navGroup, output)
+            // `?? ""` matches the Rust port (crates/apitoolchain_openapi/src/xdocs.rs:141,
+            // `.unwrap_or("")`). Without it, an x-docs sidebar entry with `pages:` but no
+            // `group:` put `undefined` into the group path; pluginNavigation uses that value
+            // as an OBJECT KEY, and `Object.keys({[undefined]: 1})` is `["undefined"]` — the
+            // STRING. A truthy string renders a real header, so the sidebar showed a group
+            // literally titled "undefined" where a header-less separator was intended.
+            // Reproducer: examples/openapi/todos-api.yaml:25.
+            processGroupPages(xDocs, group.pages, [group.group ?? ""], navGroup, output)
         }
 
         // Clear references and set from output
@@ -134,7 +141,7 @@ export function uniformPluginXDocsSidebar({
         for (const page of pages) {
             if ('pages' in page && Array.isArray(page.pages)) {
                 // This is a nested group
-                processGroupPages(xDocs, page.pages, [...groupPath, page.group], navGroup, output, page.path)
+                processGroupPages(xDocs, page.pages, [...groupPath, page.group ?? ""], navGroup, output, page.path)
             } else if ('type' in page && 'key' in page) {
                 // This is a page
                 processPage(xDocs, page, groupPath, navGroup, output, parentPath)

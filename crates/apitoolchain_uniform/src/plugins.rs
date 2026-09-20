@@ -157,8 +157,17 @@ pub fn plugin_navigation(
         // defaultGroup fallback is dead code ([] is truthy), so a ref without
         // a group gets frontmatter but NO sidebar entry. Preserved.
         let group_val = reference.get("context").and_then(|c| c.get("group"));
-        if let Some(Value::String(_)) = group_val {
-            return Err("group as string is not supported yet".to_string());
+        // A NON-EMPTY string is the unsupported case, and JS throws on it too
+        // (impl-js/pluginNavigation.ts:67-70, same message). The EMPTY string is
+        // different: JS evaluates `dataCtx?.group || []` FIRST, and `""` is
+        // falsy, so it becomes `[]` and never reaches that check — the ref gets
+        // frontmatter but no sidebar entry, silently. Matching `Value::String(_)`
+        // caught `""` as well and turned a silent no-op into a hard build
+        // failure. Mirror the `||` semantics instead.
+        if let Some(Value::String(s)) = group_val {
+            if !s.is_empty() {
+                return Err("group as string is not supported yet".to_string());
+            }
         }
         let empty: Vec<Value> = Vec::new();
         let group: &Vec<Value> = match group_val {
@@ -234,4 +243,48 @@ fn group_maps_to_sidebar(node: &GroupNode, store_mode: bool) -> Vec<Value> {
     }
 
     nav
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+
+    fn r(group: Value) -> Value {
+        json!({ "canonical": "a/b", "title": "T", "context": { "group": group } })
+    }
+
+    /// `context.group: ""` must be a silent no-op, not a build failure.
+    ///
+    /// No fixture covers this — every committed corpus uses array groups — and
+    /// matching `Value::String(_)` used to catch the empty string too, turning
+    /// what JS treats as "no sidebar entry" into a hard error. JS evaluates
+    /// `dataCtx?.group || []` first, so `""` is falsy and never reaches its own
+    /// string check (impl-js/pluginNavigation.ts:52,67).
+    #[test]
+    fn empty_string_group_is_falsy_not_an_error() {
+        let out = plugin_navigation(&json!({}), "", &[r(Value::String(String::new()))])
+            .expect("empty-string group must not error");
+        assert!(
+            out.sidebar.is_empty(),
+            "an empty-string group yields no sidebar entry, got {:?}",
+            out.sidebar
+        );
+        assert!(
+            out.page_front_matter.contains_key("a/b"),
+            "frontmatter is still written for the page"
+        );
+    }
+
+    /// A NON-empty string is genuinely unsupported, and JS throws on it too
+    /// (same message). Keep that behaviour.
+    #[test]
+    fn non_empty_string_group_still_errors() {
+        // `expect_err` would require Debug on NavigationOutput; match instead
+        // rather than widen the public struct's derives for a test.
+        match plugin_navigation(&json!({}), "", &[r(json!("Todos"))]) {
+            Err(e) => assert!(e.contains("not supported"), "unexpected message: {e}"),
+            Ok(_) => panic!("a non-empty string group must still error"),
+        }
+    }
 }

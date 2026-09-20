@@ -12,7 +12,7 @@ const config: StorybookConfig = {
     name: "@storybook/react-vite",
     options: {},
   },
-  staticDirs: ["../../design-system/public"],
+  staticDirs: ["../../apitoolchainapp-design-system/public"],
   viteFinal: async (viteConfig) => {
     viteConfig.plugins = [
       ...(viteConfig.plugins ?? []),

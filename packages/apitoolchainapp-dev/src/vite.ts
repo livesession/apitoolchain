@@ -31,7 +31,7 @@ const DEV_LABEL = "com.apitoolchain.dev";
 const DEV_LABELS = { [DEV_LABEL]: "1" };
 
 /**
- * Load dev-stack config from `packages/dev/{.env.example,.env}` into
+ * Load dev-stack config from `packages/apitoolchainapp-dev/{.env.example,.env}` into
  * `process.env` — precedence: real env > `.env` > `.env.example`. Lets the seeded
  * creds + local-registry ports be configured without editing source (and gives
  * the registries STABLE ports so a published SDK's URL survives a restart).
@@ -49,7 +49,7 @@ function loadDevEnv(pkgs: string): void {
     }
     return out;
   };
-  const dir = resolve(pkgs, "dev");
+  const dir = resolve(pkgs, "apitoolchainapp-dev");
   const defaults = parse(resolve(dir, ".env.example"));
   const overrides = parse(resolve(dir, ".env"));
   for (const k of new Set([
@@ -657,9 +657,9 @@ export function apitoolchainViteDev(
       // Config/creds from .env(.example) → process.env before anything reads them.
       loadDevEnv(pkgs);
       const profiles = loadProfiles(
-        resolve(pkgs, "dev", "profiles"),
+        resolve(pkgs, "apitoolchainapp-dev", "profiles"),
       );
-      const snapshotsDir = resolve(pkgs, "dev", ".snapshots");
+      const snapshotsDir = resolve(pkgs, "apitoolchainapp-dev", ".snapshots");
       logger.info(`${tag} ${profiles.length} dev profile(s) available`);
 
       // Dev profile picker API. Registered before boot so the picker can list

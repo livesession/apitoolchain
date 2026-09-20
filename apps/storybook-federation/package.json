@@ -11,9 +11,9 @@
     "format": "bunx biome check --write ."
   },
   "dependencies": {
-    "@apitoolchain/auth-design-system": "file:../../packages/auth-design-system",
-    "@apitoolchain/design-system": "file:../../packages/design-system",
-    "@apitoolchain/sdkjson-wizard": "file:../../packages/sdkjson-wizard"
+    "@apitoolchain/auth-design-system": "file:../../packages/apitoolchainapp-auth-design-system",
+    "@apitoolchain/design-system": "file:../../packages/apitoolchainapp-design-system",
+    "@apitoolchain/sdkjson-wizard": "file:../../packages/apitoolchainapp-sdkjson-wizard"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.2",

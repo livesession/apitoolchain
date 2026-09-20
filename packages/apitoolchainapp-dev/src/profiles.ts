@@ -3,7 +3,7 @@ import { resolve } from "node:path";
 
 /**
  * Folder-based dev seed profiles. Each profile is a directory under
- * `packages/dev/profiles/<id>/` containing a `profile.json`
+ * `packages/apitoolchainapp-dev/profiles/<id>/` containing a `profile.json`
  * manifest (and optionally its own `specs/*.yaml`). The plugin auto-discovers
  * them at dev-server start — drop in a new folder and it shows up in the picker.
  * Applied by `apply-profile.ts` against the live services (specs land in

@@ -6,4 +6,4 @@
 @import "tailwindcss";
 @import "@apitoolchain/design-system/theme.css";
 @source "../";
-@source "../../../design-system/src";
+@source "../../../apitoolchainapp-design-system/src";

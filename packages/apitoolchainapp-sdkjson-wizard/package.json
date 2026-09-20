@@ -30,7 +30,7 @@
     "react-dom": ">=18"
   },
   "dependencies": {
-    "@apitoolchain/design-system": "file:../design-system",
+    "@apitoolchain/design-system": "file:../apitoolchainapp-design-system",
     "@codemirror/autocomplete": "^6.18.0",
     "@codemirror/commands": "^6.7.0",
     "@codemirror/lang-json": "^6.0.1",

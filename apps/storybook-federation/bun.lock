@@ -4,9 +4,9 @@
     "": {
       "name": "@apitoolchain/storybook-federation",
       "dependencies": {
-        "@apitoolchain/auth-design-system": "file:../../packages/auth-design-system",
-        "@apitoolchain/design-system": "file:../../packages/design-system",
-        "@apitoolchain/sdkjson-wizard": "file:../../packages/sdkjson-wizard",
+        "@apitoolchain/auth-design-system": "file:../../packages/apitoolchainapp-auth-design-system",
+        "@apitoolchain/design-system": "file:../../packages/apitoolchainapp-design-system",
+        "@apitoolchain/sdkjson-wizard": "file:../../packages/apitoolchainapp-sdkjson-wizard",
       },
       "devDependencies": {
         "@biomejs/biome": "^2.5.2",
@@ -31,11 +31,11 @@
   "packages": {
     "@adobe/css-tools": ["@adobe/css-tools@4.5.0", "", {}, "sha512-6OzddxPio9UiWTCemp4N8cYLV2ZN1ncRnV1cVGtve7dhPOtRkleRyx32GQCYSwDYgaHU3USMm84tNsvKzRCa1Q=="],
 
-    "@apitoolchain/auth-design-system": ["@apitoolchain/auth-design-system@file:../../packages/auth-design-system", { "dependencies": { "@apitoolchain/design-system": "file:../design-system" }, "devDependencies": { "@biomejs/biome": "^2.5.2", "@storybook/addon-essentials": "^8.4.7", "@storybook/addon-interactions": "^8.4.7", "@storybook/blocks": "^8.4.7", "@storybook/react": "^8.4.7", "@storybook/react-vite": "^8.4.7", "@storybook/test": "^8.4.7", "@tailwindcss/vite": "^4.3.2", "@types/react": "^19.2.17", "@types/react-dom": "^19.2.3", "react": "^19.2.7", "react-dom": "^19.2.7", "storybook": "^8.4.7", "tailwindcss": "^4.3.2", "typescript": "^6.0.3", "vite": "^6.3.6" }, "peerDependencies": { "react": ">=18", "react-dom": ">=18" } }],
+    "@apitoolchain/auth-design-system": ["@apitoolchain/auth-design-system@file:../../packages/apitoolchainapp-auth-design-system", { "dependencies": { "@apitoolchain/design-system": "file:../apitoolchainapp-design-system" }, "devDependencies": { "@biomejs/biome": "^2.5.2", "@storybook/addon-essentials": "^8.4.7", "@storybook/addon-interactions": "^8.4.7", "@storybook/blocks": "^8.4.7", "@storybook/react": "^8.4.7", "@storybook/react-vite": "^8.4.7", "@storybook/test": "^8.4.7", "@tailwindcss/vite": "^4.3.2", "@types/react": "^19.2.17", "@types/react-dom": "^19.2.3", "react": "^19.2.7", "react-dom": "^19.2.7", "storybook": "^8.4.7", "tailwindcss": "^4.3.2", "typescript": "^6.0.3", "vite": "^6.3.6" }, "peerDependencies": { "react": ">=18", "react-dom": ">=18" } }],
 
-    "@apitoolchain/design-system": ["@apitoolchain/design-system@file:../../packages/design-system", { "devDependencies": { "@apitoolchain/filters": "file:../filters", "@biomejs/biome": "^2.5.2", "@eslint/js": "^10.0.1", "@projectwallace/css-design-tokens": "^0.11.6", "@storybook/addon-essentials": "^8.4.7", "@storybook/addon-interactions": "^8.4.7", "@storybook/blocks": "^8.4.7", "@storybook/react": "^8.4.7", "@storybook/react-vite": "^8.4.7", "@storybook/test": "^8.4.7", "@tailwindcss/vite": "^4.3.2", "@types/react": "^19.2.17", "@types/react-dom": "^19.2.3", "eslint": "^10.6.0", "eslint-plugin-react": "^7.37.5", "globals": "^17.7.0", "react": "^19.2.7", "react-dom": "^19.2.7", "storybook": "^8.4.7", "tailwindcss": "^4.3.2", "typescript": "^6.0.3", "typescript-eslint": "^8.62.1", "vite": "^6.3.6" }, "peerDependencies": { "react": ">=18", "react-dom": ">=18" } }],
+    "@apitoolchain/design-system": ["@apitoolchain/design-system@file:../../packages/apitoolchainapp-design-system", { "devDependencies": { "@apitoolchain/filters": "file:../apitoolchainapp-filters", "@biomejs/biome": "^2.5.2", "@eslint/js": "^10.0.1", "@projectwallace/css-design-tokens": "^0.11.6", "@storybook/addon-essentials": "^8.4.7", "@storybook/addon-interactions": "^8.4.7", "@storybook/blocks": "^8.4.7", "@storybook/react": "^8.4.7", "@storybook/react-vite": "^8.4.7", "@storybook/test": "^8.4.7", "@tailwindcss/vite": "^4.3.2", "@types/react": "^19.2.17", "@types/react-dom": "^19.2.3", "eslint": "^10.6.0", "eslint-plugin-react": "^7.37.5", "globals": "^17.7.0", "react": "^19.2.7", "react-dom": "^19.2.7", "storybook": "^8.4.7", "tailwindcss": "^4.3.2", "typescript": "^6.0.3", "typescript-eslint": "^8.62.1", "vite": "^6.3.6" }, "peerDependencies": { "react": ">=18", "react-dom": ">=18" } }],
 
-    "@apitoolchain/sdkjson-wizard": ["@apitoolchain/sdkjson-wizard@file:../../packages/sdkjson-wizard", { "dependencies": { "@apitoolchain/design-system": "file:../design-system", "shiki": "^1.29.2" }, "devDependencies": { "@biomejs/biome": "^2.5.2", "@storybook/addon-essentials": "^8.4.7", "@storybook/addon-interactions": "^8.4.7", "@storybook/blocks": "^8.4.7", "@storybook/react": "^8.4.7", "@storybook/react-vite": "^8.4.7", "@storybook/test": "^8.4.7", "@tailwindcss/vite": "^4.3.2", "@types/node": "^22.10.0", "@types/react": "^19.2.17", "@types/react-dom": "^19.2.3", "react": "^19.2.7", "react-dom": "^19.2.7", "storybook": "^8.4.7", "tailwindcss": "^4.3.2", "typescript": "^6.0.3", "vite": "^6.3.6" }, "peerDependencies": { "react": ">=18", "react-dom": ">=18" } }],
+    "@apitoolchain/sdkjson-wizard": ["@apitoolchain/sdkjson-wizard@file:../../packages/apitoolchainapp-sdkjson-wizard", { "dependencies": { "@apitoolchain/design-system": "file:../apitoolchainapp-design-system", "shiki": "^1.29.2" }, "devDependencies": { "@biomejs/biome": "^2.5.2", "@storybook/addon-essentials": "^8.4.7", "@storybook/addon-interactions": "^8.4.7", "@storybook/blocks": "^8.4.7", "@storybook/react": "^8.4.7", "@storybook/react-vite": "^8.4.7", "@storybook/test": "^8.4.7", "@tailwindcss/vite": "^4.3.2", "@types/node": "^22.10.0", "@types/react": "^19.2.17", "@types/react-dom": "^19.2.3", "react": "^19.2.7", "react-dom": "^19.2.7", "storybook": "^8.4.7", "tailwindcss": "^4.3.2", "typescript": "^6.0.3", "vite": "^6.3.6" }, "peerDependencies": { "react": ">=18", "react-dom": ">=18" } }],
 
     "@babel/code-frame": ["@babel/code-frame@7.29.7", "", { "dependencies": { "@babel/helper-validator-identifier": "^7.29.7", "js-tokens": "^4.0.0", "picocolors": "^1.1.1" } }, "sha512-Aup7aUOfpbAUg2ROOJN6Iw5f9DMBlzu0mIkm/malLQFN/YQgO48wCj0Kxa3sEHJvPVFg7siR+qRInwXd2qhQKw=="],
 
@@ -1079,11 +1079,11 @@
 
     "zwitch": ["zwitch@2.0.4", "", {}, "sha512-bXE4cR/kVZhKZX/RjPEflHaKVhUVl85noU3v6b8apfQEc1x4A+zBxjZ4lN8LqGd6WZ3dl98pY4o717VFmoPp+A=="],
 
-    "@apitoolchain/auth-design-system/@apitoolchain/design-system": ["@apitoolchain/design-system@file:../../packages/design-system", {}],
+    "@apitoolchain/auth-design-system/@apitoolchain/design-system": ["@apitoolchain/design-system@file:../../packages/apitoolchainapp-design-system", {}],
 
-    "@apitoolchain/design-system/@apitoolchain/filters": ["@apitoolchain/filters@file:../../packages/filters", {}],
+    "@apitoolchain/design-system/@apitoolchain/filters": ["@apitoolchain/filters@file:../../packages/apitoolchainapp-filters", {}],
 
-    "@apitoolchain/sdkjson-wizard/@apitoolchain/design-system": ["@apitoolchain/design-system@file:../../packages/design-system", {}],
+    "@apitoolchain/sdkjson-wizard/@apitoolchain/design-system": ["@apitoolchain/design-system@file:../../packages/apitoolchainapp-design-system", {}],
 
     "@babel/core/semver": ["semver@6.3.1", "", { "bin": { "semver": "bin/semver.js" } }, "sha512-BR7VvDCVHO+q2xBEWskxS6DJE1qRnb7DxzUrogb71CWoSficBxYsiAGd+Kl0mmq/MprG9yArRkyrQxTO6XjMzA=="],
 

@@ -91,7 +91,7 @@ guard "rust-xyd-paths" 20 '"(\.\./)*packages/xyd-(core|native|atlas|framework|co
 # 3. TS/JS importing xyd packages that stayed behind. The five shims here are
 #    themselves @xyd-js/*, and uniform legitimately type-imports @xyd-js/core
 #    (an optional peer, installed from npm) — so enumerate the ones that must
-#    never appear in the SHIMS. apps/ is excluded: apps/web consumes several
+#    never appear in the SHIMS. apps/ is excluded: apps/app consumes several
 #    staying packages from npm on purpose.
 guard "shim-imports" 30 "from ['\"]@xyd-js/(native|atlas|framework|components|themes?|theme-|plugin-|documan|content|composer|host|cli)" \
   'packages/xyd-uniform/*' 'packages/xyd-gql/*' 'packages/xyd-openapi/*' \

@@ -29,7 +29,7 @@
     "react-dom": ">=18"
   },
   "devDependencies": {
-    "@apitoolchain/filters": "file:../filters",
+    "@apitoolchain/filters": "file:../apitoolchainapp-filters",
     "@biomejs/biome": "^2.5.2",
     "@eslint/js": "^10.0.1",
     "@projectwallace/css-design-tokens": "^0.11.6",

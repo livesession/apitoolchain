@@ -31,7 +31,7 @@
     "gitprovider-node": {
       "target": "node",
       "source": "gitprovider",
-      "output": "../gitprovider-node",
+      "output": "../apitoolchainapp-gitprovider-node",
       "sdkName": "gitprovider",
       "options": {
         "packageName": "@apitoolchain/gitprovider-node",
@@ -41,7 +41,7 @@
     "registry-api-node": {
       "target": "node",
       "source": "registry-api",
-      "output": "../registry-api-node",
+      "output": "../apitoolchainapp-registry-api-node",
       "sdkName": "registry-api",
       "options": {
         "packageName": "@apitoolchain/registry-api-node",
@@ -52,7 +52,7 @@
     "api-node": {
       "target": "node",
       "source": "api",
-      "output": "../api-node",
+      "output": "../apitoolchainapp-api-node",
       "sdkName": "api",
       "options": {
         "packageName": "@apitoolchain/api-node",

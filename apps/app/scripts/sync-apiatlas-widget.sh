@@ -3,7 +3,7 @@
 # outside repo — only self-contained built artifacts cross the boundary (the
 # committed diff is the no-source-leak audit). Run after rebuilding the widget:
 #   (cd ../../../apiatlas/apiatlas-widget && bun run build)
-#   apps/web/scripts/sync-apiatlas-widget.sh
+#   apps/app/scripts/sync-apiatlas-widget.sh
 set -euo pipefail
 
 HERE="$(cd "$(dirname "$0")/.." && pwd)"                 # apitoolchain-web

@@ -69,5 +69,5 @@ cargo build --release -p api
 is yours and survives regeneration. Regenerate through the chain:
 
 ```bash
-packages/sdk-chain/generate.sh
+packages/apitoolchainapp-sdk-chain/generate.sh
 ```

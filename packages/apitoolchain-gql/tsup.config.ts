@@ -17,7 +17,9 @@ export default defineConfig({
         options.external = ['node:fs/promises']; // Mark 'node:fs/promises' as external
         options.loader = {
             '.js': 'jsx', // Ensure proper handling of .js files
-            '.graphql': 'text' // Load .graphql files as text
+            // No '.graphql' loader: the only .graphql import lived in
+            // src/impl-js/schema.ts, deleted with the frozen implementation.
+            // The Rust core carries its own copy (crates/apitoolchain_gql/src/opendocs.rs).
         };
     },
     // No onSuccess hook. It used to copy src/impl-js/opendocs.graphql to

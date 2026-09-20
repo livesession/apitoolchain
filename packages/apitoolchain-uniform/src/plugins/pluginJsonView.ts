@@ -5,7 +5,6 @@
 import type { UniformPluginArgs, UniformPlugin } from "../index";
 import type { Reference } from "../types";
 import { native } from "../native";
-import { pluginJsonView as jsPluginJsonView } from "../impl-js/pluginJsonView";
 
 export interface pluginJsonViewOptions {
 }
@@ -18,7 +17,12 @@ export function pluginJsonView(
     options?: pluginJsonViewOptions
 ): UniformPlugin<pluginJsonViewOutput> {
     if (!native?.pluginJsonView) {
-        return jsPluginJsonView(options);
+        throw new Error(
+            "@xyd-js/uniform.pluginJsonView requires @xyd-js/native, which did not load. " +
+                "Install it (it is an optionalDependency, so a failed install is silent) " +
+                "or build it locally with `pnpm --filter @xyd-js/native build:native`. " +
+                "There is no JavaScript fallback: it was removed in favour of a single implementation."
+        );
     }
 
     return function pluginJsonViewInner({ references, defer }: UniformPluginArgs) {

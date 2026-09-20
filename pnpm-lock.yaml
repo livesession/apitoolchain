@@ -43,8 +43,8 @@ importers:
         version: 16.14.2
     optionalDependencies:
       '@xyd-js/native':
-        specifier: '*'
-        version: 0.0.0
+        specifier: ^0.1.0
+        version: 0.1.0
     devDependencies:
       rimraf:
         specifier: ^3.0.2
@@ -69,8 +69,8 @@ importers:
         version: link:../apitoolchain-uniform
     optionalDependencies:
       '@xyd-js/native':
-        specifier: '*'
-        version: 0.0.0
+        specifier: ^0.1.0
+        version: 0.1.0
     devDependencies:
       rimraf:
         specifier: ^3.0.2
@@ -116,8 +116,8 @@ importers:
         version: 12.1.3
     optionalDependencies:
       '@xyd-js/native':
-        specifier: '*'
-        version: 0.0.0
+        specifier: ^0.1.0
+        version: 0.1.0
     devDependencies:
       '@types/js-yaml':
         specifier: ^4.0.9
@@ -138,8 +138,8 @@ importers:
   packages/apitoolchain-opencli:
     optionalDependencies:
       '@xyd-js/native':
-        specifier: '*'
-        version: 0.0.0
+        specifier: ^0.1.0
+        version: 0.1.0
     devDependencies:
       '@types/node':
         specifier: ^20.9.0
@@ -185,8 +185,8 @@ importers:
         version: 5.1.0
     optionalDependencies:
       '@xyd-js/native':
-        specifier: '*'
-        version: 0.0.0
+        specifier: ^0.1.0
+        version: 0.1.0
     devDependencies:
       '@types/node':
         specifier: ^22.10.5
@@ -922,8 +922,28 @@ packages:
       vite:
         optional: true
 
-  '@xyd-js/native@0.0.0':
-    resolution: {integrity: sha512-6XaatmV8VVq3n+s4K1r9Pa4GxMq/yd4jwqOkPK4MuWATrBhhQqz5h3e6PhdUjTIrmRxOzHrMkToJbvAWYrO2+w==}
+  '@xyd-js/native-darwin-arm64@0.1.0':
+    resolution: {integrity: sha512-SIpx5fK78cge480IP15ZiaPyVCP50Ml41IDrmDX4RKbxxBNgB2vpQ4El023VDHhcPPtZh9EfZxm2On+csWdmlQ==}
+    cpu: [arm64]
+    os: [darwin]
+
+  '@xyd-js/native-darwin-x64@0.1.0':
+    resolution: {integrity: sha512-8rMWT59+0/L32BgQsnvWphBEw4xow9JcQbIbYMPoSghs2aRVep9kbpEnQJD8p2PpCHkF2CSFFvK0kd3W2feaoQ==}
+    cpu: [x64]
+    os: [darwin]
+
+  '@xyd-js/native-linux-arm64-gnu@0.1.0':
+    resolution: {integrity: sha512-fcvkDeFFqPj45U3Iv88uABboso2UQfFt81dyoZlAwl7Y8CgWODxHY7GPxvcqDXVUjDe3vfaMDLQKIWbNmK69Ng==}
+    cpu: [arm64]
+    os: [linux]
+
+  '@xyd-js/native-linux-x64-gnu@0.1.0':
+    resolution: {integrity: sha512-wlKQty3n5DUgNX5Y1bwF7ntZY9js8fpOESCIG1ooZ8SiufbdUwSPDgtufQ7cd0CythkTqxJvPUcpZJli2TJnMg==}
+    cpu: [x64]
+    os: [linux]
+
+  '@xyd-js/native@0.1.0':
+    resolution: {integrity: sha512-tD5sGf2FZP4Az1Fr7of2USDZNHT9HlKQ71w/RDYCURN4SrTdNNIHsW78RmJXTRIeZ+DBIslAC79rBcR9BS43tQ==}
 
   '@xyd-js/openapi-sampler@0.0.0-build-e80ab83-20260920140634':
     resolution: {integrity: sha512-jCgyv78MMd+tWAY9f/dNgTDmwZ03QSSrD5RAxMVWx7U5f8fxKjzwXROzQMTes8hj8IFy08JXoDpR/W8K7mb2rg==}
@@ -2883,7 +2903,24 @@ snapshots:
     optionalDependencies:
       vite: 5.4.21(@types/node@20.9.0)
 
-  '@xyd-js/native@0.0.0':
+  '@xyd-js/native-darwin-arm64@0.1.0':
+    optional: true
+
+  '@xyd-js/native-darwin-x64@0.1.0':
+    optional: true
+
+  '@xyd-js/native-linux-arm64-gnu@0.1.0':
+    optional: true
+
+  '@xyd-js/native-linux-x64-gnu@0.1.0':
+    optional: true
+
+  '@xyd-js/native@0.1.0':
+    optionalDependencies:
+      '@xyd-js/native-darwin-arm64': 0.1.0
+      '@xyd-js/native-darwin-x64': 0.1.0
+      '@xyd-js/native-linux-arm64-gnu': 0.1.0
+      '@xyd-js/native-linux-x64-gnu': 0.1.0
     optional: true
 
   '@xyd-js/openapi-sampler@0.0.0-build-e80ab83-20260920140634': {}

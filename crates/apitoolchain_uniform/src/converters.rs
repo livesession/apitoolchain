@@ -91,7 +91,13 @@ fn copy_description(prop: &Value, out: &mut Map<String, Value>) {
 }
 
 /// The array overload of `uniformPropertiesToJsonSchema(properties[], id?)`.
-fn properties_array_to_schema(properties: &[Value], id: Option<&Value>) -> Option<Value> {
+///
+/// `pub` because the napi surface dispatches the two overloads itself. The
+/// single-value entry below hardcodes `id: None`, and `id` is the one thing
+/// that differs between them — it becomes `$id` on the emitted schema. Routing
+/// arrays through here is what lets the binding carry the full two-argument JS
+/// signature instead of quietly dropping the second one.
+pub fn properties_array_to_schema(properties: &[Value], id: Option<&Value>) -> Option<Value> {
     let mut json_schema_props: Map<String, Value> = Map::new();
     let mut required_fields: Vec<Value> = Vec::new();
 

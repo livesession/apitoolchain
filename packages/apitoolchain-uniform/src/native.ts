@@ -5,12 +5,23 @@
 // 22.12 — and Bun) reaches node:module without a bundler-visible import.
 //
 // Resolution order:
-//   1. Browser (no process) → null (JS impls)
-//   2. XYD_NATIVE=0 → null (test/incident hatch while src/impl-js exists)
+//   1. Browser (no process) → null
+//   2. XYD_NATIVE=0 → null (test/incident hatch)
 //   3. globalThis.__xydNativeCore — the embedded core.node inside the
 //      bun-compiled binary (set by xyd-cli's native-boot)
 //   4. @xyd-js/native — the napi package (platform .node)
-//   5. null → the dispatchers fall back to src/impl-js
+//   5. null → the dispatchers THROW
+//
+// Step 5 used to read "fall back to src/impl-js". That directory is gone: the
+// frozen TypeScript converters were deleted once @xyd-js/native@0.1.0 shipped
+// platform binaries, so there is one implementation rather than two.
+//
+// Returning null in a browser (step 1) is still correct and is NOT a path to
+// that throw. The converter and plugin entries are unreachable from client
+// code and tree-shake out of the bundle entirely — verified against a shipped
+// build, where `pluginJsonView` appears zero times and only this loader, the
+// enums and src/inspection/ survive. What a browser imports from this package
+// never calls the dispatchers, so it never reaches the error they raise.
 
 function load(): any | null {
     if (typeof process === "undefined" || !process.versions) return null;

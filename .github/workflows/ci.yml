@@ -81,28 +81,36 @@ jobs:
       # The shims import each other through dist/, which is gitignored.
       - run: pnpm build
 
-      # 115 tests across the five shims. @xyd-js/native is an OPTIONAL dependency
-      # and is not published with platform binaries, so every shim resolves to its
-      # frozen JS implementation here. That is deliberate and it is a SUBSET: the
-      # native ⇄ JS parity gate runs in xyd's CI, which builds the addon (it
-      # compiles these very crates) and runs these same packages through the
-      # submodule in both modes with XYD_REQUIRE_NATIVE=1.
+      # The shim suites. @xyd-js/native ships real platform binaries as of 0.1.0,
+      # so these now exercise the NATIVE path here — the inverse of what this job
+      # asserted before that release.
       - run: pnpm test:unit
 
-      - name: the JS fallback is what actually ran
-        # Non-vacuity, asserted rather than assumed. If @xyd-js/native ever DID
-        # load here, the step above would be exercising the native path while
-        # this job's name claims it gates the fallback.
+      - name: the native binding is what actually ran
+        # Non-vacuity, asserted rather than assumed — and the assertion is now the
+        # OPPOSITE of what it used to be.
         #
-        # XYD_REQUIRE_NATIVE=1 turns a failed addon load into a hard throw (the
-        # same flag xyd's dual-mode gate sets on its =1 leg). Here it must FAIL:
-        # a pass would mean a working addon appeared. Note the published
-        # @xyd-js/native IS installed — it is a stub that throws "Cannot find
-        # native binding" on require — so checking that the package resolves
-        # would prove nothing; what matters is that no binding loads.
+        # Before @xyd-js/native@0.1.0 there were no platform binaries on npm, so
+        # this job pinned the fact that the frozen JS implementation was what ran
+        # and required XYD_REQUIRE_NATIVE=1 to FAIL. A real .node now resolves from
+        # the registry, so the same command must PASS. Keeping the old polarity
+        # would have failed CI the moment the binaries shipped; deleting the check
+        # instead would have left the job proving nothing.
+        #
+        # This matters most once the frozen implementations are gone: with nothing
+        # to silently degrade to, a broken addon has to be loud here.
         run: |
-          if XYD_REQUIRE_NATIVE=1 node -e "import('./packages/apitoolchain-gql/dist/index.js')" 2>/dev/null; then
-            echo "::error::@xyd-js/native loaded — this job claims to gate the JS fallback but exercised the native path."
+          if ! XYD_REQUIRE_NATIVE=1 node -e "import('./packages/apitoolchain-gql/dist/index.js')"; then
+            echo "::error::@xyd-js/native did not load. With the frozen JS implementations reaped there is nothing to fall back to."
             exit 1
           fi
-          echo "confirmed: no native binding loads here; the frozen JS implementation is what ran"
+          node -e "
+            const n = require('@xyd-js/native');
+            const need = ['gqlSchemaToReferences','oapSchemaToReferencesFromFile','mcpToReferences','pluginNavigation'];
+            const missing = need.filter(k => typeof n[k] !== 'function');
+            if (missing.length) {
+              console.error('::error::addon loaded but is missing: ' + missing.join(', '));
+              process.exit(1);
+            }
+            console.log('confirmed: native binding loaded with ' + Object.keys(n).length + ' exports');
+          "

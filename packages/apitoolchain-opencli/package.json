@@ -23,6 +23,6 @@
     "vitest": "^2.1.1"
   },
   "optionalDependencies": {
-    "@xyd-js/native": "*"
+    "@xyd-js/native": "^0.1.0"
   }
 }

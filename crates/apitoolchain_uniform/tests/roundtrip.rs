@@ -22,7 +22,7 @@ fn fixtures(pkg: &str) -> PathBuf {
         .join("__fixtures__")
 }
 
-fn roundtrip_all(pkg: &str) {
+fn roundtrip_all(pkg: &str, expected: usize) {
     let dir = fixtures(pkg);
     let mut cases = 0;
     for entry in fs::read_dir(&dir).expect("fixtures dir") {
@@ -59,21 +59,32 @@ fn roundtrip_all(pkg: &str) {
         );
         cases += 1;
     }
-    assert!(cases > 0, "no fixture cases found under {}", dir.display());
+    // An EXACT count, not `cases > 0`. That floor was vacuous: the gql corpus
+    // could shrink from 17 oracles to 1 — or to a single case, if a move dropped
+    // the 11 `-`-prefixed directories a naive glob skips — and this still
+    // reported green while round-tripping almost nothing. Since this test is the
+    // gate that a fixture RELOCATION preserved the corpus, a floor it cannot
+    // fail is worse than no gate at all.
+    assert_eq!(
+        cases,
+        expected,
+        "{pkg}: round-tripped {cases} oracle(s), expected {expected}, under {}",
+        dir.display()
+    );
     println!("{pkg}: {cases} oracle(s) round-tripped");
 }
 
 #[test]
 fn gql_oracles_roundtrip() {
-    roundtrip_all("apitoolchain-gql");
+    roundtrip_all("apitoolchain-gql", 17);
 }
 
 #[test]
 fn openapi_oracles_roundtrip() {
-    roundtrip_all("apitoolchain-openapi");
+    roundtrip_all("apitoolchain-openapi", 10);
 }
 
 #[test]
 fn mcp_uniform_oracles_roundtrip() {
-    roundtrip_all("apitoolchain-mcp-uniform");
+    roundtrip_all("apitoolchain-mcp-uniform", 6);
 }

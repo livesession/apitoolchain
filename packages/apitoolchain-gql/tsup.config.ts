@@ -1,5 +1,3 @@
-import { copyFileSync } from 'node:fs';
-import { join } from 'node:path';
 
 import {defineConfig} from 'tsup';
 
@@ -22,12 +20,10 @@ export default defineConfig({
             '.graphql': 'text' // Load .graphql files as text
         };
     },
-    onSuccess: async () => {
-        // Copy opendocs.graphql to dist
-        copyFileSync(
-            join('src', 'impl-js', 'opendocs.graphql'),
-            join('dist', 'opendocs.graphql')
-        );
-        return Promise.resolve();
-    }
+    // No onSuccess hook. It used to copy src/impl-js/opendocs.graphql to
+    // dist/opendocs.graphql, but NOTHING in either repo reads that output — the
+    // file is consumed at BUILD time by the `.graphql: text` loader above, via
+    // `import openDocsSchemaRaw from './opendocs.graphql'` (src/impl-js/schema.ts:33),
+    // so its contents are already inlined into the bundle. The loader stays; the
+    // copy was dead weight that also pinned a path inside impl-js.
 });

@@ -8,7 +8,7 @@ import type { Reference } from "@xyd-js/uniform";
 
 import { native } from "./native";
 import { gqlSchemaToReferences as jsGqlSchemaToReferences } from "./impl-js/schema";
-import type { GQLSchemaToReferencesOptions } from "./impl-js/types";
+import type { GQLSchemaToReferencesOptions } from "./types";
 
 export async function gqlSchemaToReferences(
     schemaLocation: string | string[],

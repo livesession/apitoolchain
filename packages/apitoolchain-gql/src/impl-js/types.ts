@@ -3,19 +3,14 @@ import {GraphQLField, OperationTypeNode} from "graphql";
 
 import type {DefinitionProperty} from "@xyd-js/uniform";
 
-// New sorting types based on the documentation
-export interface SortItem {
-    node?: string;
-    group?: string[];
-    stack?: number;
-}
+// The three public option types now live in ../types.ts — the module that
+// outlives this one when impl-js is deleted. Re-exported here so the frozen
+// converter keeps compiling against a SINGLE definition rather than a copy that
+// could drift from the one the public API advertises.
+export type { SortItem, OpenDocsSortConfig, GQLSchemaToReferencesOptions } from "../types";
+import type { SortItem } from "../types";
 
 export interface SortStack {
-    sortStack?: string[][];
-    sort?: SortItem[];
-}
-
-export interface OpenDocsSortConfig {
     sortStack?: string[][];
     sort?: SortItem[];
 }
@@ -31,15 +26,6 @@ export const DEFAULT_SORT_ORDER: SortItem[] = [
     { node: "enum" },
     { node: "scalar" },
 ];
-
-export interface GQLSchemaToReferencesOptions {
-    // TODO: support line ranged in the future?
-    regions?: string[] // TODO: BETTER API - UNIFY FOR REST API / GRAPHQL ETC
-
-    flat?: boolean;
-    sort?: OpenDocsSortConfig;
-    route?: string
-}
 
 export type NestedGraphqlType = {
     __definitionProperties?: DefinitionProperty[];

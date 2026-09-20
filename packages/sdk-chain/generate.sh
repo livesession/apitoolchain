@@ -56,3 +56,11 @@ for dir in \
   printf 'node_modules\n.sdk\n' >"$here/../$dir/.gitignore"
   echo "patched $dir → src exports"
 done
+
+# 3. The rust-cli target emits UNFORMATTED Rust while the committed tree is
+#    rustfmt-clean (same convention as opencli2rust's own `regen` bin, which
+#    fmts after write_project). Without this, every regeneration would leave
+#    `cargo fmt --all --check` red in CI for reasons unrelated to the change.
+if [ -d "$here/../../cli" ]; then
+  (cd "$here/../.." && cargo fmt -p api) && echo "formatted cli/ (api)"
+fi

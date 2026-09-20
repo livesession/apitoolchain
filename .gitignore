@@ -1,0 +1,28 @@
+node_modules/
+*.log
+.npm
+.DS_Store
+.idea/
+.vscode/
+dist/
+build/
+out/
+*.tsbuildinfo
+.cache/
+.turbo
+*.tgz
+.env
+.env.local
+
+# Rust
+target/
+
+# pnpm/bun
+.pnpm-store/
+
+# opensdk regen manifests written next to generated SDKs
+.sdk/
+.chain/
+
+# fixture dumps (XYD_PARITY_DUMP=1)
+**/output.rust.json

@@ -1,0 +1,14 @@
+# Everything in this repo is compared BYTE-EXACTLY: the converter crates'
+# parity tiers diff generated output against committed goldens, and the
+# extraction itself was proven by blob-SHA equality. A CRLF checkout on any
+# contributor's machine would rewrite those bytes and fail every golden for
+# reasons that look nothing like the cause.
+* text=auto eol=lf
+
+# Binary fixtures must never be line-ending-normalized.
+*.png binary
+*.jpg binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary

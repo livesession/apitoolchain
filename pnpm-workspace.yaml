@@ -1,0 +1,14 @@
+# EXPLICIT members only — never a `packages/*` glob.
+#
+# Most of packages/ here is deliberately NOT a pnpm workspace: the twelve
+# apitoolchain packages and the apps are standalone bun islands with their own
+# runners and their own lockfiles (they were negated out of xyd's workspace for
+# the same reason). A glob would adopt every one of them and break `pnpm i`.
+#
+# These five are the converter shims, whose Rust half lives in crates/.
+packages:
+  - 'packages/xyd-uniform'
+  - 'packages/xyd-gql'
+  - 'packages/xyd-openapi'
+  - 'packages/xyd-mcp-uniform'
+  - 'packages/xyd-opencli'

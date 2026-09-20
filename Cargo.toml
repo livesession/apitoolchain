@@ -1,0 +1,46 @@
+# apitoolchain Rust workspace. Rooted at the REPO ROOT (unlike xyd, whose
+# workspace is rooted at crates/) so the `cli` crate at the root is reachable —
+# the `crates/*` glob does not climb out of that directory. Same arrangement as
+# the opensdk repo.
+[workspace]
+resolver = "2"
+members = [
+    "crates/xyd_uniform",
+    "crates/xyd_parity",
+    "crates/xyd_gql",
+    "crates/xyd_openapi",
+    "crates/xyd_mcp_uniform",
+    "crates/xyd_opencli_uniform",
+    "crates/xyd_oas_snippet",
+    # `cli` is listed EXPLICITLY: it sits at the repo root, and the `crates/*`
+    # glob above does not reach it. Same arrangement as opensdk's `cli`.
+    "cli",
+]
+#
+# crates/xyd_openapi path-deps `../../opensdk/crates/oas_doc`, which resolves to
+# <repo>/opensdk/crates/oas_doc — the `opensdk` submodule nested here at the same
+# depth it sits at in xyd. That is what lets every path in these crates stay
+# byte-identical to the xyd originals: nothing in crates/ needed editing to move.
+# Like xyd, the out-of-workspace path dep builds normally but is NOT covered by
+# `cargo fmt --all` / `cargo clippy --workspace` here; opensdk's own CI lints it.
+
+[workspace.package]
+edition = "2021"
+version = "0.0.0"
+license = "MIT"
+
+# Shared third-party pins, mirrored from xyd's crates/Cargo.toml so the converter
+# crates cannot drift across the repo split.
+# preserve_order is BYTE-LOAD-BEARING: fixture-dump diffs stay minimal AND
+# IndexMap equality is order-insensitive — exactly the vitest `toEqual` oracle
+# semantics these crates' goldens were frozen under.
+[workspace.dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1", features = ["preserve_order"] }
+thiserror = "2"
+clap = { version = "4", features = ["string"] }
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "process", "signal"] }
+
+[profile.release]
+lto = true
+strip = true

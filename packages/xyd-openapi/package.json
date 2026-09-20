@@ -13,21 +13,24 @@
     "ci:test": "vitest run"
   },
   "dependencies": {
-    "@xyd-js/openapi-sampler": "workspace:*",
-    "@xyd-js/uniform": "workspace:*",
     "@apidevtools/json-schema-ref-parser": "^12.0.2",
     "@har-sdk/openapi-sampler": "^2.4.2",
     "@readme/oas-to-snippet": "^28.0.0",
+    "@xyd-js/openapi-sampler": "0.0.0-build-e80ab83-20260920140634",
+    "@xyd-js/uniform": "workspace:*",
+    "github-slugger": "^2.0.0",
     "js-yaml": "^4.1.1",
     "oas": "^25.0.3",
-    "openapi-types": "^12.1.3",
-    "@xyd-js/native": "workspace:*"
+    "openapi-types": "^12.1.3"
   },
   "devDependencies": {
     "@types/js-yaml": "^4.0.9",
     "rimraf": "^3.0.2",
     "tsup": "^8.3.0",
-    "vitest": "^2.1.8",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "vitest": "^2.1.8"
+  },
+  "optionalDependencies": {
+    "@xyd-js/native": "*"
   }
 }

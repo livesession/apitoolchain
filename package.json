@@ -1,0 +1,24 @@
+{
+  "name": "@apitoolchain/project",
+  "private": true,
+  "engines": {
+    "pnpm": ">=9",
+    "node": ">=22.12.0"
+  },
+  "packageManager": "pnpm@9.10.0",
+  "scripts": {
+    "prepare": "node scripts/ensure-submodules.mjs --soft",
+    "preinstall": "node scripts/ensure-submodules.mjs --soft",
+    "build": "pnpm run --filter=\"./packages/xyd-*\" build",
+    "pretest:unit": "pnpm build",
+    "test:unit": "vitest run",
+    "check:standalone": "bash scripts/check-standalone.sh"
+  },
+  "devDependencies": {
+    "@types/json-schema": "^7.0.15",
+    "@types/node": "20.9.0",
+    "@types/react": "^19.1.0",
+    "typescript": "^5.6.2",
+    "vitest": "^2.1.8"
+  }
+}

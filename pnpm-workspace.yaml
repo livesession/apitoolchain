@@ -7,8 +7,8 @@
 #
 # These five are the converter shims, whose Rust half lives in crates/.
 packages:
-  - 'packages/uniform'
-  - 'packages/gql'
-  - 'packages/openapi'
-  - 'packages/mcp-uniform'
-  - 'packages/opencli'
+  - 'packages/apitoolchain-uniform'
+  - 'packages/apitoolchain-gql'
+  - 'packages/apitoolchain-openapi'
+  - 'packages/apitoolchain-mcp-uniform'
+  - 'packages/apitoolchain-opencli'

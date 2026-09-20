@@ -17,7 +17,7 @@
     "paths": {
       "~/*": ["./app/*"],
       "@xyd-js/atlas": ["../../../packages/xyd-atlas/dist/index.d.ts"],
-      "@xyd-js/uniform": ["../../packages/uniform/dist/index.d.ts"],
+      "@xyd-js/uniform": ["../../packages/apitoolchain-uniform/dist/index.d.ts"],
       "@xyd-js/framework": ["../../../packages/xyd-framework/dist/index.d.ts"],
       "@xyd-js/framework/react": [
         "../../../packages/xyd-framework/dist/react.d.ts"
@@ -25,7 +25,7 @@
       "@xyd-js/framework/hydration": [
         "../../../packages/xyd-framework/dist/hydration.d.ts"
       ],
-      "@xyd-js/openapi": ["../../packages/openapi/dist/index.d.ts"],
+      "@xyd-js/openapi": ["../../packages/apitoolchain-openapi/dist/index.d.ts"],
       "@xyd-js/components": ["../../../packages/xyd-components/dist/index.d.ts"],
       "@xyd-js/components/content": [
         "../../../packages/xyd-components/dist/content.d.ts"

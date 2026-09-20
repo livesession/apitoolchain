@@ -1,0 +1,16 @@
+[package]
+name = "apitoolchain_mcp_uniform"
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+description = "MCP server surface -> Uniform Reference[] (Rust port of @xyd-js/mcp-uniform)"
+
+[dependencies]
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+apitoolchain_openapi = { path = "../apitoolchain_openapi" }
+apitoolchain_uniform = { path = "../apitoolchain_uniform" }
+
+[dev-dependencies]
+apitoolchain_parity = { path = "../apitoolchain_parity" }

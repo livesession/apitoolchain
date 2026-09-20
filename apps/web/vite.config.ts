@@ -16,8 +16,19 @@ import { apitoolchainViteDev } from "../../packages/dev/src/vite";
 import { apiatlasWidgetProxy } from "./app/vendor/apiatlas-widget/vite-plugin.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
-/** Built dist of a xyd workspace package (`../../packages/xyd-<name>/...`). */
-const xyd = (p: string) => resolve(here, "../../packages", p);
+/** Built dist of a package in THIS repo (`../../packages/xyd-<name>/...`) —
+ *  @xyd-js/uniform and @xyd-js/openapi, whose crates live in crates/. */
+const atc = (p: string) => resolve(here, "../../packages", p);
+/** Built dist of a package that stayed in xyd. This app is only ever built with
+ *  xyd as the parent checkout (apitoolchain is a submodule there), so ONE more
+ *  level up reaches xyd's packages/ — the same directory these aliases resolved
+ *  to before the split.
+ *
+ *  Not converted to plain npm specifiers: the aliases exist precisely to bypass
+ *  package resolution and pin the BUILT dist, and several of these packages are
+ *  consumed through sub-paths (framework/react, components/writer) that their
+ *  published exports maps do not expose the same way. */
+const xyd = (p: string) => resolve(here, "../../../packages", p);
 
 /**
  * Shim `path` → path-browserify, but ONLY in the client environment. The xyd
@@ -93,7 +104,7 @@ export default defineConfig({
       { find: /^@xyd-js\/atlas$/, replacement: xyd("xyd-atlas/dist/index.js") },
       {
         find: /^@xyd-js\/uniform$/,
-        replacement: xyd("xyd-uniform/dist/index.js"),
+        replacement: atc("xyd-uniform/dist/index.js"),
       },
       {
         find: /^@xyd-js\/framework\/react$/,
@@ -109,7 +120,7 @@ export default defineConfig({
       },
       {
         find: /^@xyd-js\/openapi$/,
-        replacement: xyd("xyd-openapi/dist/index.js"),
+        replacement: atc("xyd-openapi/dist/index.js"),
       },
       {
         find: /^@xyd-js\/components\/content$/,
@@ -154,7 +165,7 @@ export default defineConfig({
   server: {
     // The aliased xyd dist lives at ../../packages (outside this app's Vite
     // root); widen the fs allow-list so the dev server can read it.
-    fs: { allow: [resolve(here, "../..")] },
+    fs: { allow: [resolve(here, "../.."), resolve(here, "../../..")] },
   },
   // Transpile the linked source-exported packages (design-system + filters ship
   // TS source, not dist) for both the SSR and client builds instead of treating

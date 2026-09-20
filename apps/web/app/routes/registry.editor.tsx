@@ -7,16 +7,16 @@ import { specTextToUniform } from "~/lib/openapi/toGroups.server";
 // component tweak). The theme bundle predates it, so pull the freshly-built
 // component CSS too — loaded BEFORE the theme so the theme still wins shared
 // codetabs rules; only the net-new dropdown rules come from here.
-import coderCss from "../../../../packages/xyd-components/dist/index.css?url";
+import coderCss from "../../../../../packages/xyd-components/dist/index.css?url";
 // The xyd theme stylesheet (sidebar + Atlas look), loaded ONLY on this route via
 // `links()`, so it never affects the rest of the app. Relative path — xyd themes
 // aren't installable here; the `@layer` order is pinned globally in app.css.
-import openerCss from "../../../../packages/xyd-theme-opener/dist/index.css?url";
+import openerCss from "../../../../../packages/xyd-theme-opener/dist/index.css?url";
 // Same reason as coderCss: the SDK-native reference styles (operation-header
 // signature + language select) live in @xyd-js/atlas, but the theme bundle
 // predates them — pull the freshly-built Atlas CSS so the net-new sdk-header
 // rules apply (loaded AFTER the theme so the fresh Atlas wins any shared rule).
-import atlasCss from "../../../../packages/xyd-atlas/dist/index.css?url";
+import atlasCss from "../../../../../packages/xyd-atlas/dist/index.css?url";
 import type { Route } from "./+types/registry.editor";
 
 export const links: Route.LinksFunction = () => [

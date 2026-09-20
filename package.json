@@ -9,7 +9,7 @@
   "scripts": {
     "prepare": "node scripts/ensure-submodules.mjs --soft",
     "preinstall": "node scripts/ensure-submodules.mjs --soft",
-    "build": "pnpm run --filter=\"./packages/xyd-*\" build",
+    "build": "pnpm run --filter=\"./packages/**\" build",
     "pretest:unit": "pnpm build",
     "test:unit": "vitest run",
     "check:standalone": "bash scripts/check-standalone.sh"

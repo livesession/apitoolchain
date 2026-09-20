@@ -7,8 +7,8 @@
 #
 # These five are the converter shims, whose Rust half lives in crates/.
 packages:
-  - 'packages/xyd-uniform'
-  - 'packages/xyd-gql'
-  - 'packages/xyd-openapi'
-  - 'packages/xyd-mcp-uniform'
-  - 'packages/xyd-opencli'
+  - 'packages/uniform'
+  - 'packages/gql'
+  - 'packages/openapi'
+  - 'packages/mcp-uniform'
+  - 'packages/opencli'

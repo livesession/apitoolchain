@@ -30,7 +30,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          # crates/xyd_openapi path-deps opensdk/crates/oas_doc, so without the
+          # crates/openapi path-deps opensdk/crates/oas_doc, so without the
           # submodule cargo cannot load the workspace at all.
           submodules: recursive
 
@@ -101,7 +101,7 @@ jobs:
         # native binding" on require — so checking that the package resolves
         # would prove nothing; what matters is that no binding loads.
         run: |
-          if XYD_REQUIRE_NATIVE=1 node -e "import('./packages/xyd-gql/dist/index.js')" 2>/dev/null; then
+          if XYD_REQUIRE_NATIVE=1 node -e "import('./packages/gql/dist/index.js')" 2>/dev/null; then
             echo "::error::@xyd-js/native loaded — this job claims to gate the JS fallback but exercised the native path."
             exit 1
           fi

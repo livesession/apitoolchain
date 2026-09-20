@@ -5,19 +5,19 @@
 [workspace]
 resolver = "2"
 members = [
-    "crates/xyd_uniform",
-    "crates/xyd_parity",
-    "crates/xyd_gql",
-    "crates/xyd_openapi",
-    "crates/xyd_mcp_uniform",
-    "crates/xyd_opencli_uniform",
-    "crates/xyd_oas_snippet",
+    "crates/uniform",
+    "crates/parity",
+    "crates/gql",
+    "crates/openapi",
+    "crates/mcp_uniform",
+    "crates/opencli_uniform",
+    "crates/oas_snippet",
     # `cli` is listed EXPLICITLY: it sits at the repo root, and the `crates/*`
     # glob above does not reach it. Same arrangement as opensdk's `cli`.
     "cli",
 ]
 #
-# crates/xyd_openapi path-deps `../../opensdk/crates/oas_doc`, which resolves to
+# crates/openapi path-deps `../../opensdk/crates/oas_doc`, which resolves to
 # <repo>/opensdk/crates/oas_doc — the `opensdk` submodule nested here at the same
 # depth it sits at in xyd. That is what lets every path in these crates stay
 # byte-identical to the xyd originals: nothing in crates/ needed editing to move.

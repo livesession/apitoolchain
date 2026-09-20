@@ -8,12 +8,12 @@ managing them.
 
 | Path | What |
 |------|------|
-| `crates/` | The Rust converters: `xyd_uniform` (the normalized API model), `xyd_openapi`, `xyd_gql`, `xyd_mcp_uniform`, `xyd_opencli_uniform`, `xyd_oas_snippet`, plus the `xyd_parity` fixture harness |
+| `crates/` | The Rust converters: `uniform` (the normalized API model), `openapi`, `gql`, `mcp_uniform`, `opencli_uniform`, `oas_snippet`, plus the `parity` fixture harness |
 | `packages/xyd-*` | The five npm shims over those crates (`@xyd-js/uniform`, `/gql`, `/openapi`, `/mcp-uniform`, `/opencli`). Each dispatches to the Rust core through `@xyd-js/native` when present and falls back to a frozen JS implementation otherwise |
 | `packages/` (rest) | Toolchain packages: generated SDKs (`*-node`), the SDK chain config, schemas, the release manager, filters, the design systems, the sdk.json wizard |
 | `apps/` | `api`, `gitprovider`, `registry-api`, `web`, `storybook-federation` |
 | `cli/` | The `api` binary — generated from the API's OpenCLI spec by `opencli2rust`, with hand-owned code in `src/custom/` |
-| `opensdk/` | Submodule ([livesession/opensdk](https://github.com/livesession/opensdk)) — the SDK/CLI generation toolchain. `crates/xyd_openapi` path-deps its `oas_doc` |
+| `opensdk/` | Submodule ([livesession/opensdk](https://github.com/livesession/opensdk)) — the SDK/CLI generation toolchain. `crates/openapi` path-deps its `oas_doc` |
 
 ## Setup
 
@@ -30,7 +30,7 @@ If you already cloned without `--recurse-submodules`:
 git submodule update --init opensdk
 ```
 
-The submodule is not optional: `crates/xyd_openapi` path-deps `opensdk/crates/oas_doc`,
+The submodule is not optional: `crates/openapi` path-deps `opensdk/crates/oas_doc`,
 so without it cargo cannot load the workspace at all.
 
 ## Tests

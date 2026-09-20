@@ -24,7 +24,7 @@ importers:
         specifier: ^2.1.8
         version: 2.1.9(@types/node@20.9.0)
 
-  packages/xyd-gql:
+  packages/gql:
     dependencies:
       '@graphql-tools/merge':
         specifier: ^8.4.0
@@ -34,7 +34,7 @@ importers:
         version: 10.1.1(graphql@16.14.2)
       '@xyd-js/uniform':
         specifier: workspace:*
-        version: link:../xyd-uniform
+        version: link:../uniform
       github-slugger:
         specifier: ^2.0.0
         version: 2.0.0
@@ -59,14 +59,14 @@ importers:
         specifier: ^2.1.8
         version: 2.1.9(@types/node@22.20.4)
 
-  packages/xyd-mcp-uniform:
+  packages/mcp-uniform:
     dependencies:
       '@xyd-js/openapi':
         specifier: workspace:*
-        version: link:../xyd-openapi
+        version: link:../openapi
       '@xyd-js/uniform':
         specifier: workspace:*
-        version: link:../xyd-uniform
+        version: link:../uniform
     optionalDependencies:
       '@xyd-js/native':
         specifier: '*'
@@ -85,7 +85,7 @@ importers:
         specifier: ^2.1.8
         version: 2.1.9(@types/node@22.20.4)
 
-  packages/xyd-openapi:
+  packages/openapi:
     dependencies:
       '@apidevtools/json-schema-ref-parser':
         specifier: ^12.0.2
@@ -101,7 +101,7 @@ importers:
         version: 0.0.0-build-e80ab83-20260920140634
       '@xyd-js/uniform':
         specifier: workspace:*
-        version: link:../xyd-uniform
+        version: link:../uniform
       github-slugger:
         specifier: ^2.0.0
         version: 2.0.0
@@ -135,7 +135,7 @@ importers:
         specifier: ^2.1.8
         version: 2.1.9(@types/node@22.20.4)
 
-  packages/xyd-opencli:
+  packages/opencli:
     optionalDependencies:
       '@xyd-js/native':
         specifier: '*'
@@ -160,7 +160,7 @@ importers:
         specifier: ^2.1.1
         version: 2.1.9(@types/node@20.9.0)
 
-  packages/xyd-uniform:
+  packages/uniform:
     dependencies:
       '@mdx-js/mdx':
         specifier: ^3.1.0

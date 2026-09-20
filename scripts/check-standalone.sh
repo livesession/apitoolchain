@@ -56,7 +56,7 @@ guard() {
 }
 
 # 1. Cargo path deps escaping the repo. Exactly ONE `../..` prefix is legitimate:
-#    crates/xyd_openapi -> ../../opensdk/crates/oas_doc, the nested submodule.
+#    crates/openapi -> ../../opensdk/crates/oas_doc, the nested submodule.
 #    Anything else at that depth lands outside this repo.
 #
 #    Not written with the generic guard above: `git grep -E` is POSIX ERE and has
@@ -84,7 +84,7 @@ check_path_deps() {
 check_path_deps
 
 # 2. Relative filesystem reaches into xyd's package layout from Rust. The crates'
-#    OWN fixture paths (`../../packages/xyd-gql`) resolve here too, so the thing
+#    OWN fixture paths (`../../packages/gql`) resolve here too, so the thing
 #    to ban is a reach at a package that did NOT move.
 guard "rust-xyd-paths" 20 '"(\.\./)*packages/xyd-(core|native|atlas|framework|components|plugin|theme)' '*.rs'
 
@@ -94,8 +94,8 @@ guard "rust-xyd-paths" 20 '"(\.\./)*packages/xyd-(core|native|atlas|framework|co
 #    never appear in the SHIMS. apps/ is excluded: apps/app consumes several
 #    staying packages from npm on purpose.
 guard "shim-imports" 30 "from ['\"]@xyd-js/(native|atlas|framework|components|themes?|theme-|plugin-|documan|content|composer|host|cli)" \
-  'packages/xyd-uniform/*' 'packages/xyd-gql/*' 'packages/xyd-openapi/*' \
-  'packages/xyd-mcp-uniform/*' 'packages/xyd-opencli/*'
+  'packages/uniform/*' 'packages/gql/*' 'packages/openapi/*' \
+  'packages/mcp-uniform/*' 'packages/opencli/*'
 
 # 4. workspace: protocol deps naming a package that is not in THIS workspace.
 #    pnpm fails loudly on these at install time, but only once someone installs;

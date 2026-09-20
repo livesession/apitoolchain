@@ -1,0 +1,16 @@
+[package]
+name = "mcp_uniform"
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+description = "MCP server surface -> Uniform Reference[] (Rust port of @xyd-js/mcp-uniform)"
+
+[dependencies]
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+openapi = { path = "../openapi" }
+uniform = { path = "../uniform" }
+
+[dev-dependencies]
+parity = { path = "../parity" }

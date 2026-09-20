@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [master]
   workflow_dispatch:
+  # Called by release.yml on a tag push, so a release gates on the SAME suite a
+  # PR runs. Re-declaring these jobs in the release file would guarantee the two
+  # drift, and the drift would only show up as a bad release.
+  workflow_call:
 
 concurrency:
   # A LITERAL `ci`, not ${{ github.workflow }}. That context aliases to the

@@ -1,0 +1,212 @@
+# Tag-push release of the `api` binary.
+#
+# Gate -> build -> attach. The gate is ci.yml itself rather than a re-declared
+# copy of its jobs: two definitions of "the suite" drift, and the drift only
+# surfaces as a bad release.
+#
+# The three asset NAMES are load-bearing, not cosmetic — anything that installs
+# this binary builds its download URL from them. Rename one and the install
+# 404s.
+name: release
+
+on:
+  push:
+    tags:
+      # Deliberately broad. Stable vs prerelease is decided below from the tag
+      # TEXT, not by two disjoint globs that could disagree. A
+      # `v[0-9]+.[0-9]+.[0-9]+` pattern leans on `+` semantics GitHub's
+      # filter-pattern docs do not state plainly; if `+` were literal there, the
+      # stable path would simply never fire.
+      - "v*"
+
+# Read-only by default; only the publishing job is granted write.
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  # A tag is immutable. Never cancel a release mid-flight.
+  cancel-in-progress: false
+
+jobs:
+  # 1) THE GATE. Nothing publishes if this is red.
+  ci:
+    name: full test suite
+    uses: ./.github/workflows/ci.yml
+
+  # 2) The three assets, built natively — one runner per target.
+  #
+  # Runs in PARALLEL with the gate: the publish job below `needs:` both, so a red
+  # gate still blocks the release, while serialising would add the whole suite's
+  # wall-clock to every tag for no extra confidence.
+  binaries:
+    name: ${{ matrix.artifact }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            artifact: api-linux-x64
+          - os: ubuntu-24.04-arm
+            artifact: api-linux-arm64
+          - os: macos-14
+            artifact: api-darwin-arm64
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+
+      # The tag is the release's identity; the manifest is what users see in
+      # `--version`. If they disagree one of them is a lie — fail before
+      # building rather than ship a binary that misreports itself.
+      #
+      # EXACT match, prerelease included: tagging v0.1.0-rc1 requires
+      # cli/Cargo.toml to say `version = "0.1.0-rc1"`. Comparing only the X.Y.Z
+      # core would let every rc ship claiming to be the stable it is not.
+      - name: Verify tag matches cli/Cargo.toml
+        shell: bash
+        run: |
+          manifest=$(cargo metadata --no-deps --format-version 1 \
+            | python3 -c "import json,sys;print(next(p['version'] for p in json.load(sys.stdin)['packages'] if p['name']=='api'))")
+          tag="${GITHUB_REF_NAME#v}"
+          echo "tag=$tag manifest=$manifest"
+          if [ "$tag" != "$manifest" ]; then
+            echo "::error::tag $GITHUB_REF_NAME does not match cli/Cargo.toml version $manifest"
+            echo "::error::fix: set cli/Cargo.toml version = \"$tag\", commit, then re-tag."
+            # The crate ships at 0.0.0 (the value opencli2rust generates), so the
+            # FIRST real release needs that bump before tagging.
+            exit 1
+          fi
+
+      # The crate lives in cli/ but cargo writes to the WORKSPACE-root target/.
+      - name: Build
+        run: cargo build -p api --bin api --release
+
+      # Stage under the asset name BEFORE upload. Every target's raw output is
+      # just `api`, so a `merge-multiple: true` download would collapse all three
+      # into one file — last writer wins, silently.
+      - name: Stage under the asset name
+        shell: bash
+        run: cp target/release/api "target/release/${{ matrix.artifact }}"
+
+      # An unsigned arm64 Mach-O does not execute at all on Apple silicon. Ad-hoc
+      # is enough: this is an HTTP client with no JIT and no entitlements.
+      - name: Codesign + verify (darwin)
+        if: matrix.os == 'macos-14'
+        run: |
+          codesign -s - --force "target/release/${{ matrix.artifact }}"
+          codesign --verify --strict --verbose=2 "target/release/${{ matrix.artifact }}"
+
+      # Exercise the SHIPPED artifact from a clean temp dir with no repo on PATH.
+      #
+      # Asserts the command TREE is present, not merely that the process exits 0:
+      # a clap app whose subcommands failed to register still exits 0 on --help
+      # and would sail through a bare smoke. This CLI is generated from an
+      # OpenCLI spec, so an empty tree is exactly the plausible regression.
+      # No network is touched — every assertion is on --help output.
+      - name: "Smoke: the command tree is really there"
+        shell: bash
+        run: |
+          BIN="$PWD/target/release/${{ matrix.artifact }}"
+          WORK="$RUNNER_TEMP/api-smoke"
+          rm -rf "$WORK"; mkdir -p "$WORK"; cd "$WORK"
+
+          "$BIN" --help > help.txt
+          n=$(grep -cE '^  [a-z][a-z0-9-]*' help.txt || true)
+          echo "top-level commands: $n"
+          # Floor, not an exact count: the spec grows. Zero or a handful means
+          # the tree did not register.
+          [ "$n" -ge 15 ] || { echo "::error::only $n commands in --help; the tree did not register"; exit 1; }
+
+          # A representative leaf must have its own subcommands too — proves the
+          # tree is nested, not just a flat list of names.
+          "$BIN" api-keys --help > sub.txt
+          grep -q "list" sub.txt || { echo "::error::api-keys has no 'list' subcommand"; exit 1; }
+          echo "smoke ok"
+
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: target/release/${{ matrix.artifact }}
+          if-no-files-found: error
+
+  # 3) Attach. Downloads and publishes; builds nothing.
+  release:
+    name: GitHub Release
+    needs: [ci, binaries]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: binaries
+          pattern: api-*
+          merge-multiple: true
+
+      # The failure this exists to prevent: assets built, codesigned, smoke-
+      # tested — then attached under a glob that never matches, so they are
+      # dropped on the floor, every job reports success, and the download URL
+      # 404s forever. Assert all three are here BEFORE publishing.
+      - name: Verify all three assets arrived
+        shell: bash
+        run: |
+          ls -la binaries
+          for a in api-linux-x64 api-linux-arm64 api-darwin-arm64; do
+            test -f "binaries/$a" || { echo "::error::missing asset $a"; exit 1; }
+          done
+          chmod +x binaries/api-*
+          ( cd binaries && sha256sum api-* > checksums.txt && cat checksums.txt )
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: ${{ github.ref_name }}
+          # A `-` in the tag (v0.1.0-rc1) means prerelease, which also keeps it
+          # OUT of /releases/latest/download/ — the endpoint installers use,
+          # which resolves to the newest NON-prerelease, non-draft release. So
+          # the first tag that ships usable assets must NOT be a prerelease.
+          prerelease: ${{ contains(github.ref_name, '-') }}
+          make_latest: ${{ !contains(github.ref_name, '-') }}
+          draft: false
+          files: |
+            binaries/api-*
+            binaries/checksums.txt
+          body: |
+            The `api` CLI — node-free and self-contained.
+
+            Download the asset for your platform, `chmod +x`, and run `api --help`.
+
+            | Asset | Platform |
+            |---|---|
+            | `api-linux-x64` | Linux x86-64 |
+            | `api-linux-arm64` | Linux ARM64 |
+            | `api-darwin-arm64` | macOS Apple Silicon |
+
+      # A release whose assets did not attach looks identical to one that worked
+      # until somebody tries to download it. Ask GitHub what it actually stored.
+      - name: Verify the release carries the assets
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # This job never checks out the repo — it only downloads artifacts — so
+          # gh has no git remote to infer the repository from and would exit with
+          # "fatal: not a git repository". Telling it explicitly is cheaper than
+          # adding a checkout for one API call.
+          GH_REPO: ${{ github.repository }}
+        run: |
+          # Capture WITHOUT a pipe. `gh ... | sort | tee` takes the exit status of
+          # tee, so a gh failure leaves an empty file and the loop below accuses
+          # the release of the very bug this step exists to catch, while the real
+          # fault is here.
+          if ! gh release view "$GITHUB_REF_NAME" --json assets --jq '.assets[].name' > /tmp/attached.txt; then
+            echo "::error::could not read release $GITHUB_REF_NAME — asset verification did not run"
+            exit 1
+          fi
+          sort -o /tmp/attached.txt /tmp/attached.txt
+          echo "attached:"; cat /tmp/attached.txt
+          for a in api-linux-x64 api-linux-arm64 api-darwin-arm64; do
+            grep -qx "$a" /tmp/attached.txt || { echo "::error::$a is not attached to the release"; exit 1; }
+          done

@@ -580,6 +580,7 @@ dependencies = [
 [[package]]
 name = "oas_doc"
 version = "0.0.0"
+source = "git+https://github.com/livesession/opensdk?rev=3917b4cecc447eae3a3eb71622d0af6764b30267#3917b4cecc447eae3a3eb71622d0af6764b30267"
 dependencies = [
  "serde",
  "serde_json",

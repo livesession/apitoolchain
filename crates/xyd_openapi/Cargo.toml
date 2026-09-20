@@ -21,7 +21,19 @@ serde_yaml = "0.9"
 # builds as an ordinary dependency but is NOT covered by `cargo fmt --all` /
 # `cargo clippy --workspace` here; opensdk's CI lints it. A missing checkout
 # fails at manifest-load with the path in the message — see scripts/ensure-submodules.mjs.
-oas_doc = { path = "../../opensdk/crates/oas_doc" }
+# A GIT dep pinned by rev, not a path into a nested submodule.
+#
+# Both this repo and xyd need oas_doc, and xyd builds its napi addon over
+# BOTH trees at once. With two path-deps cargo refuses outright — "package
+# collision in the lockfile: oas_doc v0.0.0 (.../apitoolchain/opensdk/...) and
+# oas_doc v0.0.0 (.../opensdk/...) are different, but only one can be written
+# unambiguously" — because path-deps are identified by PATH, even when the two
+# trees are byte-identical (they were: same submodule, same pin).
+#
+# A git source is ONE package identity everywhere, so xyd resolves it to its
+# own checkout with a [patch] in packages/xyd-native/Cargo.toml. It also makes
+# this repo self-contained: no nested submodule to initialize or keep in sync.
+oas_doc = { git = "https://github.com/livesession/opensdk", rev = "3917b4cecc447eae3a3eb71622d0af6764b30267" }
 xyd_uniform = { path = "../xyd_uniform" }
 
 [dev-dependencies]

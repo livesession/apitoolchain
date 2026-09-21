@@ -60,4 +60,4 @@ config.ts util.ts storage.ts   shared infra
 - Commit but do NOT push unless asked. No `Co-Authored-By` lines.
 - **Consumers that reference this app's paths:** `packages/apitoolchain-dev/src/vite.ts`
   (spawns `api/main.ts`, runs `db/scripts/{migrate,seed}.ts`),
-  `packages/apitoolchain-sdk-chain/chain.json` (reads `openapi/v1/__generated__/openapi.yaml`).
+  `sdk/chain.json` (reads `openapi/v1/__generated__/openapi.yaml`).

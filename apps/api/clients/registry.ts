@@ -17,7 +17,7 @@ const apitoolchainRegistry = new ApitoolchainRegistry({
 });
 
 // isNotFound / errMessage / apiErrMessage now ship IN the generated SDK's
-// "busybox" (opensdk `busybox: "flat"` in sdk-chain/chain.json) and are imported
+// "busybox" (opensdk `busybox: "flat"` in sdk/chain.json) and are imported
 // above — no hand-rolled mirror here. apiErrMessage still recovers registry-api's
 // real `message` from the APIError body (the SDK's own message is "failed with
 // status N").

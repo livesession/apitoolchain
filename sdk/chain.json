@@ -5,33 +5,33 @@
     "gitprovider": {
       "inputs": [
         {
-          "location": "../../apps/gitprovider/openapi/__generated__/openapi.yaml"
+          "location": "apps/gitprovider/openapi/__generated__/openapi.yaml"
         }
       ],
-      "output": "./.chain/gitprovider.openapi.json"
+      "output": "sdk/.chain/gitprovider.openapi.json"
     },
     "registry-api": {
       "inputs": [
         {
-          "location": "../../apps/registry-api/openapi/v1/__generated__/openapi.yaml"
+          "location": "apps/registry-api/openapi/v1/__generated__/openapi.yaml"
         }
       ],
-      "output": "./.chain/registry-api.openapi.json"
+      "output": "sdk/.chain/registry-api.openapi.json"
     },
     "api": {
       "inputs": [
         {
-          "location": "../../apps/api/openapi/v1/__generated__/openapi.yaml"
+          "location": "apps/api/openapi/v1/__generated__/openapi.yaml"
         }
       ],
-      "output": "./.chain/api.openapi.json"
+      "output": "sdk/.chain/api.openapi.json"
     }
   },
   "targets": {
     "gitprovider-node": {
       "target": "node",
       "source": "gitprovider",
-      "output": "../apitoolchainapp-gitprovider-node",
+      "output": "packages/apitoolchainapp-gitprovider-node",
       "sdkName": "gitprovider",
       "options": {
         "packageName": "@apitoolchain/gitprovider-node",
@@ -41,7 +41,7 @@
     "registry-api-node": {
       "target": "node",
       "source": "registry-api",
-      "output": "../apitoolchainapp-registry-api-node",
+      "output": "packages/apitoolchainapp-registry-api-node",
       "sdkName": "registry-api",
       "options": {
         "packageName": "@apitoolchain/registry-api-node",
@@ -52,7 +52,7 @@
     "api-node": {
       "target": "node",
       "source": "api",
-      "output": "../apitoolchainapp-api-node",
+      "output": "packages/apitoolchainapp-api-node",
       "sdkName": "api",
       "options": {
         "packageName": "@apitoolchain/api-node",
@@ -62,7 +62,7 @@
     "api-cli": {
       "target": "rust-cli",
       "source": "api",
-      "output": "../../cli",
+      "output": "cli",
       "options": {
         "cliName": "api"
       }

@@ -29,7 +29,6 @@ export default defineConfig({
             'packages/apitoolchainapp-registry-api-node/**',
             'packages/apitoolchainapp-release-man/**',
             'packages/apitoolchainapp-schemas/**',
-            'packages/apitoolchainapp-sdk-chain/**',
             'packages/apitoolchainapp-sdkjson-wizard/**',
             'apps/**',
             '**/node_modules/**',

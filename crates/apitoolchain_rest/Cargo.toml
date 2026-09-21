@@ -1,0 +1,29 @@
+[package]
+name = "apitoolchain_rest"
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+publish = false
+
+# Hosts the vendored wasip1 build of github.com/speakeasy-api/openapi (MIT) and
+# runs it in-process for `api rest`. See README.md for the vendoring procedure.
+
+[dependencies]
+# Default features are KEPT deliberately. wasmtime ships ~28 of them and
+# `signals-based-traps` is among the ones you must not lose — dropping it
+# silently swaps guard-page bounds checks for explicit ones. Trim only with
+# measurements in hand.
+#
+# Pinned to 48 rather than 49: 49.0.0 shipped 2026-09-21. 48.0.2 has had a
+# month and two patch releases.
+wasmtime = "48"
+wasmtime-wasi = "48"
+# The embedded module is stored zstd-compressed: 65.7 MB -> 8.3 MB, which is
+# the difference between a ~12 MB and a ~70 MB `api` binary. Decompression runs
+# only on a cache miss, so the warm path never touches it.
+zstd = "0.13"
+
+[dev-dependencies]
+# Only the host-wiring tests need the WAT parser; keeping it here rather than
+# relying on wasmtime's `wat` default feature keeps it out of the shipped binary.
+wat = "1"

@@ -11,6 +11,11 @@ percent-encoding = "2"
 reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
 serde_json = "1"
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
+# The embedded `api rest` engine: the wasip1 build of the upstream `openapi`
+# CLI plus its wasmtime host. Kept in its own crate rather than under
+# src/custom/ so a 66 MB blob is not relinked every time this CLI is touched,
+# and so the host logic gets real integration tests.
+apitoolchain_rest = { path = "../crates/apitoolchain_rest" }
 
 [[bin]]
 name = "api"

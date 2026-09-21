@@ -4,9 +4,9 @@
 
 const DEFAULT_BASE_URL: &str = "";
 
-/// The API base URL, overridable via `APITOOLCHAIN_BASE_URL`.
+/// The API base URL, overridable via `API_BASE_URL`.
 pub fn base_url() -> String {
-    match std::env::var("APITOOLCHAIN_BASE_URL") {
+    match std::env::var("API_BASE_URL") {
         Ok(v) if !v.is_empty() => v,
         _ => DEFAULT_BASE_URL.to_string(),
     }

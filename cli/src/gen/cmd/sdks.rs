@@ -236,7 +236,9 @@ async fn handle_sdks_targets_create<O: CliOverrides>(
     let path = format!("/sdks/{}/targets", runtime::path_escape(sdk_id));
     let mut body = serde_json::Map::new();
     if let Some(v) = m.get_one::<String>("language") {
-        body.insert("language".to_string(), serde_json::Value::String(v.clone()));
+        let value = serde_json::from_str::<serde_json::Value>(v)
+            .unwrap_or_else(|_| serde_json::Value::String(v.clone()));
+        body.insert("language".to_string(), value);
     }
     if let Some(v) = m.get_one::<String>("package-name") {
         body.insert(

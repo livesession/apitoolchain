@@ -47,7 +47,6 @@ pub fn command() -> Command {
                 .arg(
                     Arg::new("kind")
                         .long("kind")
-                        .help("The git platforms the gitprovider service can connect to.")
                         .required(true),
                 )
                 .arg(
@@ -164,7 +163,9 @@ async fn handle_git_providers_create<O: CliOverrides>(
     let path = "/git-providers".to_string();
     let mut body = serde_json::Map::new();
     if let Some(v) = m.get_one::<String>("kind") {
-        body.insert("kind".to_string(), serde_json::Value::String(v.clone()));
+        let value = serde_json::from_str::<serde_json::Value>(v)
+            .unwrap_or_else(|_| serde_json::Value::String(v.clone()));
+        body.insert("kind".to_string(), value);
     }
     if let Some(v) = m.get_one::<String>("name") {
         body.insert("name".to_string(), serde_json::Value::String(v.clone()));

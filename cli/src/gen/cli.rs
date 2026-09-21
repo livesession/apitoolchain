@@ -9,7 +9,7 @@ use super::runtime::{CliOverrides, Context, CustomCommands};
 
 /// The generated root command tree.
 pub fn root_command() -> clap::Command {
-    clap::Command::new("apitoolchain")
+    clap::Command::new("api")
         .version("0.0.0")
         .subcommand_required(true)
         .arg_required_else_help(true)

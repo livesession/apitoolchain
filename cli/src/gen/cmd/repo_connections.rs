@@ -87,7 +87,6 @@ pub fn command() -> Command {
                 .arg(
                     Arg::new("target-kind")
                         .long("target-kind")
-                        .help("What a repo connection syncs into a repo.")
                         .required(true),
                 )
                 .arg(
@@ -290,10 +289,9 @@ async fn handle_repo_connections_create<O: CliOverrides>(
         );
     }
     if let Some(v) = m.get_one::<String>("target-kind") {
-        body.insert(
-            "targetKind".to_string(),
-            serde_json::Value::String(v.clone()),
-        );
+        let value = serde_json::from_str::<serde_json::Value>(v)
+            .unwrap_or_else(|_| serde_json::Value::String(v.clone()));
+        body.insert("targetKind".to_string(), value);
     }
     if let Some(v) = m.get_one::<String>("target-id") {
         body.insert("targetId".to_string(), serde_json::Value::String(v.clone()));

@@ -13,16 +13,8 @@ pub fn command() -> Command {
         .subcommand(Command::new("list"))
         .subcommand(
             Command::new("create")
-                .arg(
-                    Arg::new("kind")
-                        .long("kind")
-                        .help("Package registry flavour — the language ecosystem an SDK publishes into.")
-                        .required(true),
-                )
-                .arg(
-                    Arg::new("name")
-                        .long("name"),
-                )
+                .arg(Arg::new("kind").long("kind").required(true))
+                .arg(Arg::new("name").long("name"))
                 .arg(
                     Arg::new("url")
                         .long("url")
@@ -35,13 +27,7 @@ pub fn command() -> Command {
                         .help("Auth token; may be empty for an anonymous/local registry."),
                 ),
         )
-        .subcommand(
-            Command::new("delete")
-                .arg(
-                    Arg::new("id")
-                        .required(true),
-                ),
-        )
+        .subcommand(Command::new("delete").arg(Arg::new("id").required(true)))
 }
 
 pub async fn run<O: CliOverrides>(
@@ -92,7 +78,9 @@ async fn handle_package_registries_create<O: CliOverrides>(
     let path = "/package-registries".to_string();
     let mut body = serde_json::Map::new();
     if let Some(v) = m.get_one::<String>("kind") {
-        body.insert("kind".to_string(), serde_json::Value::String(v.clone()));
+        let value = serde_json::from_str::<serde_json::Value>(v)
+            .unwrap_or_else(|_| serde_json::Value::String(v.clone()));
+        body.insert("kind".to_string(), value);
     }
     if let Some(v) = m.get_one::<String>("name") {
         body.insert("name".to_string(), serde_json::Value::String(v.clone()));

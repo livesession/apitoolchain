@@ -199,7 +199,9 @@ async fn handle_apis_create<O: CliOverrides>(
         body.insert("id".to_string(), serde_json::Value::String(v.clone()));
     }
     if let Some(v) = m.get_one::<String>("format") {
-        body.insert("format".to_string(), serde_json::Value::String(v.clone()));
+        let value = serde_json::from_str::<serde_json::Value>(v)
+            .unwrap_or_else(|_| serde_json::Value::String(v.clone()));
+        body.insert("format".to_string(), value);
     }
     if let Some(v) = m.get_one::<String>("kind") {
         let value = serde_json::from_str::<serde_json::Value>(v)

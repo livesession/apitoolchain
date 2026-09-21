@@ -73,10 +73,9 @@ async fn handle_mcp_servers_create<O: CliOverrides>(
         body.insert("name".to_string(), serde_json::Value::String(v.clone()));
     }
     if let Some(v) = m.get_one::<String>("transport") {
-        body.insert(
-            "transport".to_string(),
-            serde_json::Value::String(v.clone()),
-        );
+        let value = serde_json::from_str::<serde_json::Value>(v)
+            .unwrap_or_else(|_| serde_json::Value::String(v.clone()));
+        body.insert("transport".to_string(), value);
     }
     if let Some(v) = m.get_one::<String>("url") {
         body.insert("url".to_string(), serde_json::Value::String(v.clone()));

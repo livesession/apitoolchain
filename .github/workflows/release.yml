@@ -92,7 +92,15 @@ jobs:
         run: cp target/release/api "target/release/${{ matrix.artifact }}"
 
       # An unsigned arm64 Mach-O does not execute at all on Apple silicon. Ad-hoc
-      # is enough: this is an HTTP client with no JIT and no entitlements.
+      # is still enough, but the old justification ("no JIT") stopped being true
+      # when `api rest` gained an embedded wasm engine: Cranelift maps memory
+      # RW then flips it RX. That is permitted precisely BECAUSE this is ad-hoc
+      # signing without `--options runtime` — hardened runtime is what forbids
+      # it. So: do not add `--options runtime`, and do not start notarizing,
+      # without also obtaining a Developer ID certificate and an entitlements
+      # plist carrying com.apple.security.cs.allow-jit. Notarization requires
+      # hardened runtime, so those two changes arrive together or the binary
+      # dies at launch on a user's machine.
       - name: Codesign + verify (darwin)
         if: matrix.os == 'macos-14'
         run: |
@@ -149,6 +157,28 @@ jobs:
           #    would pass on any line mentioning the word and assert nothing.
           grep -qE '^  sdk +\[alias: sdks\]' get.txt \
             || { echo "::error::'get' lost the sdk/sdks alias pair"; exit 1; }
+
+          # 5. The embedded OpenAPI engine. `rest` is a passthrough, so the
+          #    thing to assert is that argv REACHED the guest and the guest ran
+          #    — a wasm module that failed to load prints nothing and exits
+          #    non-zero, which is indistinguishable from a missing command
+          #    unless you look at the output.
+          "$BIN" rest --help > rest.txt 2>&1 \
+            || { echo "::error::api rest failed; the embedded engine did not run"; cat rest.txt; exit 1; }
+          grep -q "Work with OpenAPI specifications" rest.txt \
+            || { echo "::error::api rest --help is not upstream's help"; cat rest.txt; exit 1; }
+
+          #    And a real document, end to end, including the exit code. A
+          #    valid spec must pass and an invalid one must fail: an engine that
+          #    validated nothing would satisfy either check alone.
+          printf 'openapi: 3.0.3\ninfo: {title: t, version: "1"}\npaths: {}\n' > ok.yaml
+          printf 'openapi: 3.0.3\ninfo: {title: t}\npaths: {}\n' > broken.yaml
+          "$BIN" rest spec validate ok.yaml \
+            || { echo "::error::api rest spec validate rejected a valid document"; exit 1; }
+          if "$BIN" rest spec validate broken.yaml; then
+            echo "::error::api rest spec validate accepted a document missing info.version"
+            exit 1
+          fi
           echo "smoke ok"
 
       - name: Upload

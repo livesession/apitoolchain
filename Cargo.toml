@@ -12,6 +12,7 @@ members = [
     "crates/apitoolchain_mcp_uniform",
     "crates/apitoolchain_opencli_uniform",
     "crates/apitoolchain_oas_snippet",
+    "crates/apitoolchain_rest",
     # `cli` is listed EXPLICITLY: it sits at the repo root, and the `crates/*`
     # glob above does not reach it. Same arrangement as opensdk's `cli`.
     "cli",
@@ -40,6 +41,14 @@ serde_json = { version = "1", features = ["preserve_order"] }
 thiserror = "2"
 clap = { version = "4", features = ["string"] }
 tokio = { version = "1", features = ["macros", "rt-multi-thread", "process", "signal"] }
+
+# Cranelift compiling the 66 MB `api rest` module is ~70s in a debug build and
+# ~5s optimized. Optimizing just the compiler keeps `cargo build` fast while
+# making `cargo run` usable; release builds are untouched.
+[profile.dev.package.wasmtime-cranelift]
+opt-level = 2
+[profile.dev.package.cranelift-codegen]
+opt-level = 2
 
 [profile.release]
 lto = true

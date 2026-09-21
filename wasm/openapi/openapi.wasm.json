@@ -1,0 +1,15 @@
+{
+  "upstream":       "https://github.com/speakeasy-api/openapi",
+  "upstreamSha":    "285dc0f5a0aa3eda2e241e3c855dc7c5d3d7d50c",
+  "upstreamRef":    "v1.25.2",
+  "upstreamModule": "github.com/speakeasy-api/openapi/cmd/openapi@v0.0.0-20260921021909-285dc0f5a0aa",
+  "goToolchain":    "go1.26.8",
+  "goos":           "wasip1",
+  "goarch":         "wasm",
+  "buildFlags":     "-trimpath -buildvcs=false -ldflags='-s -w -X main.version/commit/date'",
+  "shims":          ["charm.land/bubbletea/v2@v2.0.9", "github.com/atotto/clipboard@v0.1.4"],
+  "wasmSha256":     "615dfe238af044852bd0d81eca449aadefa263b539ee9d50aab520a51ddbc93c",
+  "wasmBytes":      68889757,
+  "zstSha256":      "2c29781e7c37be283d9ef7e8f289cb098390ad3073e3aec418efd2a81cee87de",
+  "zstBytes":       8711182
+}

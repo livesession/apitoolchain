@@ -57,6 +57,32 @@ jobs:
       - name: the api CLI builds
         run: cargo build -p api --bin api
 
+      # The `api rest` engine is a COMMITTED binary. This asserts it is the file
+      # build.sh produced — catching an LFS smudge, a corrupt checkout, or a
+      # .gitattributes mishap that line-ending-normalized it.
+      #
+      # It does NOT check staleness against upstream: that needs Go, a network
+      # and a minute, for a file that changes a few times a year. Regenerating
+      # is a manual, reviewed act (wasm/openapi/README.md).
+      - name: the embedded rest engine matches its manifest
+        run: |
+          cd wasm/openapi
+          blob=../../crates/apitoolchain_rest/src/openapi.wasm.zst
+          want=$(python3 -c 'import json;print(json.load(open("openapi.wasm.json"))["zstSha256"])')
+          got=$(shasum -a 256 "$blob" | cut -d" " -f1)
+          if [ "$want" != "$got" ]; then
+            echo "::error::openapi.wasm.zst does not match openapi.wasm.json"
+            echo "  manifest: $want"
+            echo "  on disk:  $got"
+            exit 1
+          fi
+          # Non-vacuity: a manifest that lost its key would make the compare
+          # trivially true, so assert the size independently.
+          wantb=$(python3 -c 'import json;print(json.load(open("openapi.wasm.json"))["zstBytes"])')
+          gotb=$(wc -c < "$blob" | tr -d " ")
+          [ "$wantb" = "$gotb" ] || { echo "::error::size disagrees with the manifest"; exit 1; }
+          echo "rest engine ok ($gotb bytes, $(python3 -c 'import json;print(json.load(open("openapi.wasm.json"))["upstreamRef"])'))"
+
       - name: standalone guard (this repo must not reach back into xyd)
         run: bash scripts/check-standalone.sh
 

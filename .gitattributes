@@ -12,3 +12,9 @@
 *.ico binary
 *.woff binary
 *.woff2 binary
+
+# wasm payloads. `* text=auto` above must never line-ending-normalize these:
+# the `api rest` engine is a committed binary whose sha256 is asserted in CI,
+# and `binary` also implies `-diff`, keeping an 8 MB blob out of every diff.
+*.wasm binary
+*.wasm.zst binary

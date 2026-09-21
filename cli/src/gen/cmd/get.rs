@@ -279,7 +279,7 @@ async fn handle_get_sdk<O: CliOverrides>(
         query.push(("apiId", v.clone()));
     }
     let req = runtime::Request {
-        method: method,
+        method,
         path,
         query,
         headers: Vec::new(),
@@ -346,7 +346,7 @@ async fn handle_get_api<O: CliOverrides>(
         ("GET", format!("/apis/{}", runtime::path_escape(api_id)))
     };
     let req = runtime::Request {
-        method: method,
+        method,
         path,
         query: Vec::new(),
         headers: Vec::new(),
@@ -554,7 +554,7 @@ async fn handle_get_release<O: CliOverrides>(
         query.push(("connectionId", v.clone()));
     }
     let req = runtime::Request {
-        method: method,
+        method,
         path,
         query,
         headers: Vec::new(),
@@ -604,7 +604,7 @@ async fn handle_get_sdk_target<O: CliOverrides>(
         query.push(("apiId", v.clone()));
     }
     let req = runtime::Request {
-        method: method,
+        method,
         path,
         query,
         headers: Vec::new(),

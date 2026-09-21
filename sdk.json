@@ -68,7 +68,11 @@
       "output": "cli",
       "format": true,
       "options": {
-        "cliName": "api"
+        "cliName": "api",
+        "grammar": "verb-noun",
+        "singularOverrides": {
+          "apis": "api"
+        }
       }
     }
   }

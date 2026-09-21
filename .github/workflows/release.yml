@@ -106,6 +106,11 @@ jobs:
       # and would sail through a bare smoke. This CLI is generated from an
       # OpenCLI spec, so an empty tree is exactly the plausible regression.
       # No network is touched — every assertion is on --help output.
+      #
+      # The CLI is verb-first (`api get sdks`), so the top level is a short,
+      # FIXED list of verbs. Counting it would assert almost nothing — the
+      # breadth that used to live there now lives one level down, under `get`,
+      # which is where the floor belongs.
       - name: "Smoke: the command tree is really there"
         shell: bash
         run: |
@@ -113,17 +118,37 @@ jobs:
           WORK="$RUNNER_TEMP/api-smoke"
           rm -rf "$WORK"; mkdir -p "$WORK"; cd "$WORK"
 
+          # 1. The verbs. Exact names, because unlike the nouns these do not
+          #    grow with the spec — a missing one is a real regression.
           "$BIN" --help > help.txt
-          n=$(grep -cE '^  [a-z][a-z0-9-]*' help.txt || true)
-          echo "top-level commands: $n"
-          # Floor, not an exact count: the spec grows. Zero or a handful means
-          # the tree did not register.
-          [ "$n" -ge 15 ] || { echo "::error::only $n commands in --help; the tree did not register"; exit 1; }
+          for verb in get create update delete; do
+            grep -qE "^  $verb( |$)" help.txt \
+              || { echo "::error::no '$verb' command in --help; the tree did not register"; exit 1; }
+          done
 
-          # A representative leaf must have its own subcommands too — proves the
-          # tree is nested, not just a flat list of names.
-          "$BIN" api-keys --help > sub.txt
-          grep -q "list" sub.txt || { echo "::error::api-keys has no 'list' subcommand"; exit 1; }
+          # 2. The breadth, one level down. Floor, not an exact count: the spec
+          #    grows. Zero or a handful means the nouns did not register.
+          "$BIN" get --help > get.txt
+          n=$(grep -cE '^  [a-z][a-z0-9-]*' get.txt || true)
+          echo "nouns under 'get': $n"
+          [ "$n" -ge 15 ] || { echo "::error::only $n nouns under 'get'; the tree did not register"; exit 1; }
+
+          # 3. Nesting: a noun with children of its own, proving the tree is not
+          #    a flat list. `sdk` is also a RUNNABLE parent — it lists on its own
+          #    and parents `targets` — so this covers the shape that took a clap
+          #    and a urfave fix to make reachable.
+          "$BIN" get sdk --help > sub.txt
+          grep -q "targets" sub.txt || { echo "::error::'get sdk' has no 'targets' subcommand"; exit 1; }
+
+          # 4. The merged read command keeps BOTH spellings: `get sdks` (plural,
+          #    lists) and `get sdk <id>` (singular, retrieves) are ONE command
+          #    with an alias. Losing the alias silently breaks every `get sdks`
+          #    a user has typed, while `--help` still looks healthy.
+          #
+          #    Matched exactly, with no looser fallback: a `grep sdks get.txt`
+          #    would pass on any line mentioning the word and assert nothing.
+          grep -qE '^  sdk +\[alias: sdks\]' get.txt \
+            || { echo "::error::'get' lost the sdk/sdks alias pair"; exit 1; }
           echo "smoke ok"
 
       - name: Upload

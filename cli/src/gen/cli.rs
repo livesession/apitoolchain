@@ -13,24 +13,11 @@ pub fn root_command() -> clap::Command {
         .version("0.0.0")
         .subcommand_required(true)
         .arg_required_else_help(true)
-        .subcommand(cmd::api_keys::command())
-        .subcommand(cmd::apis::command())
-        .subcommand(cmd::auth::command())
-        .subcommand(cmd::context::command())
-        .subcommand(cmd::docs_projects::command())
-        .subcommand(cmd::git_providers::command())
-        .subcommand(cmd::mcp_servers::command())
-        .subcommand(cmd::members::command())
-        .subcommand(cmd::notifications::command())
-        .subcommand(cmd::overview::command())
-        .subcommand(cmd::package_registries::command())
-        .subcommand(cmd::projects::command())
-        .subcommand(cmd::registry_connections::command())
-        .subcommand(cmd::releases::command())
-        .subcommand(cmd::repo_connections::command())
-        .subcommand(cmd::sdk_targets::command())
-        .subcommand(cmd::sdks::command())
-        .subcommand(cmd::usage::command())
+        .subcommand(cmd::get::command())
+        .subcommand(cmd::create::command())
+        .subcommand(cmd::update::command())
+        .subcommand(cmd::delete::command())
+        .subcommand(cmd::publish::command())
 }
 
 /// Parse args, resolve the invoked command path, and dispatch — custom commands
@@ -49,26 +36,11 @@ pub async fn run<O: CliOverrides>(o: O, customs: CustomCommands) -> ExitCode {
     }
 
     match cmd_path.first().map(String::as_str) {
-        Some("api-keys") => cmd::api_keys::run(&ctx, &o, &cmd_path, leaf).await,
-        Some("apis") => cmd::apis::run(&ctx, &o, &cmd_path, leaf).await,
-        Some("auth") => cmd::auth::run(&ctx, &o, &cmd_path, leaf).await,
-        Some("context") => cmd::context::run(&ctx, &o, &cmd_path, leaf).await,
-        Some("docs-projects") => cmd::docs_projects::run(&ctx, &o, &cmd_path, leaf).await,
-        Some("git-providers") => cmd::git_providers::run(&ctx, &o, &cmd_path, leaf).await,
-        Some("mcp-servers") => cmd::mcp_servers::run(&ctx, &o, &cmd_path, leaf).await,
-        Some("members") => cmd::members::run(&ctx, &o, &cmd_path, leaf).await,
-        Some("notifications") => cmd::notifications::run(&ctx, &o, &cmd_path, leaf).await,
-        Some("overview") => cmd::overview::run(&ctx, &o, &cmd_path, leaf).await,
-        Some("package-registries") => cmd::package_registries::run(&ctx, &o, &cmd_path, leaf).await,
-        Some("projects") => cmd::projects::run(&ctx, &o, &cmd_path, leaf).await,
-        Some("registry-connections") => {
-            cmd::registry_connections::run(&ctx, &o, &cmd_path, leaf).await
-        }
-        Some("releases") => cmd::releases::run(&ctx, &o, &cmd_path, leaf).await,
-        Some("repo-connections") => cmd::repo_connections::run(&ctx, &o, &cmd_path, leaf).await,
-        Some("sdk-targets") => cmd::sdk_targets::run(&ctx, &o, &cmd_path, leaf).await,
-        Some("sdks") => cmd::sdks::run(&ctx, &o, &cmd_path, leaf).await,
-        Some("usage") => cmd::usage::run(&ctx, &o, &cmd_path, leaf).await,
+        Some("get") => cmd::get::run(&ctx, &o, &cmd_path, leaf).await,
+        Some("create") => cmd::create::run(&ctx, &o, &cmd_path, leaf).await,
+        Some("update") => cmd::update::run(&ctx, &o, &cmd_path, leaf).await,
+        Some("delete") => cmd::delete::run(&ctx, &o, &cmd_path, leaf).await,
+        Some("publish") => cmd::publish::run(&ctx, &o, &cmd_path, leaf).await,
         _ => {
             eprintln!("error: unknown command: {}", cmd_path.join(" "));
             ExitCode::FAILURE

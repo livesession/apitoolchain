@@ -104,8 +104,17 @@ jobs:
             echo "::error::@xyd-js/native did not load. With the frozen JS implementations reaped there is nothing to fall back to."
             exit 1
           fi
+          # Resolve from a SHIM directory, not from the repo root. @xyd-js/native
+          # is declared only in the shims' optionalDependencies, and pnpm's
+          # isolated node_modules means the root cannot see it — a bare
+          # `require('@xyd-js/native')` here dies with MODULE_NOT_FOUND, which
+          # looks exactly like the missing-addon failure this step exists to
+          # report, while actually being a bug in the step.
           node -e "
-            const n = require('@xyd-js/native');
+            const path = require.resolve('@xyd-js/native', {
+              paths: ['packages/apitoolchain-uniform'],
+            });
+            const n = require(path);
             const need = ['gqlSchemaToReferences','oapSchemaToReferencesFromFile','mcpToReferences','pluginNavigation'];
             const missing = need.filter(k => typeof n[k] !== 'function');
             if (missing.length) {

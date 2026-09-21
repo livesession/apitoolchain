@@ -93,6 +93,15 @@ guard "rust-xyd-paths" 20 '"(\.\./)*packages/xyd-(core|native|atlas|framework|co
 #    (an optional peer, installed from npm) — so enumerate the ones that must
 #    never appear in the SHIMS. apps/ is excluded: apps/app consumes several
 #    staying packages from npm on purpose.
+#
+#    This matches TEXT, so a COMMENT that spells out the banned form trips it
+#    too — including a comment written to explain the ban. That is a false
+#    positive, and it is left in place on purpose: teaching this grep to skip
+#    comment lines would add a false-NEGATIVE surface (a line's leading `//`
+#    says nothing about whether a real import hides later on it) to a script
+#    whose entire design — corpus floors, keeping git grep's status 1 apart
+#    from 2 — exists so that a guard can never quietly pass. Prefer rewording
+#    the prose; `packages/apitoolchain-uniform/src/converters.ts` shows the shape.
 guard "shim-imports" 30 "from ['\"]@xyd-js/(native|atlas|framework|components|themes?|theme-|plugin-|documan|content|composer|host|cli)" \
   'packages/apitoolchain-uniform/*' 'packages/apitoolchain-gql/*' 'packages/apitoolchain-openapi/*' \
   'packages/apitoolchain-mcp-uniform/*' 'packages/apitoolchain-opencli/*'

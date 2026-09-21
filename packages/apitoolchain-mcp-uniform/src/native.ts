@@ -1,7 +1,14 @@
 // Loader for the Rust core (S6+ W3 rider). Same bundler-invisible pattern as
 // @xyd-js/uniform's loader (no static node:module import — see that file's
-// header): browser → null; XYD_NATIVE=0 hatch → __xydNativeCore (compiled
-// binary) → @xyd-js/native → null (frozen JS impl).
+// header): browser → null; XYD_NATIVE=0 → __xydNativeCore (compiled binary) →
+// @xyd-js/native → null.
+//
+// A null result used to mean "use the frozen JS impl". It now means the
+// conversion entry THROWS: src/impl-js was deleted once @xyd-js/native shipped
+// platform binaries. XYD_NATIVE=0 is therefore no longer a working hatch for
+// this package. What survives in JS is src/transport.ts — the JSON-RPC, auth
+// and manifest IO — which is live production code on the native path, not a
+// fallback.
 
 function load(): any | null {
     if (typeof process === "undefined" || !process.versions) return null;

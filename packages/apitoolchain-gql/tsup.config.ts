@@ -23,9 +23,9 @@ export default defineConfig({
         };
     },
     // No onSuccess hook. It used to copy src/impl-js/opendocs.graphql to
-    // dist/opendocs.graphql, but NOTHING in either repo reads that output — the
-    // file is consumed at BUILD time by the `.graphql: text` loader above, via
-    // `import openDocsSchemaRaw from './opendocs.graphql'` (src/impl-js/schema.ts:33),
-    // so its contents are already inlined into the bundle. The loader stays; the
-    // copy was dead weight that also pinned a path inside impl-js.
+    // dist/opendocs.graphql — an output nothing in either repo ever read. It
+    // and the `.graphql` loader above went together: the loader's only consumer
+    // was src/impl-js/schema.ts, which is gone, so this package now has no
+    // .graphql scaffolding at all. The schema itself did not disappear — the
+    // Rust core carries its own copy.
 });

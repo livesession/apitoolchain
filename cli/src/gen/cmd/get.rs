@@ -269,14 +269,17 @@ async fn handle_get_sdk<O: CliOverrides>(
     m: &ArgMatches,
 ) -> ExitCode {
     let id = m.get_one::<String>("id").map(String::as_str).unwrap_or("");
-    let (method, path) = if id.is_empty() {
-        ("GET", "/sdks".to_string())
-    } else {
+    let use_alt = !(id.is_empty());
+    let (method, path) = if use_alt {
         ("GET", format!("/sdks/{}", runtime::path_escape(id)))
+    } else {
+        ("GET", "/sdks".to_string())
     };
     let mut query: Vec<(&'static str, String)> = Vec::new();
-    if let Some(v) = m.get_one::<String>("api-id") {
-        query.push(("apiId", v.clone()));
+    if !use_alt {
+        if let Some(v) = m.get_one::<String>("api-id") {
+            query.push(("apiId", v.clone()));
+        }
     }
     let req = runtime::Request {
         method,
@@ -340,10 +343,11 @@ async fn handle_get_api<O: CliOverrides>(
         .get_one::<String>("api-id")
         .map(String::as_str)
         .unwrap_or("");
-    let (method, path) = if api_id.is_empty() {
-        ("GET", "/apis".to_string())
-    } else {
+    let use_alt = !(api_id.is_empty());
+    let (method, path) = if use_alt {
         ("GET", format!("/apis/{}", runtime::path_escape(api_id)))
+    } else {
+        ("GET", "/apis".to_string())
     };
     let req = runtime::Request {
         method,
@@ -544,14 +548,17 @@ async fn handle_get_release<O: CliOverrides>(
     m: &ArgMatches,
 ) -> ExitCode {
     let id = m.get_one::<String>("id").map(String::as_str).unwrap_or("");
-    let (method, path) = if id.is_empty() {
-        ("GET", "/releases".to_string())
-    } else {
+    let use_alt = !(id.is_empty());
+    let (method, path) = if use_alt {
         ("GET", format!("/releases/{}", runtime::path_escape(id)))
+    } else {
+        ("GET", "/releases".to_string())
     };
     let mut query: Vec<(&'static str, String)> = Vec::new();
-    if let Some(v) = m.get_one::<String>("connection-id") {
-        query.push(("connectionId", v.clone()));
+    if !use_alt {
+        if let Some(v) = m.get_one::<String>("connection-id") {
+            query.push(("connectionId", v.clone()));
+        }
     }
     let req = runtime::Request {
         method,
@@ -594,14 +601,17 @@ async fn handle_get_sdk_target<O: CliOverrides>(
     m: &ArgMatches,
 ) -> ExitCode {
     let id = m.get_one::<String>("id").map(String::as_str).unwrap_or("");
-    let (method, path) = if id.is_empty() {
-        ("GET", "/sdk-targets".to_string())
-    } else {
+    let use_alt = !(id.is_empty());
+    let (method, path) = if use_alt {
         ("GET", format!("/sdk-targets/{}", runtime::path_escape(id)))
+    } else {
+        ("GET", "/sdk-targets".to_string())
     };
     let mut query: Vec<(&'static str, String)> = Vec::new();
-    if let Some(v) = m.get_one::<String>("api-id") {
-        query.push(("apiId", v.clone()));
+    if !use_alt {
+        if let Some(v) = m.get_one::<String>("api-id") {
+            query.push(("apiId", v.clone()));
+        }
     }
     let req = runtime::Request {
         method,

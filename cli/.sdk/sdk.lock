@@ -8,7 +8,7 @@
     "src/gen/cli.rs": "198196925d1111d2b3e3755d87df1c10b246ae7db53a44ee0110cdfee6daa8a0",
     "src/gen/cmd/create.rs": "cd1b5ef7823d7095bc0a163f49d135dd322c8410eecb36415c9b7d1685704c44",
     "src/gen/cmd/delete.rs": "7aaded688b511af168ad90c3d9846eec229db90722efec4c49c418ab151f7e7f",
-    "src/gen/cmd/get.rs": "f4a81c14687b6f9c1ed7faae6f3a2323cb7d1f23d903307604eb79d248da83e5",
+    "src/gen/cmd/get.rs": "7202640db3c963a1cff89e8669ddceb24b1bf657c7c7dcb05cef538487decfc4",
     "src/gen/cmd/mod.rs": "877587e1e8fd383407f8fa974fd11add3d0bd7197018039ac7ac72f629a6dd1f",
     "src/gen/cmd/publish.rs": "c65b89e2f10742b8979406ceb7715578b36f0ff41f34cd1ea4fd51cbd5f3737c",
     "src/gen/cmd/update.rs": "101d14c7a50845b95cbce047e0e0a83cc541427e6047f00ebcfe94e438b2b9cd",

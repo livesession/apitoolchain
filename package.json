@@ -10,7 +10,7 @@
     "prepare": "node scripts/ensure-submodules.mjs --soft",
     "preinstall": "node scripts/ensure-submodules.mjs --soft",
     "build": "pnpm run --filter=\"./packages/**\" build",
-    "sdk:generate": "bash sdk/generate.sh",
+    "sdk:generate": "opensdk run",
     "pretest:unit": "pnpm build",
     "test:unit": "vitest run",
     "check:standalone": "bash scripts/check-standalone.sh"

@@ -8,7 +8,7 @@
           "location": "apps/gitprovider/openapi/__generated__/openapi.yaml"
         }
       ],
-      "output": "sdk/.chain/gitprovider.openapi.json"
+      "output": ".chain/gitprovider.openapi.json"
     },
     "registry-api": {
       "inputs": [
@@ -16,7 +16,7 @@
           "location": "apps/registry-api/openapi/v1/__generated__/openapi.yaml"
         }
       ],
-      "output": "sdk/.chain/registry-api.openapi.json"
+      "output": ".chain/registry-api.openapi.json"
     },
     "api": {
       "inputs": [
@@ -24,7 +24,7 @@
           "location": "apps/api/openapi/v1/__generated__/openapi.yaml"
         }
       ],
-      "output": "sdk/.chain/api.openapi.json"
+      "output": ".chain/api.openapi.json"
     }
   },
   "targets": {
@@ -35,7 +35,8 @@
       "sdkName": "gitprovider",
       "options": {
         "packageName": "@apitoolchain/gitprovider-node",
-        "tests": false
+        "tests": false,
+        "entry": "source"
       }
     },
     "registry-api-node": {
@@ -46,7 +47,8 @@
       "options": {
         "packageName": "@apitoolchain/registry-api-node",
         "tests": false,
-        "busybox": "flat"
+        "busybox": "flat",
+        "entry": "source"
       }
     },
     "api-node": {
@@ -56,13 +58,15 @@
       "sdkName": "api",
       "options": {
         "packageName": "@apitoolchain/api-node",
-        "tests": false
+        "tests": false,
+        "entry": "source"
       }
     },
     "api-cli": {
       "target": "rust-cli",
       "source": "api",
       "output": "cli",
+      "format": true,
       "options": {
         "cliName": "api"
       }

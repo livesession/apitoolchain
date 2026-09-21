@@ -10,7 +10,7 @@ use super::runtime::{CliOverrides, Context, CustomCommands};
 /// The generated root command tree.
 pub fn root_command() -> clap::Command {
     clap::Command::new("api")
-        .version("0.0.0")
+        .version(env!("CARGO_PKG_VERSION"))
         .subcommand_required(true)
         .arg_required_else_help(true)
         .subcommand(cmd::get::command())

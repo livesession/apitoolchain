@@ -5,7 +5,7 @@
     ".gitignore": "44c92e3a70ad3307b7056871c2bdb096d8bfa9373f5bf06a79bb6324a20ff2fb",
     "Cargo.toml": "922989241250dc1c589559203ebb58ffc94cca34581d24f1125ee8f3142a38ef",
     "src/custom/mod.rs": "17f6cce7c7b000e9aa9fdfc31bb45054fd681ff1100280881c2fad97713aaa0b",
-    "src/gen/cli.rs": "198196925d1111d2b3e3755d87df1c10b246ae7db53a44ee0110cdfee6daa8a0",
+    "src/gen/cli.rs": "3500cd80a09d878b5e4ac163f00c6a1adaf51dfd4bc01fd801b80bc5d83b01e5",
     "src/gen/cmd/create.rs": "cd1b5ef7823d7095bc0a163f49d135dd322c8410eecb36415c9b7d1685704c44",
     "src/gen/cmd/delete.rs": "7aaded688b511af168ad90c3d9846eec229db90722efec4c49c418ab151f7e7f",
     "src/gen/cmd/get.rs": "7202640db3c963a1cff89e8669ddceb24b1bf657c7c7dcb05cef538487decfc4",

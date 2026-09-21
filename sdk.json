@@ -72,7 +72,8 @@
         "grammar": "verb-noun",
         "singularOverrides": {
           "apis": "api"
-        }
+        },
+        "versionFrom": "crate"
       }
     }
   }

@@ -1,0 +1,149 @@
+# Schema links + constants:
+# - `object` (single-value enum) and `kind` (`const`) carry the `const` meta
+# - `id` is `allOf: [$ref <scalar>]` + description → a scalar row, no nameless child
+# - `color` is `allOf: [$ref <enum>]` → an enum row with the values folded in
+# - `definition` / `NewWidget.definition` / `parts` / `steps` / the `widgetId`
+#   parameter link to their component schema (`symbolDef`)
+# - `status` / `mode` are multi-value enums → unchanged shape, no `const`
+openapi: 3.0.3
+info:
+  title: Widgets API
+  version: 1.0.0
+servers:
+  - url: https://api.example.com/v1
+tags:
+  - name: widgets
+paths:
+  /widgets:
+    post:
+      operationId: createWidget
+      summary: Create widget
+      description: Creates a widget from a definition.
+      tags: [widgets]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewWidget'
+      responses:
+        '201':
+          description: The widget that was created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Widget'
+  /widgets/{widgetId}:
+    get:
+      operationId: getWidget
+      summary: Retrieve widget
+      description: Returns one widget.
+      tags: [widgets]
+      parameters:
+        - name: widgetId
+          in: path
+          required: true
+          description: The widget to return.
+          schema:
+            $ref: '#/components/schemas/WidgetId'
+      responses:
+        '200':
+          description: The widget.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Widget'
+components:
+  schemas:
+    WidgetId:
+      type: string
+      format: uuid
+      description: The identifier of a widget.
+      example: 0d4f1e2a-6b2c-4f33-9d7e-1a2b3c4d5e6f
+    Color:
+      type: string
+      enum: [red, green, blue]
+    Widget:
+      type: object
+      required: [object, id, definition, created_at]
+      properties:
+        object:
+          type: string
+          enum: [widget]
+          description: The object type, always `widget`.
+        id:
+          allOf:
+            - $ref: '#/components/schemas/WidgetId'
+          description: Unique identifier for the widget.
+        kind:
+          type: string
+          const: standard
+          description: The kind of widget, always `standard`.
+        color:
+          allOf:
+            - $ref: '#/components/schemas/Color'
+          description: The colour of the widget.
+        definition:
+          $ref: '#/components/schemas/WidgetDefinition'
+        parts:
+          type: array
+          description: The parts the widget is made of.
+          items:
+            $ref: '#/components/schemas/Part'
+        created_at:
+          type: string
+          format: date-time
+          description: When the widget was created, RFC 3339.
+        status:
+          type: string
+          enum: [active, archived]
+          description: Whether the widget is in use.
+    NewWidget:
+      type: object
+      required: [definition]
+      properties:
+        definition:
+          allOf:
+            - $ref: '#/components/schemas/WidgetDefinition'
+          description: The definition of the new widget.
+        parts:
+          type: array
+          items:
+            $ref: '#/components/schemas/Part'
+    WidgetDefinition:
+      type: object
+      description: What a widget does — its steps and how they are evaluated.
+      required: [steps]
+      properties:
+        steps:
+          type: array
+          description: The steps, in order.
+          items:
+            $ref: '#/components/schemas/Step'
+        mode:
+          type: string
+          enum: [strict, loose]
+          default: strict
+          description: How the steps are matched.
+    Step:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+          description: The step's name.
+        count:
+          type: integer
+          minimum: 1
+          description: How many times the step must happen.
+    Part:
+      type: object
+      required: [object, sku]
+      properties:
+        object:
+          type: string
+          enum: [part]
+          description: The object type, always `part`.
+        sku:
+          type: string
+          description: The part's stock-keeping unit.

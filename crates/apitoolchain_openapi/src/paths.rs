@@ -10,14 +10,14 @@ use serde_json::Value;
 use crate::core::{
     schema_object_to_properties, schema_object_to_property, PropsResult, VisitedRefs,
 };
-use crate::doc::DocCtx;
+use crate::links::ConvCtx;
 use crate::util::{
     clean_path, encode_uri_component, http_method_to_reference_type, join_url_pathname, slug,
 };
 
 /// `oapPathToReference`.
 pub fn oap_path_to_reference(
-    ctx: &DocCtx,
+    ctx: &ConvCtx,
     http_method: &str,
     endpoint_path: &str,
     oap_path: &Value,
@@ -113,7 +113,7 @@ pub fn oap_path_to_reference(
 
 /// `oapParametersToDefinitionProperties` — grouped by `in`, insertion order.
 fn parameters_to_properties(
-    ctx: &DocCtx,
+    ctx: &ConvCtx,
     parameters: &[Value],
 ) -> Vec<(String, Vec<DefinitionProperty>)> {
     let mut order: Vec<String> = Vec::new();
@@ -180,7 +180,7 @@ fn parameters_to_properties(
 }
 
 /// `oapRequestOperationToUniformDefinition`.
-fn request_definition(ctx: &DocCtx, oap_operation: &Value) -> Definition {
+fn request_definition(ctx: &ConvCtx, oap_operation: &Value) -> Definition {
     let req_body = ctx.resolve(oap_operation.get("requestBody").unwrap_or(&Value::Null));
     let mut variants: Vec<DefinitionVariant> = Vec::new();
 
@@ -240,7 +240,7 @@ fn request_definition(ctx: &DocCtx, oap_operation: &Value) -> Definition {
 }
 
 /// `oapRequestBodyToDefinitionProperties`.
-fn request_body_properties(ctx: &DocCtx, req_body: &Value, content_type: &str) -> PropsResult {
+fn request_body_properties(ctx: &ConvCtx, req_body: &Value, content_type: &str) -> PropsResult {
     let Some(schema) = req_body
         .get("content")
         .and_then(|c| c.get(content_type))
@@ -286,7 +286,7 @@ fn request_body_properties(ctx: &DocCtx, req_body: &Value, content_type: &str) -
 }
 
 /// `oapResponseOperationToUniformDefinition`.
-pub fn response_definition(ctx: &DocCtx, oap_operation: &Value) -> Definition {
+pub fn response_definition(ctx: &ConvCtx, oap_operation: &Value) -> Definition {
     let responses = ctx.resolve(oap_operation.get("responses").unwrap_or(&Value::Null));
     let mut variants: Vec<DefinitionVariant> = Vec::new();
 
@@ -359,7 +359,7 @@ struct ResponseProps {
 
 /// `oasResponseToDefinitionProperties`.
 fn response_properties(
-    ctx: &DocCtx,
+    ctx: &ConvCtx,
     responses: &Value,
     code: &str,
     content_type: &str,
@@ -435,7 +435,7 @@ fn response_properties(
 }
 
 /// `definitionPropertyTypeDef` — the `__internal_getRefPath` symbol link.
-pub fn definition_property_type_def(ctx: &DocCtx, schema: &Value) -> Option<SymbolDef> {
+pub fn definition_property_type_def(ctx: &ConvCtx, schema: &Value) -> Option<SymbolDef> {
     let mut oas_schema = schema;
     if oas_schema.get("type").and_then(|t| t.as_str()) == Some("array") {
         oas_schema = ctx.resolve(oas_schema.get("items")?);

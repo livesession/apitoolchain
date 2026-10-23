@@ -9,7 +9,7 @@ import {
     OpenAPIReferenceContext
 } from "@xyd-js/uniform";
 
-import {XDocs, XDocsSidebar, XDocsPage} from "./types";
+import {XDocs, XDocsSidebar, XDocsPage, XDocsMeta, XDocsSchemaMeta} from "./types";
 
 interface NavigationGroup {
     id: string
@@ -17,13 +17,7 @@ interface NavigationGroup {
     beta: boolean
 }
 
-interface ComponentMeta {
-    name: string
-
-    group: string
-
-    example: string
-}
+type ComponentMeta = XDocsSchemaMeta
 
 type ExtensionSchema = OpenAPIV3.Document & {
     "x-docs"?: XDocs
@@ -53,6 +47,11 @@ export function uniformPluginXDocsSidebar({
     const refByComponentSchema: {
         [key: string]: Reference
     } = {}
+    // `x-docs.hidden` refs (operations and component schemas alike) — dropped
+    // from the GENERATED navigation in the defer below. An `x-docs.sidebar`
+    // that lists one explicitly still shows it: the sidebar is a complete
+    // enumeration and wins over the per-page flag.
+    const hiddenRefs = new Set<Reference>()
 
     defer(() => {
         // @ts-ignore
@@ -73,6 +72,12 @@ export function uniformPluginXDocsSidebar({
         const xDocs = schema["x-docs"]
 
         if (!xDocs?.sidebar) {
+            // No sidebar: the generated navigation, minus the hidden refs.
+            if (hiddenRefs.size && Array.isArray(references)) {
+                const kept = references.filter(ref => !hiddenRefs.has(ref))
+                references.length = 0
+                references.push(...kept)
+            }
             return {}
         }
 
@@ -286,6 +291,14 @@ export function uniformPluginXDocsSidebar({
         const ctx = ref.context as OpenAPIReferenceContext | undefined
         if (ctx?.componentSchema) {
             refByComponentSchema[ctx.componentSchema] = ref
+            // The schema's own `x-docs` — honoured here, outside sidebar mode,
+            // exactly like an operation's (`name` → title, `group` → sidebar
+            // group, `hidden`). The sidebar pass re-reads `name` for the object
+            // pages it lists.
+            const meta = componentXDocs(selector("[component]") as OpenAPIV3.SchemaObject | undefined)
+            if (meta && applyDocsMeta(ref, meta)) {
+                hiddenRefs.add(ref)
+            }
         }
 
         const methodPath = selector("[method] [path]") as OpenAPIV3.OperationObject | undefined
@@ -313,14 +326,8 @@ export function uniformPluginXDocsSidebar({
             return
         }
 
-        if (meta.name) {
-            ref.title = meta.name
-        }
-
-        if (meta.group) {
-            if (ref.context) {
-                ref.context.group = [meta.group]
-            }
+        if (applyDocsMeta(ref, meta)) {
+            hiddenRefs.add(ref)
         }
 
         if (!ref.description) {
@@ -352,6 +359,43 @@ export function uniformPluginXDocsSidebar({
             }
         }
     }
+}
+
+/** The common `x-docs` keys of an operation or a component schema: `name` →
+ *  the reference title, `group` → its sidebar group. Returns whether the ref is
+ *  `hidden`. */
+function applyDocsMeta(ref: Reference, meta: XDocsMeta): boolean {
+    if (meta.name) {
+        ref.title = meta.name
+    }
+
+    if (meta.group) {
+        if (ref.context) {
+            ref.context.group = [meta.group]
+        }
+    }
+
+    return !!meta.hidden
+}
+
+/** A component schema's `x-docs`: on the schema itself, else on the first
+ *  `allOf` member that carries one (a composed model may document itself on a
+ *  member). */
+function componentXDocs(component: OpenAPIV3.SchemaObject | undefined): XDocsSchemaMeta | undefined {
+    if (!component) {
+        return undefined
+    }
+    const own = (component as any)["x-docs"] as XDocsSchemaMeta | undefined
+    if (own) {
+        return own
+    }
+    for (const item of component.allOf || []) {
+        const docsMeta = (item as any)["x-docs"] as XDocsSchemaMeta | undefined
+        if (docsMeta) {
+            return docsMeta
+        }
+    }
+    return undefined
 }
 
 function oasXDocsExamples(examples: Examples) {

@@ -8,7 +8,7 @@
 use serde_json::{json, Map, Value};
 
 use apitoolchain_openapi::core::{schema_object_to_property, VisitedRefs};
-use apitoolchain_openapi::DocCtx;
+use apitoolchain_openapi::{ConvCtx, DocCtx};
 
 /// The conversion input: what `mcpUrlToReferences` has in hand AFTER the
 /// RPC/manifest step. `transport` is `"http" | "sse"`.
@@ -139,8 +139,10 @@ fn json_schema_properties_to_definition_properties(schema: Option<&Value>) -> Ve
         let prop_schema = &props[name];
         // A fresh stamp-free DocCtx per call — the MCP schemas are plain JSON
         // Schema (no $ref dereference bookkeeping), so resolve() is identity
-        // and no visited/refPath machinery engages.
-        let ctx = DocCtx::new(prop_schema);
+        // and no visited/refPath machinery engages. ConvCtx adds the
+        // component-schema identity map; a bare property schema has no
+        // `components`, so it stays empty and no row links anywhere.
+        let ctx = ConvCtx::new(DocCtx::new(prop_schema));
         let mut visited: VisitedRefs = Default::default();
         if let Some(prop) = schema_object_to_property(
             &ctx,

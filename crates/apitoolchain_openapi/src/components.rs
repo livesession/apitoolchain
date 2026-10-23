@@ -9,12 +9,12 @@ use apitoolchain_uniform::{
 use serde_json::Value;
 
 use crate::core::{schema_object_to_properties, PropsResult, VisitedRefs};
-use crate::doc::DocCtx;
+use crate::links::ConvCtx;
 use crate::paths::definition_property_type_def;
 use crate::Options;
 
 /// `schemaComponentsToUniformReferences`.
-pub fn schema_components_to_references(ctx: &DocCtx, options: &Options) -> Vec<Reference> {
+pub fn schema_components_to_references(ctx: &ConvCtx, options: &Options) -> Vec<Reference> {
     let mut references = Vec::new();
 
     let Some(schemas) = ctx
@@ -89,7 +89,7 @@ pub fn schema_components_to_references(ctx: &DocCtx, options: &Options) -> Vec<R
 }
 
 /// `createSchemaExampleGroup`.
-fn schema_example_group(ctx: &DocCtx, schema: &Value) -> Vec<ExampleGroup> {
+fn schema_example_group(ctx: &ConvCtx, schema: &Value) -> Vec<ExampleGroup> {
     let mut visited = ExampleVisited::new();
     let Some(example) = generate_schema_example(ctx, schema, &mut visited, None) else {
         return vec![];
@@ -128,7 +128,7 @@ fn node_addr(v: &Value) -> usize {
 /// `generateSchemaExample` — with the JS truthy-cache semantics (a cached
 /// falsy value — null/""/0/false — does NOT short-circuit).
 fn generate_schema_example(
-    ctx: &DocCtx,
+    ctx: &ConvCtx,
     schema: &Value,
     visited: &mut ExampleVisited,
     parent: Option<&Value>,

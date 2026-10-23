@@ -11,6 +11,7 @@ import { oapExamples } from "./oas-examples";
 import { uniformOasOptions } from "../types";
 import { schemaComponentsToUniformReferences } from "./oas-componentSchemas";
 import {httpMethodToUniformMethod} from "../utils";
+import {registerComponentSchemas} from "../component-links";
 
 // TODO: support one-of
 // TODO: support $ref - currently we use $refParser.dereference that converts $ref into objects
@@ -26,6 +27,10 @@ export function oapSchemaToReferences(
     }
     const references: Reference[] = [];
     const oas = new Oas(schema as any);
+
+    // Component schemas by identity — what lets a nested property that IS a
+    // component link to its page (component-links.ts).
+    registerComponentSchemas(schema)
 
     const serverUrls =  schema?.servers?.map(s => s.url) || []
     const server = serverUrls[0] || ""

@@ -1,9 +1,12 @@
+import path from "node:path";
+
 import {describe, expect, it} from 'vitest'
 
 import {testOasSchemaToReferences} from "./utils";
 import {uniformOasOptions} from "../src/impl-js/types";
 import {uniformOpenAIMeta} from "../__fixtures__/-2.complex.openai/pluginOasOpenai";
 import {uniformPluginXDocsSidebar} from "../src";
+import {native} from "../src/native";
 
 // The FULL fixture matrix runs — these outputs are the frozen parity oracle for
 // the Rust migration (crates/apitoolchain_openapi). Regen is explicit only:
@@ -62,8 +65,40 @@ const tests: {
     {
         name: "8.enums",
         description: "OpenAPI enums",
+    },
+    {
+        name: "9.schema-links",
+        description: "const values, schema links on nested properties, allOf scalar rows",
+    },
+    {
+        name: "5.xdocs.objects",
+        description: "x-docs name/group/hidden on component schemas, outside sidebar mode",
+        plugins: [
+            uniformPluginXDocsSidebar
+        ]
     }
 ]
+
+// Fixtures whose oracles carry the docs-metadata output (the `const` meta,
+// `symbolDef`s on nested properties, the allOf-scalar fold): a published
+// @xyd-js/native built from a core that predates it cannot produce them, so
+// under the NATIVE path they run only once the addon has caught up. The gate is
+// a feature probe, not a version pin — it lifts by itself the moment a native
+// core that emits `const` resolves; until then these cases are exercised on the
+// JS impl (XYD_NATIVE=0) and the Rust core by `cargo test` (tests/parity.rs).
+const DOCS_METADATA_FIXTURES = new Set(["-3.random", "8.enums", "9.schema-links", "5.xdocs.objects"])
+const nativeHasDocsMetadata = (() => {
+    if (typeof native?.oapSchemaToReferencesFromFile !== "function") {
+        return false
+    }
+    try {
+        const probe = path.join(__dirname, "..", "__fixtures__", "9.schema-links", "input.yaml")
+        const out: string = native.oapSchemaToReferencesFromFile(probe)
+        return out.includes('"name":"const"')
+    } catch {
+        return false
+    }
+})()
 
 describe("oapSchemaToReferences", {timeout: 60000}, () => {
     tests.forEach((test) => {
@@ -77,7 +112,11 @@ describe("oapSchemaToReferences", {timeout: 60000}, () => {
         // The full 625-page openai docs site builds BYTE-IDENTICAL in both
         // modes — the divergence never reaches rendered output. The oracle is
         // regenerated from Rust at the impl-js reap, removing this skip.
-        const skipNative = test.name === "-2.complex.openai" && process.env.XYD_NATIVE !== "0";
+        const nativePath = process.env.XYD_NATIVE !== "0"
+        const skipNative = nativePath && (
+            test.name === "-2.complex.openai"
+            || (DOCS_METADATA_FIXTURES.has(test.name) && !!native && !nativeHasDocsMetadata)
+        );
         (skipNative ? it.skip : it)(`[${test.name}]: ${test.description}`, async () => {
             await testOasSchemaToReferences(test.name, test.options, test.plugins, test.url);
         });

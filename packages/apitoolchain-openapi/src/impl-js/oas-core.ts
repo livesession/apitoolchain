@@ -3,11 +3,13 @@ import {OpenAPIV3} from "openapi-types";
 import {
     DEFINED_DEFINITION_PROPERTY_TYPE,
     DefinitionProperty,
-    DefinitionPropertyMeta
+    DefinitionPropertyMeta,
+    SymbolDef
 } from "@xyd-js/uniform";
 
 import {OasJSONSchema} from "./types";
 import {BUILT_IN_PROPERTIES} from "./const";
+import {componentLink} from "./component-links";
 
 export function schemaObjectToUniformDefinitionProperties(
     schemaObject: OpenAPIV3.ReferenceObject | OpenAPIV3.SchemaObject,
@@ -165,6 +167,12 @@ export function schemaObjectToUniformDefinitionProperty(
         visitedRefs.set(refPath, parentProperty);
     }
 
+    // A property whose schema IS a component schema links to that schema's
+    // page (`objects/<Name>`) — the same link the SDK-type pass emits for
+    // nested types. Identity-based (component-links.ts), so a schema that
+    // merely contains a `$ref` never links to its member.
+    const link = componentLink(schema)
+
     // Handle anyOf case
     if ('anyOf' in schema && schema.anyOf) {
         const componentPaths: string[] = []
@@ -206,12 +214,15 @@ export function schemaObjectToUniformDefinitionProperty(
         const oasSchema = schema as OasJSONSchema;
         oasSchema.__internal_getRefPath = () => componentPaths
 
-        const prop = {
+        const prop: DefinitionProperty = {
             name,
             type: DEFINED_DEFINITION_PROPERTY_TYPE.UNION,
             description: schema.description || "",
             properties
         };
+        if (link) {
+            prop.symbolDef = link
+        }
 
         if (refPath) {
             visitedRefs.set(refPath, prop);
@@ -269,6 +280,9 @@ export function schemaObjectToUniformDefinitionProperty(
             properties,
             meta,
         };
+        if (link) {
+            prop.symbolDef = link
+        }
 
         if (refPath) {
             visitedRefs.set(refPath, prop);
@@ -280,6 +294,13 @@ export function schemaObjectToUniformDefinitionProperty(
     // Handle allOf case
     if ('allOf' in schema && schema.allOf) {
         const componentPaths: string[] = []
+        // Whether the wrapper declares a `type` of its own; when it does not, a
+        // folded scalar member decides the row's type (see `foldMember`).
+        const wrapperTyped = typeof schema.type === "string" && !!schema.type
+        // The members that are component schemas — ONE such member links the
+        // row to that schema's page (`id: allOf: [$ref WidgetId]`); two or more
+        // are a composition with no single page to point at.
+        const memberLinks: SymbolDef[] = []
         const mergedProperty: DefinitionProperty = {
             name,
             type: schema.type || "",
@@ -287,11 +308,19 @@ export function schemaObjectToUniformDefinitionProperty(
             properties: [],
             meta
         };
+        if (link) {
+            mergedProperty.symbolDef = link
+        }
 
         for (const variantSchema of schema.allOf) {
             if ('$ref' in variantSchema) {
                 console.warn("$ref is not supported in allOf schemas");
                 continue; // Skip reference objects
+            }
+
+            const memberLink = componentLink(variantSchema)
+            if (memberLink) {
+                memberLinks.push(memberLink)
             }
 
             const oasSchema = variantSchema as OasJSONSchema;
@@ -359,19 +388,17 @@ export function schemaObjectToUniformDefinitionProperty(
                 if (property) {
                     if (isOfType(property.type)) {
                         mergedProperty.ofProperty = property
+                    } else if (mergedProperty.ofProperty) {
+                        mergedProperty.description = property.description || mergedProperty.ofProperty.description || ""
                     } else {
-                        if (!mergedProperty.properties?.length) {
-                            mergedProperty.properties = []
-                        }
-
-                        if (mergedProperty.ofProperty) {
-                            mergedProperty.description = property.description || mergedProperty.ofProperty.description || ""
-                        } else {
-                            mergedProperty.properties.push(property);
-                        }
+                        foldMember(mergedProperty, property, wrapperTyped)
                     }
                 }
             }
+        }
+
+        if (!mergedProperty.symbolDef && memberLinks.length === 1) {
+            mergedProperty.symbolDef = memberLinks[0]
         }
 
         const oasSchema = schema as OasJSONSchema;
@@ -389,10 +416,19 @@ export function schemaObjectToUniformDefinitionProperty(
         description: schema.description || "",
         meta,
     };
+    if (link) {
+        property.symbolDef = link
+    }
 
-    if (schema.enum) {
+    // enum → $$enum with value-named child properties. A `const` (OpenAPI 3.1)
+    // is a one-value enum: same children, same `enum-type`, plus the `const`
+    // meta a single-value enum carries too.
+    const enumValues: any[] | undefined = schema.enum
+        ?? ("const" in schema ? [(schema as any).const] : undefined)
+
+    if (enumValues) {
         const enumProperties = schemaObjectToUniformDefinitionProperties({
-            properties: schema.enum.reduce((acc, enumName) => ({
+            properties: enumValues.reduce((acc, enumName) => ({
                 ...acc,
                 [enumName]: {
                     type: schema.type,
@@ -407,6 +443,16 @@ export function schemaObjectToUniformDefinitionProperty(
             name: "enum-type",
             value: schema.type
         })
+        // The constant's value: `{ name: "const", value: <literal> }` for a
+        // single-value enum or a `const`, beside the `$$enum` children a
+        // renderer already knows. Scalars stay what they are; an object or
+        // array literal is JSON-stringified, like the `example` meta.
+        if (enumValues.length === 1) {
+            meta.push({
+                name: "const",
+                value: literalMetaValue(enumValues[0])
+            })
+        }
 
         const enumProperty: DefinitionProperty = {
             name,
@@ -420,6 +466,9 @@ export function schemaObjectToUniformDefinitionProperty(
                 type: schema.type || "",
             }
         };
+        if (link) {
+            enumProperty.symbolDef = link
+        }
 
         if (refPath) {
             visitedRefs.set(refPath, enumProperty);
@@ -462,6 +511,9 @@ export function schemaObjectToUniformDefinitionProperty(
                 meta,
                 properties: []
             };
+            if (link) {
+                arrayProperty.symbolDef = link
+            }
 
             const itemsProperty = schemaObjectToUniformDefinitionProperty("", schema.items, required, true, visitedRefs, arrayProperty);
 
@@ -473,10 +525,17 @@ export function schemaObjectToUniformDefinitionProperty(
                         properties: itemsProperty.properties || [],
                         description: itemsProperty.description || "",
                         meta: itemsProperty.meta || [],
-                        ofProperty: itemsProperty.ofProperty || undefined
+                        ofProperty: itemsProperty.ofProperty || undefined,
+                        symbolDef: itemsProperty.symbolDef || undefined,
                     }
                 } else {
                     arrayProperty.properties = [itemsProperty];
+                }
+                // An array of a component links to that component — the rule
+                // the request/response roots already follow (an array's link is
+                // its items').
+                if (!arrayProperty.symbolDef && itemsProperty.symbolDef) {
+                    arrayProperty.symbolDef = itemsProperty.symbolDef
                 }
             }
             if (refPath) {
@@ -572,6 +631,41 @@ export function schemaObjectToUniformDefinitionPropertyMeta(objProp: OpenAPIV3.S
     }
 
     return meta
+}
+
+// `allOf: [<a scalar, enum or otherwise typed member>]` — the member is folded
+// onto the merged row: its type (when the wrapper declares none), its
+// description (when the wrapper has none), its meta (the wrapper's win by
+// name), and an enum's value children + base type. Before this, such a member
+// was pushed as a NAMELESS CHILD, so a described `id: allOf: [$ref Uuid]`
+// rendered as a parent with one empty-named `string` row.
+function foldMember(merged: DefinitionProperty, member: DefinitionProperty, wrapperTyped: boolean) {
+    if (!wrapperTyped) {
+        merged.type = member.type
+    }
+    if (!merged.description) {
+        merged.description = member.description || ""
+    }
+    if (!merged.meta) {
+        merged.meta = []
+    }
+    for (const m of member.meta || []) {
+        if (!merged.meta.some(existing => existing.name === m.name)) {
+            merged.meta.push(m)
+        }
+    }
+    if (!merged.properties?.length && member.properties?.length) {
+        merged.properties = member.properties
+    }
+    if (!merged.ofProperty && member.ofProperty) {
+        merged.ofProperty = member.ofProperty
+    }
+}
+
+// The `const` meta value: scalars as they are, object/array/null literals
+// JSON-stringified (the `example` meta rule).
+function literalMetaValue(v: unknown) {
+    return typeof v === "object" ? JSON.stringify(v) : v
 }
 
 function isMergeType(type: string) {

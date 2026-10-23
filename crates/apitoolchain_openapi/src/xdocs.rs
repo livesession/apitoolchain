@@ -20,13 +20,19 @@ pub fn get_xdocs_route(doc: &Value) -> Option<String> {
 }
 
 /// Apply the plugin to `refs` in place: the per-ref x-docs meta pass, then
-/// (when `x-docs.sidebar` exists) the sidebar-driven ref-list rebuild.
+/// (when `x-docs.sidebar` exists) the sidebar-driven ref-list rebuild —
+/// otherwise the generated navigation minus the `x-docs.hidden` refs.
 pub fn apply_xdocs_sidebar(ctx: &DocCtx, doc: &Value, refs: &mut Vec<Value>) {
     // ---- per-ref pass (pluginXDocsSidebarInner) -------------------------
     // ref index maps mirror refByOperationId / refByComponentSchema
     // (last-write-wins on duplicate keys, like JS object assignment).
     let mut by_operation_id: std::collections::HashMap<String, usize> = Default::default();
     let mut by_component_schema: std::collections::HashMap<String, usize> = Default::default();
+    // `x-docs.hidden` refs (operations and component schemas alike) — dropped
+    // from the GENERATED navigation below. An `x-docs.sidebar` that lists one
+    // explicitly still shows it: the sidebar is a complete enumeration and
+    // wins over the per-schema flag.
+    let mut hidden: Vec<usize> = Vec::new();
 
     for (i, r) in refs.iter_mut().enumerate() {
         let (component_schema, method, path) = {
@@ -46,6 +52,15 @@ pub fn apply_xdocs_sidebar(ctx: &DocCtx, doc: &Value, refs: &mut Vec<Value>) {
 
         if let Some(cs) = &component_schema {
             by_component_schema.insert(cs.clone(), i);
+            // The schema's own `x-docs` — honoured here, outside sidebar mode,
+            // exactly like an operation's (`name` → title, `group` → sidebar
+            // group, `hidden`). The sidebar pass re-reads `name` for the
+            // object pages it lists.
+            if let Some(meta) = component_xdocs(ctx, doc, cs) {
+                if apply_docs_meta(r, meta) {
+                    hidden.push(i);
+                }
+            }
         }
 
         // selector("[method] [path]") — the operation node; absent for
@@ -74,14 +89,8 @@ pub fn apply_xdocs_sidebar(ctx: &DocCtx, doc: &Value, refs: &mut Vec<Value>) {
             continue;
         };
 
-        if let Some(name) = meta.get("name").filter(|n| truthy(Some(n))) {
-            r["title"] = name.clone();
-        }
-        if let Some(group) = meta.get("group").filter(|g| truthy(Some(g))) {
-            // JS: `if (ref.context) ref.context.group = [meta.group]`
-            if r.get("context").map(|c| truthy(Some(c))).unwrap_or(false) {
-                r["context"]["group"] = json!([group]);
-            }
+        if apply_docs_meta(r, meta) {
+            hidden.push(i);
         }
         if !truthy(r.get("description")) {
             let summary = op
@@ -116,15 +125,23 @@ pub fn apply_xdocs_sidebar(ctx: &DocCtx, doc: &Value, refs: &mut Vec<Value>) {
     }
 
     // ---- defer pass: the sidebar-driven rebuild -------------------------
-    let Some(xdocs) = doc.get("x-docs") else {
+    let xdocs = doc.get("x-docs");
+    let sidebar = xdocs
+        .and_then(|x| x.get("sidebar"))
+        .and_then(|s| s.as_array());
+    let Some(sidebar) = sidebar else {
+        // No sidebar: the generated navigation, minus the hidden refs.
+        if !hidden.is_empty() {
+            let mut i = 0;
+            refs.retain(|_| {
+                let keep = !hidden.contains(&i);
+                i += 1;
+                keep
+            });
+        }
         return;
     };
-    let Some(sidebar) = xdocs.get("sidebar").and_then(|s| s.as_array()) else {
-        return;
-    };
-    if !truthy(xdocs.get("sidebar")) {
-        return;
-    }
+    let xdocs = xdocs.unwrap_or(&Value::Null);
 
     let inherit = xdocs.get("sidebarPathStrategy").and_then(|v| v.as_str()) == Some("inherit");
 
@@ -159,6 +176,39 @@ pub fn apply_xdocs_sidebar(ctx: &DocCtx, doc: &Value, refs: &mut Vec<Value>) {
 
     // `references.length = 0; references.push(...output)`
     *refs = output;
+}
+
+/// The common `x-docs` keys of an operation or a component schema: `name` →
+/// the reference title, `group` → its sidebar group. Returns whether the ref
+/// is `hidden`.
+fn apply_docs_meta(r: &mut Value, meta: &Value) -> bool {
+    if let Some(name) = meta.get("name").filter(|n| truthy(Some(n))) {
+        r["title"] = name.clone();
+    }
+    if let Some(group) = meta.get("group").filter(|g| truthy(Some(g))) {
+        // JS: `if (ref.context) ref.context.group = [meta.group]`
+        if r.get("context").map(|c| truthy(Some(c))).unwrap_or(false) {
+            r["context"]["group"] = json!([group]);
+        }
+    }
+    truthy(meta.get("hidden"))
+}
+
+/// A component schema's `x-docs`: on the schema itself, else on the first
+/// `allOf` member that carries one (a composed model may document itself on
+/// a member).
+fn component_xdocs<'a>(ctx: &DocCtx<'a>, doc: &'a Value, name: &str) -> Option<&'a Value> {
+    let component = doc.get("components")?.get("schemas")?.get(name)?;
+    let component = ctx.resolve(component);
+    if let Some(meta) = component.get("x-docs").filter(|m| truthy(Some(m))) {
+        return Some(meta);
+    }
+    for item in component.get("allOf")?.as_array()? {
+        if let Some(meta) = ctx.resolve(item).get("x-docs").filter(|m| truthy(Some(m))) {
+            return Some(meta);
+        }
+    }
+    None
 }
 
 /// Resolve `doc.paths[path][method]` through possible `$ref` path items.
@@ -409,4 +459,180 @@ fn remove_segments(s: &str, marker: char, closer: Option<char>) -> String {
         i += 1;
     }
     out
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::oap_schema_to_references;
+
+    /// Convert, then run the x-docs pass the way `fused.rs` does.
+    fn refs_after_xdocs(doc: &Value) -> Vec<Value> {
+        let refs = oap_schema_to_references(doc, None);
+        let mut refs: Vec<Value> = refs
+            .iter()
+            .map(|r| serde_json::to_value(r).expect("Reference serializes"))
+            .collect();
+        let (processed, stamps) = DocCtx::preprocess(doc);
+        let ctx = DocCtx::with_merged_stamps(&processed, &stamps);
+        apply_xdocs_sidebar(&ctx, &processed, &mut refs);
+        refs
+    }
+
+    fn widgets_doc(sidebar: Option<Value>) -> Value {
+        let mut doc = json!({
+            "openapi": "3.0.3",
+            "info": { "title": "Widgets", "version": "1.0.0" },
+            "tags": [{ "name": "widgets" }],
+            "paths": {
+                "/widgets": {
+                    "get": {
+                        "operationId": "listWidgets",
+                        "summary": "List widgets",
+                        "tags": ["widgets"],
+                        "responses": { "200": { "description": "ok" } }
+                    }
+                },
+                "/internal/health": {
+                    "get": {
+                        "operationId": "health",
+                        "summary": "Health",
+                        "tags": ["widgets"],
+                        "x-docs": { "hidden": true },
+                        "responses": { "200": { "description": "ok" } }
+                    }
+                }
+            },
+            "components": {
+                "schemas": {
+                    "Widget": {
+                        "x-docs": { "name": "The widget object", "group": "widgets" },
+                        "type": "object",
+                        "properties": { "id": { "type": "string" } }
+                    },
+                    "WidgetList": {
+                        "x-docs": { "hidden": true },
+                        "type": "object",
+                        "properties": { "data": { "type": "array", "items": { "$ref": "#/components/schemas/Widget" } } }
+                    },
+                    "Part": {
+                        "allOf": [
+                            { "$ref": "#/components/schemas/PartBase" },
+                            { "x-docs": { "name": "The part object", "group": "parts" }, "type": "object", "properties": { "sku": { "type": "string" } } }
+                        ]
+                    },
+                    "PartBase": {
+                        "type": "object",
+                        "properties": { "id": { "type": "string" } }
+                    }
+                }
+            }
+        });
+        if let Some(sidebar) = sidebar {
+            doc["x-docs"] = json!({ "sidebar": sidebar });
+        }
+        doc
+    }
+
+    fn titles(refs: &[Value]) -> Vec<String> {
+        refs.iter()
+            .map(|r| r["title"].as_str().unwrap_or("").to_string())
+            .collect()
+    }
+
+    fn group_of(refs: &[Value], title: &str) -> Vec<String> {
+        refs.iter()
+            .find(|r| r["title"] == title)
+            .and_then(|r| r["context"]["group"].as_array())
+            .map(|g| g.iter().map(|v| v.as_str().unwrap().to_string()).collect())
+            .unwrap_or_default()
+    }
+
+    /// Outside sidebar mode a component schema's `x-docs.name` / `.group`
+    /// retitle and regroup its page; `hidden` drops it; the rest keep the
+    /// defaults (`<Name>` under "Objects").
+    #[test]
+    fn component_xdocs_outside_sidebar_mode() {
+        let refs = refs_after_xdocs(&widgets_doc(None));
+        assert_eq!(
+            titles(&refs),
+            vec![
+                "List widgets",
+                "The widget object",
+                "The part object",
+                "PartBase"
+            ]
+        );
+        assert_eq!(group_of(&refs, "The widget object"), vec!["widgets"]);
+        assert_eq!(group_of(&refs, "The part object"), vec!["parts"]);
+        assert_eq!(group_of(&refs, "PartBase"), vec!["Objects"]);
+        // The canonical is untouched — the page keeps its default URL.
+        let widget = refs
+            .iter()
+            .find(|r| r["title"] == "The widget object")
+            .unwrap();
+        assert_eq!(widget["canonical"], "objects/Widget");
+    }
+
+    /// `x-docs.hidden` on an operation and on a schema both drop the ref.
+    #[test]
+    fn hidden_drops_from_the_generated_navigation() {
+        let refs = refs_after_xdocs(&widgets_doc(None));
+        let t = titles(&refs);
+        assert!(
+            !t.iter().any(|x| x == "Health"),
+            "hidden operation leaked: {t:?}"
+        );
+        assert!(
+            !t.iter().any(|x| x == "WidgetList"),
+            "hidden schema leaked: {t:?}"
+        );
+    }
+
+    /// An `x-docs.sidebar` is a complete enumeration: a listed page shows even
+    /// when flagged hidden, and the listed object page takes the sidebar's
+    /// group while keeping its `x-docs.name`.
+    #[test]
+    fn sidebar_listing_wins_over_hidden() {
+        let sidebar = json!([{
+            "group": "Reference",
+            "pages": [
+                { "type": "endpoint", "key": "health" },
+                { "type": "object", "key": "WidgetList" },
+                { "type": "object", "key": "Widget" }
+            ]
+        }]);
+        let refs = refs_after_xdocs(&widgets_doc(Some(sidebar)));
+        assert_eq!(
+            titles(&refs),
+            vec!["Health", "WidgetList", "The widget object"]
+        );
+        assert_eq!(group_of(&refs, "The widget object"), vec!["Reference"]);
+    }
+
+    /// No `x-docs` anywhere: the pass is a no-op on the ref list.
+    #[test]
+    fn no_xdocs_is_a_no_op() {
+        let mut doc = widgets_doc(None);
+        doc["paths"]["/internal/health"]["get"]
+            .as_object_mut()
+            .unwrap()
+            .remove("x-docs");
+        for name in ["Widget", "WidgetList"] {
+            doc["components"]["schemas"][name]
+                .as_object_mut()
+                .unwrap()
+                .remove("x-docs");
+        }
+        doc["components"]["schemas"]["Part"]["allOf"][1]
+            .as_object_mut()
+            .unwrap()
+            .remove("x-docs");
+        let before: Vec<Value> = oap_schema_to_references(&doc, None)
+            .iter()
+            .map(|r| serde_json::to_value(r).unwrap())
+            .collect();
+        let after = refs_after_xdocs(&doc);
+        assert_eq!(before, after);
+    }
 }

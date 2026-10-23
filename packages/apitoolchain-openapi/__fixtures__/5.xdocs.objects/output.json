@@ -1,0 +1,1018 @@
+[
+  {
+    "title": "List widgets",
+    "canonical": "listWidgets",
+    "description": "Returns a page of widgets, newest first.",
+    "type": "rest_get",
+    "category": "rest",
+    "context": {
+      "method": "get",
+      "path": "/widgets",
+      "group": [
+        "widgets"
+      ],
+      "fullPath": "https://api.example.com/v1/widgets",
+      "servers": [
+        "https://api.example.com/v1"
+      ],
+      "scopes": []
+    },
+    "examples": {
+      "groups": [
+        {
+          "description": "Example request",
+          "examples": [
+            {
+              "codeblock": {
+                "tabs": [
+                  {
+                    "title": "shell",
+                    "language": "shell",
+                    "code": "curl --request GET \\\n     --url https://api.example.com/v1/widgets \\\n     --header 'accept: application/json'"
+                  },
+                  {
+                    "title": "javascript",
+                    "language": "javascript",
+                    "code": "const options = {method: 'GET', headers: {accept: 'application/json'}};\n\nfetch('https://api.example.com/v1/widgets', options)\n  .then(res => res.json())\n  .then(res => console.log(res))\n  .catch(err => console.error(err));"
+                  },
+                  {
+                    "title": "python",
+                    "language": "python",
+                    "code": "import requests\n\nurl = \"https://api.example.com/v1/widgets\"\n\nheaders = {\"accept\": \"application/json\"}\n\nresponse = requests.get(url, headers=headers)\n\nprint(response.text)"
+                  },
+                  {
+                    "title": "go",
+                    "language": "go",
+                    "code": "package main\n\nimport (\n\t\"fmt\"\n\t\"net/http\"\n\t\"io\"\n)\n\nfunc main() {\n\n\turl := \"https://api.example.com/v1/widgets\"\n\n\treq, _ := http.NewRequest(\"GET\", url, nil)\n\n\treq.Header.Add(\"accept\", \"application/json\")\n\n\tres, _ := http.DefaultClient.Do(req)\n\n\tdefer res.Body.Close()\n\tbody, _ := io.ReadAll(res.Body)\n\n\tfmt.Println(string(body))\n\n}"
+                  }
+                ]
+              }
+            }
+          ],
+          "kind": "request"
+        },
+        {
+          "description": "Example response",
+          "examples": [
+            {
+              "codeblock": {
+                "title": "200",
+                "tabs": [
+                  {
+                    "title": "application/json",
+                    "language": "json",
+                    "code": "{\n  \"object\": \"list\",\n  \"data\": [\n    {\n      \"object\": \"widget\",\n      \"id\": \"string\",\n      \"tags\": [\n        {\n          \"name\": \"string\"\n        }\n      ]\n    }\n  ]\n}"
+                  }
+                ]
+              }
+            }
+          ],
+          "kind": "response"
+        }
+      ]
+    },
+    "definitions": [
+      {
+        "title": "Response",
+        "type": "return",
+        "variants": [
+          {
+            "title": "200",
+            "description": "A page of widgets.",
+            "properties": [
+              {
+                "name": "object",
+                "type": "$$enum",
+                "description": "",
+                "meta": [
+                  {
+                    "name": "required",
+                    "value": "true"
+                  },
+                  {
+                    "name": "enum-type",
+                    "value": "string"
+                  },
+                  {
+                    "name": "const",
+                    "value": "list"
+                  }
+                ],
+                "properties": [
+                  {
+                    "name": "list",
+                    "type": "string",
+                    "description": "",
+                    "meta": []
+                  }
+                ],
+                "ofProperty": {
+                  "name": "",
+                  "description": "",
+                  "type": "string"
+                }
+              },
+              {
+                "name": "data",
+                "type": "$$array",
+                "description": "",
+                "meta": [
+                  {
+                    "name": "required",
+                    "value": "true"
+                  }
+                ],
+                "properties": [],
+                "ofProperty": {
+                  "name": "",
+                  "type": "object",
+                  "properties": [
+                    {
+                      "name": "object",
+                      "type": "$$enum",
+                      "description": "The object type, always `widget`.",
+                      "meta": [
+                        {
+                          "name": "required",
+                          "value": "true"
+                        },
+                        {
+                          "name": "enum-type",
+                          "value": "string"
+                        },
+                        {
+                          "name": "const",
+                          "value": "widget"
+                        }
+                      ],
+                      "properties": [
+                        {
+                          "name": "widget",
+                          "type": "string",
+                          "description": "",
+                          "meta": []
+                        }
+                      ],
+                      "ofProperty": {
+                        "name": "",
+                        "description": "",
+                        "type": "string"
+                      }
+                    },
+                    {
+                      "name": "id",
+                      "type": "string",
+                      "description": "Unique identifier for the widget.",
+                      "meta": [
+                        {
+                          "name": "required",
+                          "value": "true"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "tags",
+                      "type": "$$array",
+                      "description": "",
+                      "meta": [],
+                      "properties": [],
+                      "ofProperty": {
+                        "name": "",
+                        "type": "object",
+                        "properties": [
+                          {
+                            "name": "name",
+                            "type": "string",
+                            "description": "",
+                            "meta": []
+                          }
+                        ],
+                        "description": "",
+                        "meta": [],
+                        "symbolDef": {
+                          "id": "#/components/schemas/Tag",
+                          "canonical": "objects/Tag"
+                        }
+                      },
+                      "symbolDef": {
+                        "id": "#/components/schemas/Tag",
+                        "canonical": "objects/Tag"
+                      }
+                    }
+                  ],
+                  "description": "A widget.",
+                  "meta": [
+                    {
+                      "name": "required",
+                      "value": "true"
+                    }
+                  ],
+                  "symbolDef": {
+                    "id": "#/components/schemas/Widget",
+                    "canonical": "objects/Widget"
+                  }
+                },
+                "symbolDef": {
+                  "id": "#/components/schemas/Widget",
+                  "canonical": "objects/Widget"
+                }
+              }
+            ],
+            "meta": [
+              {
+                "name": "status",
+                "value": "200"
+              },
+              {
+                "name": "contentType",
+                "value": "application/json"
+              },
+              {
+                "name": "definitionDescription",
+                "value": ""
+              }
+            ]
+          }
+        ],
+        "properties": []
+      }
+    ]
+  },
+  {
+    "title": "Create a widget",
+    "canonical": "createWidget",
+    "description": "Creates a widget.",
+    "type": "rest_post",
+    "category": "rest",
+    "context": {
+      "method": "post",
+      "path": "/widgets",
+      "group": [
+        "widgets"
+      ],
+      "fullPath": "https://api.example.com/v1/widgets",
+      "servers": [
+        "https://api.example.com/v1"
+      ],
+      "scopes": []
+    },
+    "examples": {
+      "groups": [
+        {
+          "description": "Example request",
+          "examples": [
+            {
+              "codeblock": {
+                "tabs": [
+                  {
+                    "title": "shell",
+                    "language": "shell",
+                    "code": "curl --request POST \\\n     --url https://api.example.com/v1/widgets \\\n     --header 'accept: application/json' \\\n     --header 'content-type: application/json' \\\n     --data '\n{\n  \"object\": \"widget\",\n  \"id\": \"string\",\n  \"tags\": [\n    {\n      \"name\": \"string\"\n    }\n  ]\n}\n'"
+                  },
+                  {
+                    "title": "javascript",
+                    "language": "javascript",
+                    "code": "const options = {\n  method: 'POST',\n  headers: {accept: 'application/json', 'content-type': 'application/json'},\n  body: JSON.stringify({object: 'widget', id: 'string', tags: [{name: 'string'}]})\n};\n\nfetch('https://api.example.com/v1/widgets', options)\n  .then(res => res.json())\n  .then(res => console.log(res))\n  .catch(err => console.error(err));"
+                  },
+                  {
+                    "title": "python",
+                    "language": "python",
+                    "code": "import requests\n\nurl = \"https://api.example.com/v1/widgets\"\n\npayload = {\n    \"object\": \"widget\",\n    \"id\": \"string\",\n    \"tags\": [{ \"name\": \"string\" }]\n}\nheaders = {\n    \"accept\": \"application/json\",\n    \"content-type\": \"application/json\"\n}\n\nresponse = requests.post(url, json=payload, headers=headers)\n\nprint(response.text)"
+                  },
+                  {
+                    "title": "go",
+                    "language": "go",
+                    "code": "package main\n\nimport (\n\t\"fmt\"\n\t\"strings\"\n\t\"net/http\"\n\t\"io\"\n)\n\nfunc main() {\n\n\turl := \"https://api.example.com/v1/widgets\"\n\n\tpayload := strings.NewReader(\"{\\\"object\\\":\\\"widget\\\",\\\"id\\\":\\\"string\\\",\\\"tags\\\":[{\\\"name\\\":\\\"string\\\"}]}\")\n\n\treq, _ := http.NewRequest(\"POST\", url, payload)\n\n\treq.Header.Add(\"accept\", \"application/json\")\n\treq.Header.Add(\"content-type\", \"application/json\")\n\n\tres, _ := http.DefaultClient.Do(req)\n\n\tdefer res.Body.Close()\n\tbody, _ := io.ReadAll(res.Body)\n\n\tfmt.Println(string(body))\n\n}"
+                  }
+                ]
+              }
+            }
+          ],
+          "kind": "request"
+        },
+        {
+          "description": "Example response",
+          "examples": [
+            {
+              "codeblock": {
+                "title": "201",
+                "tabs": [
+                  {
+                    "title": "application/json",
+                    "language": "json",
+                    "code": "{\n  \"object\": \"widget\",\n  \"id\": \"string\",\n  \"tags\": [\n    {\n      \"name\": \"string\"\n    }\n  ]\n}"
+                  }
+                ]
+              }
+            },
+            {
+              "codeblock": {
+                "title": "400",
+                "tabs": [
+                  {
+                    "title": "application/json",
+                    "language": "json",
+                    "code": "{\n  \"code\": \"string\",\n  \"message\": \"string\"\n}"
+                  }
+                ]
+              }
+            }
+          ],
+          "kind": "response"
+        }
+      ]
+    },
+    "definitions": [
+      {
+        "title": "Request body",
+        "variants": [
+          {
+            "title": "application/json",
+            "description": "A widget.",
+            "properties": [
+              {
+                "name": "object",
+                "type": "$$enum",
+                "description": "The object type, always `widget`.",
+                "meta": [
+                  {
+                    "name": "required",
+                    "value": "true"
+                  },
+                  {
+                    "name": "enum-type",
+                    "value": "string"
+                  },
+                  {
+                    "name": "const",
+                    "value": "widget"
+                  }
+                ],
+                "properties": [
+                  {
+                    "name": "widget",
+                    "type": "string",
+                    "description": "",
+                    "meta": []
+                  }
+                ],
+                "ofProperty": {
+                  "name": "",
+                  "description": "",
+                  "type": "string"
+                }
+              },
+              {
+                "name": "id",
+                "type": "string",
+                "description": "Unique identifier for the widget.",
+                "meta": [
+                  {
+                    "name": "required",
+                    "value": "true"
+                  }
+                ]
+              },
+              {
+                "name": "tags",
+                "type": "$$array",
+                "description": "",
+                "meta": [],
+                "properties": [],
+                "ofProperty": {
+                  "name": "",
+                  "type": "object",
+                  "properties": [
+                    {
+                      "name": "name",
+                      "type": "string",
+                      "description": "",
+                      "meta": []
+                    }
+                  ],
+                  "description": "",
+                  "meta": [],
+                  "symbolDef": {
+                    "id": "#/components/schemas/Tag",
+                    "canonical": "objects/Tag"
+                  }
+                },
+                "symbolDef": {
+                  "id": "#/components/schemas/Tag",
+                  "canonical": "objects/Tag"
+                }
+              }
+            ],
+            "meta": [
+              {
+                "name": "contentType",
+                "value": "application/json"
+              },
+              {
+                "name": "required",
+                "value": "true"
+              }
+            ]
+          }
+        ],
+        "properties": [],
+        "meta": [
+          {
+            "name": "required",
+            "value": "true"
+          }
+        ],
+        "type": "$rest.request.body"
+      },
+      {
+        "title": "Response",
+        "type": "return",
+        "variants": [
+          {
+            "title": "201",
+            "description": "The widget that was created.",
+            "properties": [
+              {
+                "name": "object",
+                "type": "$$enum",
+                "description": "The object type, always `widget`.",
+                "meta": [
+                  {
+                    "name": "required",
+                    "value": "true"
+                  },
+                  {
+                    "name": "enum-type",
+                    "value": "string"
+                  },
+                  {
+                    "name": "const",
+                    "value": "widget"
+                  }
+                ],
+                "properties": [
+                  {
+                    "name": "widget",
+                    "type": "string",
+                    "description": "",
+                    "meta": []
+                  }
+                ],
+                "ofProperty": {
+                  "name": "",
+                  "description": "",
+                  "type": "string"
+                }
+              },
+              {
+                "name": "id",
+                "type": "string",
+                "description": "Unique identifier for the widget.",
+                "meta": [
+                  {
+                    "name": "required",
+                    "value": "true"
+                  }
+                ]
+              },
+              {
+                "name": "tags",
+                "type": "$$array",
+                "description": "",
+                "meta": [],
+                "properties": [],
+                "ofProperty": {
+                  "name": "",
+                  "type": "object",
+                  "properties": [
+                    {
+                      "name": "name",
+                      "type": "string",
+                      "description": "",
+                      "meta": []
+                    }
+                  ],
+                  "description": "",
+                  "meta": [],
+                  "symbolDef": {
+                    "id": "#/components/schemas/Tag",
+                    "canonical": "objects/Tag"
+                  }
+                },
+                "symbolDef": {
+                  "id": "#/components/schemas/Tag",
+                  "canonical": "objects/Tag"
+                }
+              }
+            ],
+            "meta": [
+              {
+                "name": "status",
+                "value": "201"
+              },
+              {
+                "name": "contentType",
+                "value": "application/json"
+              },
+              {
+                "name": "definitionDescription",
+                "value": ""
+              }
+            ]
+          },
+          {
+            "title": "400",
+            "description": "The request was invalid.",
+            "properties": [
+              {
+                "name": "code",
+                "type": "string",
+                "description": "",
+                "meta": [
+                  {
+                    "name": "required",
+                    "value": "true"
+                  }
+                ]
+              },
+              {
+                "name": "message",
+                "type": "string",
+                "description": "",
+                "meta": [
+                  {
+                    "name": "required",
+                    "value": "true"
+                  }
+                ]
+              }
+            ],
+            "meta": [
+              {
+                "name": "status",
+                "value": "400"
+              },
+              {
+                "name": "contentType",
+                "value": "application/json"
+              },
+              {
+                "name": "definitionDescription",
+                "value": ""
+              }
+            ]
+          }
+        ],
+        "properties": []
+      }
+    ]
+  },
+  {
+    "title": "Retrieve widget",
+    "canonical": "getWidget",
+    "description": "Returns one widget.",
+    "type": "rest_get",
+    "category": "rest",
+    "context": {
+      "method": "get",
+      "path": "/widgets/{widgetId}",
+      "group": [
+        "widgets"
+      ],
+      "fullPath": "https://api.example.com/v1/widgets/{widgetId}",
+      "servers": [
+        "https://api.example.com/v1"
+      ],
+      "scopes": []
+    },
+    "examples": {
+      "groups": [
+        {
+          "description": "Example request",
+          "examples": [
+            {
+              "codeblock": {
+                "tabs": [
+                  {
+                    "title": "shell",
+                    "language": "shell",
+                    "code": "curl --request GET \\\n     --url https://api.example.com/v1/widgets/string \\\n     --header 'accept: application/json'"
+                  },
+                  {
+                    "title": "javascript",
+                    "language": "javascript",
+                    "code": "const options = {method: 'GET', headers: {accept: 'application/json'}};\n\nfetch('https://api.example.com/v1/widgets/string', options)\n  .then(res => res.json())\n  .then(res => console.log(res))\n  .catch(err => console.error(err));"
+                  },
+                  {
+                    "title": "python",
+                    "language": "python",
+                    "code": "import requests\n\nurl = \"https://api.example.com/v1/widgets/string\"\n\nheaders = {\"accept\": \"application/json\"}\n\nresponse = requests.get(url, headers=headers)\n\nprint(response.text)"
+                  },
+                  {
+                    "title": "go",
+                    "language": "go",
+                    "code": "package main\n\nimport (\n\t\"fmt\"\n\t\"net/http\"\n\t\"io\"\n)\n\nfunc main() {\n\n\turl := \"https://api.example.com/v1/widgets/string\"\n\n\treq, _ := http.NewRequest(\"GET\", url, nil)\n\n\treq.Header.Add(\"accept\", \"application/json\")\n\n\tres, _ := http.DefaultClient.Do(req)\n\n\tdefer res.Body.Close()\n\tbody, _ := io.ReadAll(res.Body)\n\n\tfmt.Println(string(body))\n\n}"
+                  }
+                ]
+              }
+            }
+          ],
+          "kind": "request"
+        },
+        {
+          "description": "Example response",
+          "examples": [
+            {
+              "codeblock": {
+                "title": "200",
+                "tabs": [
+                  {
+                    "title": "application/json",
+                    "language": "json",
+                    "code": "{\n  \"object\": \"widget\",\n  \"id\": \"string\",\n  \"tags\": [\n    {\n      \"name\": \"string\"\n    }\n  ]\n}"
+                  }
+                ]
+              }
+            }
+          ],
+          "kind": "response"
+        }
+      ]
+    },
+    "definitions": [
+      {
+        "title": "Path parameters",
+        "properties": [
+          {
+            "name": "widgetId",
+            "type": "string",
+            "description": "",
+            "meta": [
+              {
+                "name": "required",
+                "value": "true"
+              }
+            ]
+          }
+        ],
+        "type": "$rest.param.path"
+      },
+      {
+        "title": "Response",
+        "type": "return",
+        "variants": [
+          {
+            "title": "200",
+            "description": "The widget.",
+            "properties": [
+              {
+                "name": "object",
+                "type": "$$enum",
+                "description": "The object type, always `widget`.",
+                "meta": [
+                  {
+                    "name": "required",
+                    "value": "true"
+                  },
+                  {
+                    "name": "enum-type",
+                    "value": "string"
+                  },
+                  {
+                    "name": "const",
+                    "value": "widget"
+                  }
+                ],
+                "properties": [
+                  {
+                    "name": "widget",
+                    "type": "string",
+                    "description": "",
+                    "meta": []
+                  }
+                ],
+                "ofProperty": {
+                  "name": "",
+                  "description": "",
+                  "type": "string"
+                }
+              },
+              {
+                "name": "id",
+                "type": "string",
+                "description": "Unique identifier for the widget.",
+                "meta": [
+                  {
+                    "name": "required",
+                    "value": "true"
+                  }
+                ]
+              },
+              {
+                "name": "tags",
+                "type": "$$array",
+                "description": "",
+                "meta": [],
+                "properties": [],
+                "ofProperty": {
+                  "name": "",
+                  "type": "object",
+                  "properties": [
+                    {
+                      "name": "name",
+                      "type": "string",
+                      "description": "",
+                      "meta": []
+                    }
+                  ],
+                  "description": "",
+                  "meta": [],
+                  "symbolDef": {
+                    "id": "#/components/schemas/Tag",
+                    "canonical": "objects/Tag"
+                  }
+                },
+                "symbolDef": {
+                  "id": "#/components/schemas/Tag",
+                  "canonical": "objects/Tag"
+                }
+              }
+            ],
+            "meta": [
+              {
+                "name": "status",
+                "value": "200"
+              },
+              {
+                "name": "contentType",
+                "value": "application/json"
+              },
+              {
+                "name": "definitionDescription",
+                "value": ""
+              }
+            ]
+          }
+        ],
+        "properties": []
+      }
+    ]
+  },
+  {
+    "title": "The widget object",
+    "description": "A widget.",
+    "canonical": "objects/Widget",
+    "definitions": [
+      {
+        "title": "Widget",
+        "properties": [
+          {
+            "name": "object",
+            "type": "$$enum",
+            "description": "The object type, always `widget`.",
+            "meta": [
+              {
+                "name": "required",
+                "value": "true"
+              },
+              {
+                "name": "enum-type",
+                "value": "string"
+              },
+              {
+                "name": "const",
+                "value": "widget"
+              }
+            ],
+            "properties": [
+              {
+                "name": "widget",
+                "type": "string",
+                "description": "",
+                "meta": []
+              }
+            ],
+            "ofProperty": {
+              "name": "",
+              "description": "",
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "type": "string",
+            "description": "Unique identifier for the widget.",
+            "meta": [
+              {
+                "name": "required",
+                "value": "true"
+              }
+            ]
+          },
+          {
+            "name": "tags",
+            "type": "$$array",
+            "description": "",
+            "meta": [],
+            "properties": [],
+            "ofProperty": {
+              "name": "",
+              "type": "object",
+              "properties": [
+                {
+                  "name": "name",
+                  "type": "string",
+                  "description": "",
+                  "meta": []
+                }
+              ],
+              "description": "",
+              "meta": [],
+              "symbolDef": {
+                "id": "#/components/schemas/Tag",
+                "canonical": "objects/Tag"
+              }
+            },
+            "symbolDef": {
+              "id": "#/components/schemas/Tag",
+              "canonical": "objects/Tag"
+            }
+          }
+        ],
+        "meta": []
+      }
+    ],
+    "examples": {
+      "groups": [
+        {
+          "description": "Example",
+          "examples": [
+            {
+              "codeblock": {
+                "tabs": [
+                  {
+                    "title": "json",
+                    "language": "json",
+                    "code": "{\n  \"object\": \"\",\n  \"id\": \"\",\n  \"tags\": [\n    {\n      \"name\": \"\"\n    }\n  ]\n}"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "type": "rest_component_schema",
+    "context": {
+      "componentSchema": "Widget",
+      "group": [
+        "widgets"
+      ]
+    }
+  },
+  {
+    "title": "The part object",
+    "description": "A part of a widget.",
+    "canonical": "objects/Part",
+    "definitions": [
+      {
+        "title": "Part",
+        "properties": [
+          {
+            "name": "id",
+            "type": "string",
+            "description": "Unique identifier for the part.",
+            "meta": [
+              {
+                "name": "required",
+                "value": "true"
+              }
+            ]
+          },
+          {
+            "name": "sku",
+            "type": "string",
+            "description": "The part's stock-keeping unit.",
+            "meta": [
+              {
+                "name": "required",
+                "value": "true"
+              }
+            ]
+          }
+        ],
+        "meta": [],
+        "symbolDef": {
+          "id": []
+        }
+      }
+    ],
+    "examples": {
+      "groups": []
+    },
+    "type": "rest_component_schema",
+    "context": {
+      "componentSchema": "Part",
+      "group": [
+        "parts"
+      ]
+    }
+  },
+  {
+    "title": "PartBase",
+    "description": "",
+    "canonical": "objects/PartBase",
+    "definitions": [
+      {
+        "title": "PartBase",
+        "properties": [
+          {
+            "name": "id",
+            "type": "string",
+            "description": "Unique identifier for the part.",
+            "meta": [
+              {
+                "name": "required",
+                "value": "true"
+              }
+            ]
+          }
+        ],
+        "meta": []
+      }
+    ],
+    "examples": {
+      "groups": [
+        {
+          "description": "Example",
+          "examples": [
+            {
+              "codeblock": {
+                "tabs": [
+                  {
+                    "title": "json",
+                    "language": "json",
+                    "code": "{\n  \"id\": \"\"\n}"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "type": "rest_component_schema",
+    "context": {
+      "componentSchema": "PartBase",
+      "group": [
+        "Objects"
+      ]
+    }
+  },
+  {
+    "title": "Tag",
+    "description": "",
+    "canonical": "objects/Tag",
+    "definitions": [
+      {
+        "title": "Tag",
+        "properties": [
+          {
+            "name": "name",
+            "type": "string",
+            "description": "",
+            "meta": []
+          }
+        ],
+        "meta": []
+      }
+    ],
+    "examples": {
+      "groups": [
+        {
+          "description": "Example",
+          "examples": [
+            {
+              "codeblock": {
+                "tabs": [
+                  {
+                    "title": "json",
+                    "language": "json",
+                    "code": "{\n  \"name\": \"\"\n}"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "type": "rest_component_schema",
+    "context": {
+      "componentSchema": "Tag",
+      "group": [
+        "Objects"
+      ]
+    }
+  }
+]

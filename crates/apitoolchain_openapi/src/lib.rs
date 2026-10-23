@@ -8,6 +8,7 @@
 mod components;
 pub mod core;
 pub mod fused;
+mod links;
 mod paths;
 mod util;
 pub mod xdocs;
@@ -20,6 +21,7 @@ use serde_json::Value;
 // opensdk repo. Aliasing it as `doc` keeps every internal `crate::doc::DocCtx`
 // resolving unchanged, and the re-export keeps `apitoolchain_openapi::DocCtx` — the
 // path five call sites outside this crate already use — working verbatim.
+pub use links::ConvCtx;
 use oas_doc as doc;
 pub use oas_doc::{parse_spec, read_spec, DocCtx, OasError};
 
@@ -45,7 +47,7 @@ pub fn oap_schema_to_references(raw: &Value, options: Option<Options>) -> Vec<Re
     // build the lazy-resolution context over the processed doc.
     let (processed, merged_stamps) = DocCtx::preprocess(raw);
     let raw = &processed;
-    let ctx = DocCtx::with_merged_stamps(raw, &merged_stamps);
+    let ctx = ConvCtx::new(DocCtx::with_merged_stamps(raw, &merged_stamps));
     let mut references: Vec<Reference> = Vec::new();
 
     // Mutable servers accumulation quirk: starts from doc servers; path-level

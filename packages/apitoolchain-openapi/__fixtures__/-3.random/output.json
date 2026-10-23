@@ -200,6 +200,10 @@
                   "name": "",
                   "description": "",
                   "type": "string"
+                },
+                "symbolDef": {
+                  "id": "#/components/schemas/RelativeDateString",
+                  "canonical": "objects/RelativeDateString"
                 }
               }
             ],
@@ -274,6 +278,10 @@
                   "name": "",
                   "description": "",
                   "type": "string"
+                },
+                "symbolDef": {
+                  "id": "#/components/schemas/RelativeDateString",
+                  "canonical": "objects/RelativeDateString"
                 }
               }
             ],
@@ -301,6 +309,10 @@
                 "type": "object",
                 "description": "",
                 "meta": [],
+                "symbolDef": {
+                  "id": "#/components/schemas/Pagination",
+                  "canonical": "objects/Pagination"
+                },
                 "properties": [
                   {
                     "name": "num",
@@ -453,6 +465,10 @@
                       "type": "object",
                       "description": "",
                       "meta": [],
+                      "symbolDef": {
+                        "id": "#/components/schemas/SessionVisitorData",
+                        "canonical": "objects/SessionVisitorData"
+                      },
                       "properties": [
                         {
                           "name": "id",
@@ -471,6 +487,10 @@
                           "type": "object",
                           "description": "",
                           "meta": [],
+                          "symbolDef": {
+                            "id": "#/components/schemas/SessionVisitorDataGeolocation",
+                            "canonical": "objects/SessionVisitorDataGeolocation"
+                          },
                           "properties": [
                             {
                               "name": "country_code",
@@ -534,7 +554,15 @@
                               }
                             ],
                             "description": "",
-                            "meta": []
+                            "meta": [],
+                            "symbolDef": {
+                              "id": "#/components/schemas/SessionVisitorDataParams",
+                              "canonical": "objects/SessionVisitorDataParams"
+                            }
+                          },
+                          "symbolDef": {
+                            "id": "#/components/schemas/SessionVisitorDataParams",
+                            "canonical": "objects/SessionVisitorDataParams"
                           }
                         },
                         {
@@ -556,6 +584,10 @@
                       "type": "object",
                       "description": "",
                       "meta": [],
+                      "symbolDef": {
+                        "id": "#/components/schemas/SessionResolutionData",
+                        "canonical": "objects/SessionResolutionData"
+                      },
                       "properties": [
                         {
                           "name": "height",
@@ -582,6 +614,10 @@
                       "type": "object",
                       "description": "",
                       "meta": [],
+                      "symbolDef": {
+                        "id": "#/components/schemas/SessionOsData",
+                        "canonical": "objects/SessionOsData"
+                      },
                       "properties": [
                         {
                           "name": "name",
@@ -602,6 +638,10 @@
                       "type": "object",
                       "description": "",
                       "meta": [],
+                      "symbolDef": {
+                        "id": "#/components/schemas/SessionBrowserData",
+                        "canonical": "objects/SessionBrowserData"
+                      },
                       "properties": [
                         {
                           "name": "description",
@@ -628,6 +668,10 @@
                       "type": "object",
                       "description": "",
                       "meta": [],
+                      "symbolDef": {
+                        "id": "#/components/schemas/SessionUTMData",
+                        "canonical": "objects/SessionUTMData"
+                      },
                       "properties": [
                         {
                           "name": "source",
@@ -666,6 +710,10 @@
                       "type": "object",
                       "description": "",
                       "meta": [],
+                      "symbolDef": {
+                        "id": "#/components/schemas/SessionPageViewsStatisticsData",
+                        "canonical": "objects/SessionPageViewsStatisticsData"
+                      },
                       "properties": [
                         {
                           "name": "count",
@@ -680,6 +728,10 @@
                       "type": "object",
                       "description": "",
                       "meta": [],
+                      "symbolDef": {
+                        "id": "#/components/schemas/SessionEventsStatisticsData",
+                        "canonical": "objects/SessionEventsStatisticsData"
+                      },
                       "properties": [
                         {
                           "name": "clicks",
@@ -715,7 +767,15 @@
                     }
                   ],
                   "description": "",
-                  "meta": []
+                  "meta": [],
+                  "symbolDef": {
+                    "id": "#/components/schemas/Session",
+                    "canonical": "objects/Session"
+                  }
+                },
+                "symbolDef": {
+                  "id": "#/components/schemas/Session",
+                  "canonical": "objects/Session"
                 }
               }
             ],
@@ -1013,7 +1073,15 @@
                       }
                     ],
                     "description": "",
-                    "meta": []
+                    "meta": [],
+                    "symbolDef": {
+                      "id": "#/components/schemas/AlertEvent",
+                      "canonical": "objects/AlertEvent"
+                    }
+                  },
+                  "symbolDef": {
+                    "id": "#/components/schemas/AlertEvent",
+                    "canonical": "objects/AlertEvent"
                   }
                 },
                 {
@@ -1371,7 +1439,15 @@
                       "name": "required",
                       "value": "true"
                     }
-                  ]
+                  ],
+                  "symbolDef": {
+                    "id": "#/components/schemas/AlertEvent",
+                    "canonical": "objects/AlertEvent"
+                  }
+                },
+                "symbolDef": {
+                  "id": "#/components/schemas/AlertEvent",
+                  "canonical": "objects/AlertEvent"
                 }
               },
               {
@@ -1486,7 +1562,15 @@
                     }
                   ],
                   "description": "",
-                  "meta": []
+                  "meta": [],
+                  "symbolDef": {
+                    "id": "#/components/schemas/AlertEvent",
+                    "canonical": "objects/AlertEvent"
+                  }
+                },
+                "symbolDef": {
+                  "id": "#/components/schemas/AlertEvent",
+                  "canonical": "objects/AlertEvent"
                 }
               },
               {
@@ -1845,7 +1929,15 @@
                     }
                   ],
                   "description": "",
-                  "meta": []
+                  "meta": [],
+                  "symbolDef": {
+                    "id": "#/components/schemas/AlertEvent",
+                    "canonical": "objects/AlertEvent"
+                  }
+                },
+                "symbolDef": {
+                  "id": "#/components/schemas/AlertEvent",
+                  "canonical": "objects/AlertEvent"
                 }
               },
               {
@@ -1952,7 +2044,15 @@
                     }
                   ],
                   "description": "",
-                  "meta": []
+                  "meta": [],
+                  "symbolDef": {
+                    "id": "#/components/schemas/AlertEvent",
+                    "canonical": "objects/AlertEvent"
+                  }
+                },
+                "symbolDef": {
+                  "id": "#/components/schemas/AlertEvent",
+                  "canonical": "objects/AlertEvent"
                 }
               },
               {
@@ -3248,6 +3348,10 @@
               {
                 "name": "enum-type",
                 "value": "string"
+              },
+              {
+                "name": "const",
+                "value": "v1.0"
               }
             ],
             "properties": [
@@ -4646,6 +4750,10 @@
             "type": "object",
             "description": "",
             "meta": [],
+            "symbolDef": {
+              "id": "#/components/schemas/SessionVisitorData",
+              "canonical": "objects/SessionVisitorData"
+            },
             "properties": [
               {
                 "name": "id",
@@ -4664,6 +4772,10 @@
                 "type": "object",
                 "description": "",
                 "meta": [],
+                "symbolDef": {
+                  "id": "#/components/schemas/SessionVisitorDataGeolocation",
+                  "canonical": "objects/SessionVisitorDataGeolocation"
+                },
                 "properties": [
                   {
                     "name": "country_code",
@@ -4727,7 +4839,15 @@
                     }
                   ],
                   "description": "",
-                  "meta": []
+                  "meta": [],
+                  "symbolDef": {
+                    "id": "#/components/schemas/SessionVisitorDataParams",
+                    "canonical": "objects/SessionVisitorDataParams"
+                  }
+                },
+                "symbolDef": {
+                  "id": "#/components/schemas/SessionVisitorDataParams",
+                  "canonical": "objects/SessionVisitorDataParams"
                 }
               },
               {
@@ -4749,6 +4869,10 @@
             "type": "object",
             "description": "",
             "meta": [],
+            "symbolDef": {
+              "id": "#/components/schemas/SessionResolutionData",
+              "canonical": "objects/SessionResolutionData"
+            },
             "properties": [
               {
                 "name": "height",
@@ -4775,6 +4899,10 @@
             "type": "object",
             "description": "",
             "meta": [],
+            "symbolDef": {
+              "id": "#/components/schemas/SessionOsData",
+              "canonical": "objects/SessionOsData"
+            },
             "properties": [
               {
                 "name": "name",
@@ -4795,6 +4923,10 @@
             "type": "object",
             "description": "",
             "meta": [],
+            "symbolDef": {
+              "id": "#/components/schemas/SessionBrowserData",
+              "canonical": "objects/SessionBrowserData"
+            },
             "properties": [
               {
                 "name": "description",
@@ -4821,6 +4953,10 @@
             "type": "object",
             "description": "",
             "meta": [],
+            "symbolDef": {
+              "id": "#/components/schemas/SessionUTMData",
+              "canonical": "objects/SessionUTMData"
+            },
             "properties": [
               {
                 "name": "source",
@@ -4859,6 +4995,10 @@
             "type": "object",
             "description": "",
             "meta": [],
+            "symbolDef": {
+              "id": "#/components/schemas/SessionPageViewsStatisticsData",
+              "canonical": "objects/SessionPageViewsStatisticsData"
+            },
             "properties": [
               {
                 "name": "count",
@@ -4873,6 +5013,10 @@
             "type": "object",
             "description": "",
             "meta": [],
+            "symbolDef": {
+              "id": "#/components/schemas/SessionEventsStatisticsData",
+              "canonical": "objects/SessionEventsStatisticsData"
+            },
             "properties": [
               {
                 "name": "clicks",
@@ -4963,6 +5107,10 @@
             "type": "object",
             "description": "",
             "meta": [],
+            "symbolDef": {
+              "id": "#/components/schemas/SessionVisitorDataGeolocation",
+              "canonical": "objects/SessionVisitorDataGeolocation"
+            },
             "properties": [
               {
                 "name": "country_code",
@@ -5026,7 +5174,15 @@
                 }
               ],
               "description": "",
-              "meta": []
+              "meta": [],
+              "symbolDef": {
+                "id": "#/components/schemas/SessionVisitorDataParams",
+                "canonical": "objects/SessionVisitorDataParams"
+              }
+            },
+            "symbolDef": {
+              "id": "#/components/schemas/SessionVisitorDataParams",
+              "canonical": "objects/SessionVisitorDataParams"
             }
           },
           {
@@ -5672,6 +5828,10 @@
             "type": "object",
             "description": "",
             "meta": [],
+            "symbolDef": {
+              "id": "#/components/schemas/Pagination",
+              "canonical": "objects/Pagination"
+            },
             "properties": [
               {
                 "name": "num",
@@ -5824,6 +5984,10 @@
                   "type": "object",
                   "description": "",
                   "meta": [],
+                  "symbolDef": {
+                    "id": "#/components/schemas/SessionVisitorData",
+                    "canonical": "objects/SessionVisitorData"
+                  },
                   "properties": [
                     {
                       "name": "id",
@@ -5842,6 +6006,10 @@
                       "type": "object",
                       "description": "",
                       "meta": [],
+                      "symbolDef": {
+                        "id": "#/components/schemas/SessionVisitorDataGeolocation",
+                        "canonical": "objects/SessionVisitorDataGeolocation"
+                      },
                       "properties": [
                         {
                           "name": "country_code",
@@ -5905,7 +6073,15 @@
                           }
                         ],
                         "description": "",
-                        "meta": []
+                        "meta": [],
+                        "symbolDef": {
+                          "id": "#/components/schemas/SessionVisitorDataParams",
+                          "canonical": "objects/SessionVisitorDataParams"
+                        }
+                      },
+                      "symbolDef": {
+                        "id": "#/components/schemas/SessionVisitorDataParams",
+                        "canonical": "objects/SessionVisitorDataParams"
                       }
                     },
                     {
@@ -5927,6 +6103,10 @@
                   "type": "object",
                   "description": "",
                   "meta": [],
+                  "symbolDef": {
+                    "id": "#/components/schemas/SessionResolutionData",
+                    "canonical": "objects/SessionResolutionData"
+                  },
                   "properties": [
                     {
                       "name": "height",
@@ -5953,6 +6133,10 @@
                   "type": "object",
                   "description": "",
                   "meta": [],
+                  "symbolDef": {
+                    "id": "#/components/schemas/SessionOsData",
+                    "canonical": "objects/SessionOsData"
+                  },
                   "properties": [
                     {
                       "name": "name",
@@ -5973,6 +6157,10 @@
                   "type": "object",
                   "description": "",
                   "meta": [],
+                  "symbolDef": {
+                    "id": "#/components/schemas/SessionBrowserData",
+                    "canonical": "objects/SessionBrowserData"
+                  },
                   "properties": [
                     {
                       "name": "description",
@@ -5999,6 +6187,10 @@
                   "type": "object",
                   "description": "",
                   "meta": [],
+                  "symbolDef": {
+                    "id": "#/components/schemas/SessionUTMData",
+                    "canonical": "objects/SessionUTMData"
+                  },
                   "properties": [
                     {
                       "name": "source",
@@ -6037,6 +6229,10 @@
                   "type": "object",
                   "description": "",
                   "meta": [],
+                  "symbolDef": {
+                    "id": "#/components/schemas/SessionPageViewsStatisticsData",
+                    "canonical": "objects/SessionPageViewsStatisticsData"
+                  },
                   "properties": [
                     {
                       "name": "count",
@@ -6051,6 +6247,10 @@
                   "type": "object",
                   "description": "",
                   "meta": [],
+                  "symbolDef": {
+                    "id": "#/components/schemas/SessionEventsStatisticsData",
+                    "canonical": "objects/SessionEventsStatisticsData"
+                  },
                   "properties": [
                     {
                       "name": "clicks",
@@ -6086,7 +6286,15 @@
                 }
               ],
               "description": "",
-              "meta": []
+              "meta": [],
+              "symbolDef": {
+                "id": "#/components/schemas/Session",
+                "canonical": "objects/Session"
+              }
+            },
+            "symbolDef": {
+              "id": "#/components/schemas/Session",
+              "canonical": "objects/Session"
             }
           }
         ],
@@ -6248,7 +6456,15 @@
                   "name": "required",
                   "value": "true"
                 }
-              ]
+              ],
+              "symbolDef": {
+                "id": "#/components/schemas/AlertEvent",
+                "canonical": "objects/AlertEvent"
+              }
+            },
+            "symbolDef": {
+              "id": "#/components/schemas/AlertEvent",
+              "canonical": "objects/AlertEvent"
             }
           },
           {
@@ -6367,7 +6583,15 @@
                 }
               ],
               "description": "",
-              "meta": []
+              "meta": [],
+              "symbolDef": {
+                "id": "#/components/schemas/AlertEvent",
+                "canonical": "objects/AlertEvent"
+              }
+            },
+            "symbolDef": {
+              "id": "#/components/schemas/AlertEvent",
+              "canonical": "objects/AlertEvent"
             }
           },
           {
@@ -6540,7 +6764,15 @@
                 }
               ],
               "description": "",
-              "meta": []
+              "meta": [],
+              "symbolDef": {
+                "id": "#/components/schemas/AlertEvent",
+                "canonical": "objects/AlertEvent"
+              }
+            },
+            "symbolDef": {
+              "id": "#/components/schemas/AlertEvent",
+              "canonical": "objects/AlertEvent"
             }
           },
           {

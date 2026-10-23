@@ -113,7 +113,15 @@
                     "name": "",
                     "description": "",
                     "type": "string"
+                  },
+                  "symbolDef": {
+                    "id": "#/components/schemas/Status",
+                    "canonical": "objects/Status"
                   }
+                },
+                "symbolDef": {
+                  "id": "#/components/schemas/Status",
+                  "canonical": "objects/Status"
                 }
               }
             ],

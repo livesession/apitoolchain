@@ -1,0 +1,101 @@
+{
+  "urlPrefix": "docs/api",
+  "sidebar": [
+    {
+      "group": "widgets",
+      "pages": [
+        {
+          "virtual": ".xyd/.cache/.content/docs/api/listWidgets",
+          "page": "docs/api/listWidgets"
+        },
+        {
+          "virtual": ".xyd/.cache/.content/docs/api/createWidget",
+          "page": "docs/api/createWidget"
+        },
+        {
+          "virtual": ".xyd/.cache/.content/docs/api/getWidget",
+          "page": "docs/api/getWidget"
+        },
+        {
+          "virtual": ".xyd/.cache/.content/docs/api/objects/Widget",
+          "page": "docs/api/objects/Widget"
+        }
+      ]
+    },
+    {
+      "group": "parts",
+      "pages": [
+        {
+          "virtual": ".xyd/.cache/.content/docs/api/objects/Part",
+          "page": "docs/api/objects/Part"
+        }
+      ]
+    },
+    {
+      "group": "Objects",
+      "pages": [
+        {
+          "virtual": ".xyd/.cache/.content/docs/api/objects/PartBase",
+          "page": "docs/api/objects/PartBase"
+        },
+        {
+          "virtual": ".xyd/.cache/.content/docs/api/objects/Tag",
+          "page": "docs/api/objects/Tag"
+        }
+      ]
+    }
+  ],
+  "pageFrontMatter": {
+    "docs/api/listWidgets": {
+      "title": "List widgets"
+    },
+    "docs/api/createWidget": {
+      "title": "Create a widget"
+    },
+    "docs/api/getWidget": {
+      "title": "Retrieve widget"
+    },
+    "docs/api/objects/Widget": {
+      "title": "The widget object"
+    },
+    "docs/api/objects/Part": {
+      "title": "The part object"
+    },
+    "docs/api/objects/PartBase": {
+      "title": "PartBase"
+    },
+    "docs/api/objects/Tag": {
+      "title": "Tag"
+    }
+  },
+  "pages": [
+    {
+      "pagePath": "docs/api/listWidgets",
+      "region": "GET /widgets"
+    },
+    {
+      "pagePath": "docs/api/createWidget",
+      "region": "POST /widgets"
+    },
+    {
+      "pagePath": "docs/api/getWidget",
+      "region": "GET /widgets/{widgetId}"
+    },
+    {
+      "pagePath": "docs/api/objects/Widget",
+      "region": "/components/schemas/Widget"
+    },
+    {
+      "pagePath": "docs/api/objects/Part",
+      "region": "/components/schemas/Part"
+    },
+    {
+      "pagePath": "docs/api/objects/PartBase",
+      "region": "/components/schemas/PartBase"
+    },
+    {
+      "pagePath": "docs/api/objects/Tag",
+      "region": "/components/schemas/Tag"
+    }
+  ]
+}

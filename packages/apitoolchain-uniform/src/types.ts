@@ -41,6 +41,12 @@ export type SymbolDef = {
     id?: string | string[];
 
     canonical?: string | string[];
+
+    /** What to call the linked symbol where a bare type would be shown. The
+     *  OpenAPI converter sets it on every link to a component schema: the
+     *  schema's constant `object` property value when it has one (`widget`,
+     *  the "object type" convention), else the schema name. */
+    label?: string;
 }
 
 export type DefinitionTypeREST = "$rest.param.path" | "$rest.param.query" | "$rest.param.header" | "$rest.param.cookie" | "$rest.request.body"

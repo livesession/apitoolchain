@@ -195,7 +195,12 @@
             "meta": []
           }
         ],
-        "meta": []
+        "meta": [],
+        "symbolDef": {
+          "id": "#/components/schemas/Response",
+          "canonical": "objects/Response",
+          "label": "Response"
+        }
       }
     ],
     "examples": {
@@ -305,7 +310,12 @@
             "meta": []
           }
         ],
-        "meta": []
+        "meta": [],
+        "symbolDef": {
+          "id": "#/components/schemas/User",
+          "canonical": "objects/User",
+          "label": "User"
+        }
       }
     ],
     "examples": {

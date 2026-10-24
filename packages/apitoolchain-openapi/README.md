@@ -13,8 +13,10 @@ on the Rust side (`tests/parity.rs`, `tests/fused.rs`), `vitest` through this sh
   summary), `context.group` = the first tag. Its definitions are the parameter
   groups, the request body and the response, each a list of property rows.
 - One `Reference` per `components.schemas` entry: `title` = the schema name,
-  `canonical` = `objects/<Name>`, `context.group` = `["Objects"]`, one definition
-  with the schema's property rows and a generated JSON example.
+  `canonical` = `objects/<Name>`, `context.group` = `["Objects"]` (see
+  [Options](#options) and [`x-docs.group`](#on-a-component-schema)), one
+  definition with the schema's property rows, the page's own
+  [link](#schema-links) as its `symbolDef`, and a generated JSON example.
 
 A property row (`DefinitionProperty`) has a `name`, a `type` (a JSON type or one
 of the `$$union` / `$$xor` / `$$array` / `$$enum` markers), a `description`, a
@@ -53,12 +55,15 @@ A nested property whose schema **is** a component schema links to that schema's
 page:
 
 ```json
-"symbolDef": { "id": "#/components/schemas/WidgetDefinition", "canonical": "objects/WidgetDefinition" }
+"symbolDef": { "id": "#/components/schemas/Widget", "canonical": "objects/Widget", "label": "widget" }
 ```
 
 - directly (`definition: { $ref: '#/components/schemas/WidgetDefinition' }`),
-- through a described wrapper (`allOf: [{ $ref: ... }]` + `description`),
+- through a described or nullable wrapper (`allOf: [{ $ref: ... }]` +
+  `description` / `nullable`),
 - for an array of a component (the row and its `ofProperty` both link),
+- on the branches of a `oneOf` / `anyOf` that are components (the union row
+  itself does not link),
 - on parameters whose `schema` is a `$ref`.
 
 Inline schemas carry no link, and neither does an `allOf` of two or more
@@ -67,6 +72,38 @@ decided by identity — the schema object *is* the component — never by
 containment, so a schema that merely holds a `$ref` does not link to its
 member. A `$ref` with sibling keys (the OpenAPI 3.1 form) is merged into a new
 schema by the dereferencer and does not link.
+
+The same link sits on a **request or response root** (the variant's
+`symbolDef`; an array root links to its items' schema) and on a **component
+page's own definition**, so a renderer can name what an operation takes and
+returns and what a page documents. An inline root keeps the legacy
+`{ "id": [<member paths>] }` of a composition, or no `symbolDef` at all.
+
+#### Labels
+
+Every link to a component schema carries `label` — what a renderer prints where
+it would otherwise print a bare `object`: the schema's constant `object`
+property value when it has one (a single-value `enum` or a `const`, the "object
+type" convention — `{ "object": "widget", ... }`), else the schema name. The
+constant is read on the schema's own `properties`, else on the first `allOf`
+member that declares one; a multi-value `object` enum or a non-string literal
+is not a constant.
+
+```yaml
+Widget:            # label: widget
+  properties:
+    object: { type: string, enum: [widget] }
+Material:          # label: Material (no `object` property)
+  properties:
+    name: { type: string }
+WidgetList:        # label: list; `data` → label: widget on the row and its items
+  properties:
+    object: { type: string, enum: [list] }
+    data: { type: array, items: { $ref: '#/components/schemas/Widget' } }
+```
+
+`label` is independent of `x-docs.name` (the page title); it is the short tag
+for a type column.
 
 ### `allOf` with one scalar member
 
@@ -135,18 +172,49 @@ components:
 | key | what |
 |---|---|
 | `name` | the reference title instead of the schema name |
-| `group` | the sidebar group instead of `Objects` — what puts an object page beside its resource's endpoints |
+| `group` | the resource group the page belongs to — the page is nested under that group's `Objects` sub-group (`context.group = ["widgets", "Objects"]`), which the navigation lists after the group's operations |
 | `hidden` | drop the page from the generated navigation (envelopes, errors) — a property that links to a hidden schema keeps its `symbolDef.id` and loses the `canonical`, so hide a schema only when no page should link to it |
 | `example` | a JSON example for the page (sidebar mode) |
 
 The keys are read on the schema itself, else on the first `allOf` member that
 carries them — in both modes. `hidden` applies to the *generated* navigation: an
 `x-docs.sidebar` is a complete enumeration and still shows a page it lists.
-Schema links follow the page: once the navigation is final, a nested
-`symbolDef.canonical` is the canonical of the schema's own reference (a sidebar
-that moves an object page under another path included), and a link to a schema
-without a page (hidden, or not listed by a sidebar) keeps its `id` and drops its
-`canonical` — a link never lands on a page that does not exist.
+Schema links follow the page: once the navigation is final, a
+`symbolDef.canonical` — a nested property's, a request/response root's or a
+page's own — is the canonical of the schema's own reference (a sidebar that
+moves an object page under another path included), and a link to a schema
+without a page (hidden, or not listed by a sidebar) keeps its `id` and `label`
+and drops its `canonical` — a link never lands on a page that does not exist.
+
+With `group`, the generated sidebar of the example above is
+
+```json
+[
+  { "group": "widgets", "pages": [ "…/listWidgets", "…/createWidget",
+      { "group": "Objects", "pages": [ "…/objects/Widget" ] } ] },
+  { "group": "parts",   "pages": [ { "group": "Objects", "pages": [ "…/objects/Part" ] } ] },
+  { "group": "Objects", "pages": [ "…/objects/PartBase" ] }
+]
+```
+
+— schemas without a `group` keep the flat top-level `Objects` group. The
+sub-group is an ordinary nested sidebar group: a renderer that starts nested
+groups collapsed (xyd does, unless a group holds the active page) shows the
+operations and a folded `Objects` entry. An `x-docs.sidebar` entry places its
+pages itself; no sub-group is added there.
+
+## Options
+
+`oapSchemaToReferences(doc, options)` / the Rust `Options` (JSON through the
+native addon, camelCase):
+
+| option | what |
+|---|---|
+| `regions` | convert only these regions: `"METHOD /path"` or `"/components/schemas/Name"` (the per-page conversion) |
+| `objectsGroup` | the name of the component-schema pages' group, default `"Objects"` — both the flat top-level group and the sub-group under a resource group (`x-docs.group`); an empty string means the default |
+
+The fused endpoint (`fused::uniform_oas_pages`, `FusedInput::objects_group`)
+takes the same name, since it builds the sidebar.
 
 ## Tests
 

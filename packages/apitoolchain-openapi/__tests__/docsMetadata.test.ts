@@ -137,11 +137,13 @@ describe("docs metadata (JS impl)", () => {
         expect(row(widget, "definition").symbolDef).toEqual({
             id: "#/components/schemas/WidgetDefinition",
             canonical: "objects/WidgetDefinition",
+            label: "WidgetDefinition",
         });
         // Through allOf: [$ref] as well.
         expect(row(widget, "id").symbolDef).toEqual({
             id: "#/components/schemas/WidgetId",
             canonical: "objects/WidgetId",
+            label: "WidgetId",
         });
         // An array of a component links to the component, on the row and its items.
         const parts = row(widget, "parts");
@@ -172,12 +174,17 @@ describe("docs metadata (JS impl)", () => {
             "The part object",
             "PartBase",
         ]);
+        // An object page with a resource group is nested under that group's
+        // "Objects" sub-group (the navigation lists it after the group's
+        // operations); one without keeps the flat top-level "Objects".
         const widget = byCanonical(refs, "objects/Widget");
         expect(widget.title).toBe("The widget object");
-        expect(widget.context?.group).toEqual(["widgets"]);
+        expect(widget.context?.group).toEqual(["widgets", "Objects"]);
         const part = byCanonical(refs, "objects/Part");
-        expect(part.context?.group).toEqual(["parts"]);
+        expect(part.context?.group).toEqual(["parts", "Objects"]);
         expect(byCanonical(refs, "objects/PartBase").context?.group).toEqual(["Objects"]);
+        // An operation's own `x-docs.group` is never nested.
+        expect(byCanonical(refs, "listWidgets").context?.group).toEqual(["widgets"]);
         // hidden: the operation and the three schemas are gone.
         expect(refs.some(r => r.canonical === "health")).toBe(false);
         expect(refs.some(r => r.canonical === "objects/WidgetList")).toBe(false);
@@ -187,11 +194,11 @@ describe("docs metadata (JS impl)", () => {
         // A link to a hidden schema keeps its id and loses its canonical — on
         // the object page and on every endpoint that embeds the schema.
         const tags = row(widget.definitions[0].properties, "tags");
-        expect(tags.symbolDef).toEqual({id: "#/components/schemas/Tag"});
-        expect(tags.ofProperty?.symbolDef).toEqual({id: "#/components/schemas/Tag"});
+        expect(tags.symbolDef).toEqual({id: "#/components/schemas/Tag", label: "Tag"});
+        expect(tags.ofProperty?.symbolDef).toEqual({id: "#/components/schemas/Tag", label: "Tag"});
         const create = byCanonical(refs, "createWidget");
         const body = create.definitions.find(d => d.title === "Request body")!.variants![0].properties;
-        expect(row(body, "tags").symbolDef).toEqual({id: "#/components/schemas/Tag"});
+        expect(row(body, "tags").symbolDef).toEqual({id: "#/components/schemas/Tag", label: "Tag"});
         // A link to a page that exists stays whole: listWidgets → WidgetList
         // (hidden, inlined) → data: array of Widget.
         const list = byCanonical(refs, "listWidgets");
@@ -208,6 +215,85 @@ describe("docs metadata (JS impl)", () => {
         }
         expect(links).toContain("objects/Widget");
         expect(links).not.toContain("objects/Tag");
+        // The response ROOT links to the hidden envelope: the variant's own
+        // symbolDef loses its canonical too, and keeps its id and label (the
+        // envelope's constant `object` value).
+        const root = list.definitions.find(d => d.title === "Response")!.variants![0].symbolDef;
+        expect(root).toEqual({id: "#/components/schemas/WidgetList", label: "list"});
+    });
+
+    it("the objectsGroup option names the flat group and the sub-group", async () => {
+        const doc = await deferencedOpenAPI(fixture("5.xdocs.objects"));
+        const refs = uniform(oapSchemaToReferences(doc!, {objectsGroup: "Types"}), {plugins: [uniformPluginXDocsSidebar]}).references;
+        expect(byCanonical(refs, "objects/Widget").context?.group).toEqual(["widgets", "Types"]);
+        expect(byCanonical(refs, "objects/Part").context?.group).toEqual(["parts", "Types"]);
+        expect(byCanonical(refs, "objects/PartBase").context?.group).toEqual(["Types"]);
+        expect(byCanonical(refs, "listWidgets").context?.group).toEqual(["widgets"]);
+        // An empty name means the default.
+        const plain = uniform(oapSchemaToReferences(doc!, {objectsGroup: ""}), {plugins: [uniformPluginXDocsSidebar]}).references;
+        expect(byCanonical(plain, "objects/Widget").context?.group).toEqual(["widgets", "Objects"]);
+    });
+
+    it("schema links carry the schema's label: its constant `object` value, else its name", async () => {
+        const doc = await deferencedOpenAPI(fixture("10.schema-labels"));
+        const refs = oapSchemaToReferences(doc!);
+
+        // The component pages' own links.
+        const widget = byCanonical(refs, "objects/Widget");
+        expect(widget.definitions[0].symbolDef).toEqual({
+            id: "#/components/schemas/Widget",
+            canonical: "objects/Widget",
+            label: "widget",
+        });
+        expect(byCanonical(refs, "objects/Material").definitions[0].symbolDef?.label).toBe("Material");
+        expect(byCanonical(refs, "objects/Part").definitions[0].symbolDef?.label).toBe("part");
+        expect(byCanonical(refs, "objects/Assembly").definitions[0].symbolDef?.label).toBe("assembly");
+
+        // Nested rows: a schema without an `object` property, a multi-value
+        // `object` enum (not a constant), a `const`, a tag on an allOf member.
+        const rows = widget.definitions[0].properties;
+        expect(row(rows, "material").symbolDef?.label).toBe("Material");
+        expect(row(rows, "shape").symbolDef?.label).toBe("Shape");
+        expect(row(rows, "assembly").symbolDef?.label).toBe("assembly");
+        const parts = row(rows, "parts");
+        expect(parts.symbolDef?.label).toBe("part");
+        expect(parts.ofProperty?.symbolDef?.label).toBe("part");
+        expect(row(rows, "id").symbolDef).toBeUndefined();
+
+        // An array of widgets: the row and its items.
+        const list = byCanonical(refs, "objects/WidgetList");
+        expect(list.definitions[0].symbolDef?.label).toBe("list");
+        const data = row(list.definitions[0].properties, "data");
+        expect(data.type).toBe("$$array");
+        expect(data.symbolDef?.label).toBe("widget");
+        expect(data.ofProperty?.symbolDef?.label).toBe("widget");
+
+        // A nullable widget (allOf + nullable) and a union with a null branch.
+        const slot = byCanonical(refs, "objects/Slot").definitions[0].properties;
+        const nullable = row(slot, "widget");
+        expect(nullable.type).toBe("object");
+        expect(metaValue(nullable, "nullable")).toBe("true");
+        expect(nullable.symbolDef?.label).toBe("widget");
+        const spare = row(slot, "spare");
+        expect(spare.type).toBe("$$union");
+        expect(spare.symbolDef).toBeUndefined();
+        expect(spare.properties?.[0].symbolDef?.label).toBe("widget");
+        expect(spare.properties?.[1].symbolDef).toBeUndefined();
+
+        // The request/response roots: a `$ref` root, an array root (its
+        // items'), a request body; an inline root has no link.
+        const response = (canonical: string, index = 0) =>
+            byCanonical(refs, canonical).definitions.find(d => d.title === "Response")!.variants![index].symbolDef;
+        expect(response("getWidget")).toEqual({
+            id: "#/components/schemas/Widget",
+            canonical: "objects/Widget",
+            label: "widget",
+        });
+        expect(response("listWidgets")?.label).toBe("list");
+        expect(response("listMaterials")?.label).toBe("Material");
+        expect(response("getSlot", 1)).toBeUndefined();
+        const body = byCanonical(refs, "createWidget").definitions.find(d => d.title === "Request body")!.variants![0];
+        expect(body.symbolDef?.label).toBe("widget");
     });
 
     it("an x-docs.sidebar: links follow the listed page, a listed composition reads its own x-docs", () => {
@@ -271,8 +357,8 @@ describe("docs metadata (JS impl)", () => {
         expect(data.ofProperty?.symbolDef?.canonical).toBe(widget.canonical);
         // Widget.tags → Tag is not listed: no page, so no canonical.
         const tags = row(widget.definitions[0].properties, "tags");
-        expect(tags.symbolDef).toEqual({id: "#/components/schemas/Tag"});
-        expect(tags.ofProperty?.symbolDef).toEqual({id: "#/components/schemas/Tag"});
+        expect(tags.symbolDef).toEqual({id: "#/components/schemas/Tag", label: "Tag"});
+        expect(tags.ofProperty?.symbolDef).toEqual({id: "#/components/schemas/Tag", label: "Tag"});
     });
 
     it("regions mode (one page at a time): the links follow the document, not the one-page list", async () => {
@@ -286,8 +372,8 @@ describe("docs metadata (JS impl)", () => {
         const widget = page("/components/schemas/Widget");
         expect(widget.map(r => r.canonical)).toEqual(["objects/Widget"]);
         const tags = row(widget[0].definitions[0].properties, "tags");
-        expect(tags.symbolDef).toEqual({id: "#/components/schemas/Tag"});
-        expect(tags.ofProperty?.symbolDef).toEqual({id: "#/components/schemas/Tag"});
+        expect(tags.symbolDef).toEqual({id: "#/components/schemas/Tag", label: "Tag"});
+        expect(tags.ofProperty?.symbolDef).toEqual({id: "#/components/schemas/Tag", label: "Tag"});
 
         const list = page("GET /widgets");
         expect(list.map(r => r.canonical)).toEqual(["listWidgets"]);
@@ -297,7 +383,7 @@ describe("docs metadata (JS impl)", () => {
 
         const create = page("POST /widgets");
         const body = create[0].definitions.find(d => d.title === "Request body")!.variants![0].properties;
-        expect(row(body, "tags").symbolDef).toEqual({id: "#/components/schemas/Tag"});
+        expect(row(body, "tags").symbolDef).toEqual({id: "#/components/schemas/Tag", label: "Tag"});
     });
 
     it("regions mode under an x-docs.sidebar: the links follow the listed page", () => {
@@ -342,7 +428,7 @@ describe("docs metadata (JS impl)", () => {
         expect(data.ofProperty?.symbolDef?.canonical).toBe(widgetCanonical);
         // Tag is not listed: no page, so no canonical.
         const tags = row(page("/components/schemas/Widget")[0].definitions[0].properties, "tags");
-        expect(tags.symbolDef).toEqual({id: "#/components/schemas/Tag"});
+        expect(tags.symbolDef).toEqual({id: "#/components/schemas/Tag", label: "Tag"});
     });
 
     it("an x-docs.sidebar that lists a hidden page still shows it", () => {

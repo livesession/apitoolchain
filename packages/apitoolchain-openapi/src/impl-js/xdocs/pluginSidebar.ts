@@ -6,11 +6,14 @@ import {
     Example,
     ExampleGroup,
     Reference,
+    SymbolDef,
     UniformPluginArgs,
     OpenAPIReferenceContext
 } from "@xyd-js/uniform";
 
 import {XDocs, XDocsSidebar, XDocsPage, XDocsMeta, XDocsSchemaMeta} from "./types";
+import {objectsGroupOf} from "../const";
+import type {uniformOasOptions} from "../types";
 
 interface NavigationGroup {
     id: string
@@ -53,6 +56,15 @@ export function uniformPluginXDocsSidebar({
     // that lists one explicitly still shows it: the sidebar is a complete
     // enumeration and wins over the per-page flag.
     const hiddenRefs = new Set<Reference>()
+    // The converter options travel on the reference list (`__internal_options`,
+    // set by the converter and by the native shim alike): `objectsGroup` names
+    // the sub-group an object page with a resource group is nested under.
+    // @ts-ignore
+    const options: uniformOasOptions | undefined = typeof references.__internal_options === "function"
+        // @ts-ignore
+        ? references.__internal_options()
+        : undefined
+    const objectsGroup = objectsGroupOf(options)
 
     defer(() => {
         if (!schema) {
@@ -278,7 +290,7 @@ export function uniformPluginXDocsSidebar({
             // group, `hidden`). The sidebar pass re-reads `name` for the object
             // pages it lists.
             const meta = componentXDocs(selector("[component]") as OpenAPIV3.SchemaObject | undefined)
-            if (meta && applyDocsMeta(ref, meta)) {
+            if (meta && applyDocsMeta(ref, meta, objectsGroup)) {
                 hiddenRefs.add(ref)
             }
         }
@@ -308,7 +320,7 @@ export function uniformPluginXDocsSidebar({
             return
         }
 
-        if (applyDocsMeta(ref, meta)) {
+        if (applyDocsMeta(ref, meta, undefined)) {
             hiddenRefs.add(ref)
         }
 
@@ -344,16 +356,20 @@ export function uniformPluginXDocsSidebar({
 }
 
 /** The common `x-docs` keys of an operation or a component schema: `name` →
- *  the reference title, `group` → its sidebar group. Returns whether the ref is
- *  `hidden`. */
-function applyDocsMeta(ref: Reference, meta: XDocsMeta): boolean {
+ *  the reference title, `group` → its sidebar group. A component schema's
+ *  `group` is a RESOURCE group (the one its endpoints sit in), so its page is
+ *  nested under `subGroup` inside it — `[group, "Objects"]` — after the
+ *  operations, which the navigation lists before any sub-group; an operation
+ *  (`subGroup` undefined) goes straight into `[group]`. Returns whether the ref
+ *  is `hidden`. */
+function applyDocsMeta(ref: Reference, meta: XDocsMeta, subGroup: string | undefined): boolean {
     if (meta.name) {
         ref.title = meta.name
     }
 
     if (meta.group) {
         if (ref.context) {
-            ref.context.group = [meta.group]
+            ref.context.group = subGroup ? [meta.group, subGroup] : [meta.group]
         }
     }
 
@@ -443,19 +459,14 @@ function schemaPageLinks(schema: ExtensionSchema): (name: string) => PageLink {
     return name => links.get(name)
 }
 
-/** Nested schema links. A property's `symbolDef` whose `id` is a component
- *  schema (`#/components/schemas/<Name>`) takes that schema's page link: the
- *  page's canonical, or no `canonical` at all when the schema has no page — a
- *  link must never land on a page that does not exist. The `id` stays either
- *  way. */
+/** Schema links. A `symbolDef` whose `id` is a component schema
+ *  (`#/components/schemas/<Name>`) — a property's, a request/response root's
+ *  (the variant's) or a component page's own — takes that schema's page link:
+ *  the page's canonical, or no `canonical` at all when the schema has no page —
+ *  a link must never land on a page that does not exist. The `id` and the
+ *  `label` stay either way. */
 function relinkSchemaLinks(references: Reference[], pageLink: (name: string) => PageLink) {
-    const seen = new Set<DefinitionProperty>()
-    const visit = (property: DefinitionProperty | undefined) => {
-        if (!property || typeof property !== "object" || seen.has(property)) {
-            return
-        }
-        seen.add(property)
-        const symbolDef = property.symbolDef
+    const relink = (symbolDef: SymbolDef | undefined) => {
         const id = symbolDef?.id
         if (symbolDef && typeof id === "string" && id.startsWith(COMPONENT_SCHEMA_PREFIX)) {
             const target = pageLink(id.slice(COMPONENT_SCHEMA_PREFIX.length))
@@ -465,15 +476,25 @@ function relinkSchemaLinks(references: Reference[], pageLink: (name: string) => 
                 delete symbolDef.canonical
             }
         }
+    }
+    const seen = new Set<DefinitionProperty>()
+    const visit = (property: DefinitionProperty | undefined) => {
+        if (!property || typeof property !== "object" || seen.has(property)) {
+            return
+        }
+        seen.add(property)
+        relink(property.symbolDef)
         property.properties?.forEach(visit)
         visit(property.ofProperty)
     }
 
     for (const ref of references) {
         for (const definition of ref.definitions || []) {
+            relink(definition.symbolDef)
             definition.properties?.forEach(visit)
             visit(definition.rootProperty)
             for (const variant of definition.variants || []) {
+                relink(variant.symbolDef)
                 variant.properties?.forEach(visit)
                 visit(variant.rootProperty)
             }

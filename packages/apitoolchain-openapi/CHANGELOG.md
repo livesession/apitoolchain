@@ -24,6 +24,30 @@ and `5.xdocs.objects` pin the new output on both sides.
   on the first `allOf` member that carries them. `x-docs.hidden` on operations
   too. An `x-docs.sidebar` that lists a hidden page still shows it.
 - `XDocsMeta` / `XDocsOperationMeta` / `XDocsSchemaMeta` types.
+- **A label on every schema link.** A `symbolDef` that points at a component
+  schema carries `label`: the schema's constant `object` property value when
+  it has one (a single-value `enum` or a `const` — read on the schema or on
+  the first `allOf` member that declares one), else the schema name. A
+  renderer prints it where it would otherwise print a bare `object`
+  (`data: array of widget`). `SymbolDef.label` in `@xyd-js/uniform`.
+- **Links on the request/response roots and on the component pages.** A
+  request-body or response variant whose schema is a component schema (an
+  array root: its items) carries that schema's link as its `symbolDef`
+  (`id`, `canonical`, `label`) instead of nothing; a component page's
+  definition carries the page's own link. An inline composition keeps the
+  legacy `{ id: [<member paths>] }`. The x-docs pass relinks these like the
+  nested ones (a hidden page's link loses its `canonical`).
+- **Object pages nested under their resource group's `Objects` sub-group.** A
+  component schema with an `x-docs.group` gets `context.group = [<group>,
+  "Objects"]`, so the generated sidebar lists it under a nested `Objects`
+  group AFTER the group's operations (a renderer that starts nested groups
+  collapsed shows it folded). Schemas without a resource group keep the flat
+  top-level `Objects` group; an `x-docs.sidebar` entry is placed where it is
+  listed. An operation's `x-docs.group` is never nested.
+- **`objectsGroup` option** (`uniformOasOptions.objectsGroup`, the Rust
+  `Options::objects_group` / `FusedInput::objects_group`, JSON
+  `objectsGroup`): renames the component-schema pages' group — the flat
+  top-level group and the sub-group alike; default `"Objects"`.
 
 ### Fixed
 
@@ -64,6 +88,12 @@ and `5.xdocs.objects` pin the new output on both sides.
   (the per-schema x-docs, fused golden included); the `-3.random`, `8.enums`
   and `-2.complex.openai` oracles regenerated (new `symbolDef` / `const`
   entries, the folded rows).
+- `10.schema-labels` (the labels: a widget, a schema without an `object`
+  property, an array of widgets, a nullable widget, a union branch, the
+  roots and the pages); every oracle regenerated (the `label` on each link,
+  the root and page links), the `5.xdocs.objects` oracle and fused golden
+  with the nested `Objects` sub-group. Unit tests on both twins for the
+  labels, the nesting and the `objectsGroup` option (incl. the fused path).
 - The fixture matrix skips, under the native path only, the fixtures a
   published `@xyd-js/native` built from an older core cannot produce. The gate
   is a feature probe (does the addon produce this core's `9.schema-links` rows:

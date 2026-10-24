@@ -106,3 +106,4 @@ parity_case!(code_samples, "6.codeSamples");
 parity_case!(examples_case, "7.examples");
 parity_case!(enums, "8.enums");
 parity_case!(schema_links, "9.schema-links");
+parity_case!(schema_labels, "10.schema-labels");

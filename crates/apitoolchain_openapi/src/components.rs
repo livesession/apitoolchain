@@ -8,7 +8,7 @@ use apitoolchain_uniform::{
 };
 use serde_json::Value;
 
-use crate::core::{schema_object_to_properties, PropsResult, VisitedRefs};
+use crate::core::{schema_object_to_properties, PropsResult};
 use crate::links::ConvCtx;
 use crate::paths::definition_property_type_def;
 use crate::Options;
@@ -39,14 +39,17 @@ pub fn schema_components_to_references(ctx: &ConvCtx, options: &Options) -> Vec<
 
         let mut properties: Vec<DefinitionProperty> = Vec::new();
         let mut root_property: Option<DefinitionProperty> = None;
-        let mut visited = VisitedRefs::new();
-        match schema_object_to_properties(ctx, component_schema, false, &mut visited) {
+        match schema_object_to_properties(ctx, component_schema, false) {
             PropsResult::List(list) => properties = list,
             PropsResult::Single(single) => root_property = Some(*single),
             PropsResult::None => {}
         }
 
-        let symbol_def = definition_property_type_def(ctx, component_schema);
+        // The page's own link — `id`, `canonical` and the `label` a renderer
+        // shows for the schema (its constant `object` value, else its name).
+        let symbol_def = ctx
+            .component_link(component_schema)
+            .or_else(|| definition_property_type_def(ctx, component_schema));
 
         let definition = Definition {
             title: component_schema_name.clone(),
@@ -64,7 +67,7 @@ pub fn schema_components_to_references(ctx: &ConvCtx, options: &Options) -> Vec<
         );
         context.insert(
             "group".into(),
-            Value::Array(vec![Value::String("Objects".into())]),
+            Value::Array(vec![Value::String(options.objects_group().to_string())]),
         );
 
         references.push(Reference {

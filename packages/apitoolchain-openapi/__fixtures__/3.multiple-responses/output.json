@@ -113,7 +113,12 @@
                 "name": "definitionDescription",
                 "value": ""
               }
-            ]
+            ],
+            "symbolDef": {
+              "id": "#/components/schemas/Response",
+              "canonical": "objects/Response",
+              "label": "Response"
+            }
           },
           {
             "title": "200",
@@ -139,7 +144,12 @@
                 "name": "definitionDescription",
                 "value": ""
               }
-            ]
+            ],
+            "symbolDef": {
+              "id": "#/components/schemas/ResponseStream",
+              "canonical": "objects/ResponseStream",
+              "label": "ResponseStream"
+            }
           },
           {
             "title": "400",
@@ -165,7 +175,12 @@
                 "name": "definitionDescription",
                 "value": ""
               }
-            ]
+            ],
+            "symbolDef": {
+              "id": "#/components/schemas/ErrorResponse",
+              "canonical": "objects/ErrorResponse",
+              "label": "ErrorResponse"
+            }
           }
         ],
         "properties": []
@@ -187,7 +202,12 @@
             "meta": []
           }
         ],
-        "meta": []
+        "meta": [],
+        "symbolDef": {
+          "id": "#/components/schemas/ErrorResponse",
+          "canonical": "objects/ErrorResponse",
+          "label": "ErrorResponse"
+        }
       }
     ],
     "examples": {
@@ -233,7 +253,12 @@
             "meta": []
           }
         ],
-        "meta": []
+        "meta": [],
+        "symbolDef": {
+          "id": "#/components/schemas/Response",
+          "canonical": "objects/Response",
+          "label": "Response"
+        }
       }
     ],
     "examples": {
@@ -279,7 +304,12 @@
             "meta": []
           }
         ],
-        "meta": []
+        "meta": [],
+        "symbolDef": {
+          "id": "#/components/schemas/ResponseStream",
+          "canonical": "objects/ResponseStream",
+          "label": "ResponseStream"
+        }
       }
     ],
     "examples": {

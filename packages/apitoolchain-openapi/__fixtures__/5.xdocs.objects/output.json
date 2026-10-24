@@ -190,11 +190,13 @@
                         "description": "",
                         "meta": [],
                         "symbolDef": {
-                          "id": "#/components/schemas/Tag"
+                          "id": "#/components/schemas/Tag",
+                          "label": "Tag"
                         }
                       },
                       "symbolDef": {
-                        "id": "#/components/schemas/Tag"
+                        "id": "#/components/schemas/Tag",
+                        "label": "Tag"
                       }
                     }
                   ],
@@ -207,12 +209,14 @@
                   ],
                   "symbolDef": {
                     "id": "#/components/schemas/Widget",
-                    "canonical": "objects/Widget"
+                    "canonical": "objects/Widget",
+                    "label": "widget"
                   }
                 },
                 "symbolDef": {
                   "id": "#/components/schemas/Widget",
-                  "canonical": "objects/Widget"
+                  "canonical": "objects/Widget",
+                  "label": "widget"
                 }
               }
             ],
@@ -229,7 +233,11 @@
                 "name": "definitionDescription",
                 "value": ""
               }
-            ]
+            ],
+            "symbolDef": {
+              "id": "#/components/schemas/WidgetList",
+              "label": "list"
+            }
           }
         ],
         "properties": []
@@ -391,11 +399,13 @@
                   "description": "",
                   "meta": [],
                   "symbolDef": {
-                    "id": "#/components/schemas/Tag"
+                    "id": "#/components/schemas/Tag",
+                    "label": "Tag"
                   }
                 },
                 "symbolDef": {
-                  "id": "#/components/schemas/Tag"
+                  "id": "#/components/schemas/Tag",
+                  "label": "Tag"
                 }
               }
             ],
@@ -408,7 +418,12 @@
                 "name": "required",
                 "value": "true"
               }
-            ]
+            ],
+            "symbolDef": {
+              "id": "#/components/schemas/Widget",
+              "canonical": "objects/Widget",
+              "label": "widget"
+            }
           }
         ],
         "properties": [],
@@ -491,11 +506,13 @@
                   "description": "",
                   "meta": [],
                   "symbolDef": {
-                    "id": "#/components/schemas/Tag"
+                    "id": "#/components/schemas/Tag",
+                    "label": "Tag"
                   }
                 },
                 "symbolDef": {
-                  "id": "#/components/schemas/Tag"
+                  "id": "#/components/schemas/Tag",
+                  "label": "Tag"
                 }
               }
             ],
@@ -512,7 +529,12 @@
                 "name": "definitionDescription",
                 "value": ""
               }
-            ]
+            ],
+            "symbolDef": {
+              "id": "#/components/schemas/Widget",
+              "canonical": "objects/Widget",
+              "label": "widget"
+            }
           },
           {
             "title": "400",
@@ -554,7 +576,11 @@
                 "name": "definitionDescription",
                 "value": ""
               }
-            ]
+            ],
+            "symbolDef": {
+              "id": "#/components/schemas/Error",
+              "label": "Error"
+            }
           }
         ],
         "properties": []
@@ -722,11 +748,13 @@
                   "description": "",
                   "meta": [],
                   "symbolDef": {
-                    "id": "#/components/schemas/Tag"
+                    "id": "#/components/schemas/Tag",
+                    "label": "Tag"
                   }
                 },
                 "symbolDef": {
-                  "id": "#/components/schemas/Tag"
+                  "id": "#/components/schemas/Tag",
+                  "label": "Tag"
                 }
               }
             ],
@@ -743,7 +771,12 @@
                 "name": "definitionDescription",
                 "value": ""
               }
-            ]
+            ],
+            "symbolDef": {
+              "id": "#/components/schemas/Widget",
+              "canonical": "objects/Widget",
+              "label": "widget"
+            }
           }
         ],
         "properties": []
@@ -821,15 +854,22 @@
               "description": "",
               "meta": [],
               "symbolDef": {
-                "id": "#/components/schemas/Tag"
+                "id": "#/components/schemas/Tag",
+                "label": "Tag"
               }
             },
             "symbolDef": {
-              "id": "#/components/schemas/Tag"
+              "id": "#/components/schemas/Tag",
+              "label": "Tag"
             }
           }
         ],
-        "meta": []
+        "meta": [],
+        "symbolDef": {
+          "id": "#/components/schemas/Widget",
+          "canonical": "objects/Widget",
+          "label": "widget"
+        }
       }
     ],
     "examples": {
@@ -856,7 +896,8 @@
     "context": {
       "componentSchema": "Widget",
       "group": [
-        "widgets"
+        "widgets",
+        "Objects"
       ]
     }
   },
@@ -893,7 +934,9 @@
         ],
         "meta": [],
         "symbolDef": {
-          "id": []
+          "id": "#/components/schemas/Part",
+          "canonical": "objects/Part",
+          "label": "Part"
         }
       }
     ],
@@ -904,7 +947,8 @@
     "context": {
       "componentSchema": "Part",
       "group": [
-        "parts"
+        "parts",
+        "Objects"
       ]
     }
   },
@@ -928,7 +972,12 @@
             ]
           }
         ],
-        "meta": []
+        "meta": [],
+        "symbolDef": {
+          "id": "#/components/schemas/PartBase",
+          "canonical": "objects/PartBase",
+          "label": "PartBase"
+        }
       }
     ],
     "examples": {

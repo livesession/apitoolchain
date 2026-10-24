@@ -11,6 +11,7 @@ use std::collections::HashMap;
 use serde_json::{json, Map, Value};
 
 use crate::doc::DocCtx;
+use crate::Options;
 use apitoolchain_uniform::jsrt::truthy;
 
 const COMPONENT_SCHEMA_PREFIX: &str = "#/components/schemas/";
@@ -23,10 +24,24 @@ pub fn get_xdocs_route(doc: &Value) -> Option<String> {
         .map(|s| s.to_string())
 }
 
+/// [`apply_xdocs_sidebar_with_options`] with the default [`Options`] (the
+/// object pages' sub-group named [`crate::DEFAULT_OBJECTS_GROUP`]).
+pub fn apply_xdocs_sidebar(ctx: &DocCtx, doc: &Value, refs: &mut Vec<Value>) {
+    apply_xdocs_sidebar_with_options(ctx, doc, refs, &Options::default());
+}
+
 /// Apply the plugin to `refs` in place: the per-ref x-docs meta pass, then
 /// (when `x-docs.sidebar` exists) the sidebar-driven ref-list rebuild —
 /// otherwise the generated navigation minus the `x-docs.hidden` refs.
-pub fn apply_xdocs_sidebar(ctx: &DocCtx, doc: &Value, refs: &mut Vec<Value>) {
+/// `options.objects_group()` names the sub-group an object page with a
+/// resource group (`x-docs.group`) is nested under.
+pub fn apply_xdocs_sidebar_with_options(
+    ctx: &DocCtx,
+    doc: &Value,
+    refs: &mut Vec<Value>,
+    options: &Options,
+) {
+    let objects_group = options.objects_group();
     // ---- per-ref pass (pluginXDocsSidebarInner) -------------------------
     // ref index maps mirror refByOperationId / refByComponentSchema
     // (last-write-wins on duplicate keys, like JS object assignment).
@@ -61,7 +76,7 @@ pub fn apply_xdocs_sidebar(ctx: &DocCtx, doc: &Value, refs: &mut Vec<Value>) {
             // group, `hidden`). The sidebar pass re-reads `name` for the
             // object pages it lists.
             if let Some(meta) = component_xdocs(ctx, doc, cs) {
-                if apply_docs_meta(r, meta) {
+                if apply_docs_meta(r, meta, Some(objects_group)) {
                     hidden.push(i);
                 }
             }
@@ -93,7 +108,7 @@ pub fn apply_xdocs_sidebar(ctx: &DocCtx, doc: &Value, refs: &mut Vec<Value>) {
             continue;
         };
 
-        if apply_docs_meta(r, meta) {
+        if apply_docs_meta(r, meta, None) {
             hidden.push(i);
         }
         if !truthy(r.get("description")) {
@@ -314,17 +329,19 @@ fn schema_page_links(ctx: &DocCtx, doc: &Value) -> HashMap<String, PageLink> {
     links
 }
 
-/// Nested schema links. A property's `symbolDef` whose `id` is a component
-/// schema (`#/components/schemas/<Name>`) takes that schema's page link: the
-/// page's canonical, or no `canonical` at all when the schema has no page — a
-/// link must never land on a page that does not exist. The `id` stays either
-/// way.
+/// Schema links. A `symbolDef` whose `id` is a component schema
+/// (`#/components/schemas/<Name>`) — a property's, a request/response root's
+/// (the variant's) or a component page's own — takes that schema's page link:
+/// the page's canonical, or no `canonical` at all when the schema has no page
+/// — a link must never land on a page that does not exist. The `id` and the
+/// `label` stay either way.
 fn relink_schema_links(refs: &mut [Value], page_link: &dyn Fn(&str) -> PageLink) {
     for r in refs.iter_mut() {
         let Some(definitions) = r.get_mut("definitions").and_then(|d| d.as_array_mut()) else {
             continue;
         };
         for definition in definitions {
+            relink_symbol_def(definition.get_mut("symbolDef"), page_link);
             relink_rows(definition.get_mut("properties"), page_link);
             relink_property(definition.get_mut("rootProperty"), page_link);
             if let Some(variants) = definition
@@ -332,10 +349,33 @@ fn relink_schema_links(refs: &mut [Value], page_link: &dyn Fn(&str) -> PageLink)
                 .and_then(|v| v.as_array_mut())
             {
                 for variant in variants {
+                    relink_symbol_def(variant.get_mut("symbolDef"), page_link);
                     relink_rows(variant.get_mut("properties"), page_link);
                     relink_property(variant.get_mut("rootProperty"), page_link);
                 }
             }
+        }
+    }
+}
+
+fn relink_symbol_def(symbol_def: Option<&mut Value>, page_link: &dyn Fn(&str) -> PageLink) {
+    let Some(symbol_def) = symbol_def.and_then(|s| s.as_object_mut()) else {
+        return;
+    };
+    let schema = symbol_def
+        .get("id")
+        .and_then(|i| i.as_str())
+        .and_then(|i| i.strip_prefix(COMPONENT_SCHEMA_PREFIX))
+        .map(|s| s.to_string());
+    if let Some(schema) = schema {
+        match page_link(&schema) {
+            PageLink::Set(target) => {
+                symbol_def.insert("canonical".to_string(), Value::String(target));
+            }
+            PageLink::Drop => {
+                symbol_def.remove("canonical");
+            }
+            PageLink::Keep => {}
         }
     }
 }
@@ -352,42 +392,29 @@ fn relink_property(property: Option<&mut Value>, page_link: &dyn Fn(&str) -> Pag
     let Some(property) = property.filter(|p| p.is_object()) else {
         return;
     };
-    if let Some(symbol_def) = property
-        .get_mut("symbolDef")
-        .and_then(|s| s.as_object_mut())
-    {
-        let schema = symbol_def
-            .get("id")
-            .and_then(|i| i.as_str())
-            .and_then(|i| i.strip_prefix(COMPONENT_SCHEMA_PREFIX))
-            .map(|s| s.to_string());
-        if let Some(schema) = schema {
-            match page_link(&schema) {
-                PageLink::Set(target) => {
-                    symbol_def.insert("canonical".to_string(), Value::String(target));
-                }
-                PageLink::Drop => {
-                    symbol_def.remove("canonical");
-                }
-                PageLink::Keep => {}
-            }
-        }
-    }
+    relink_symbol_def(property.get_mut("symbolDef"), page_link);
     relink_rows(property.get_mut("properties"), page_link);
     relink_property(property.get_mut("ofProperty"), page_link);
 }
 
 /// The common `x-docs` keys of an operation or a component schema: `name` →
-/// the reference title, `group` → its sidebar group. Returns whether the ref
+/// the reference title, `group` → its sidebar group. A component schema's
+/// `group` is a RESOURCE group (the one its endpoints sit in), so its page is
+/// nested under `sub_group` inside it — `[group, "Objects"]` — after the
+/// operations, which the navigation lists before any sub-group; an operation
+/// (`sub_group: None`) goes straight into `[group]`. Returns whether the ref
 /// is `hidden`.
-fn apply_docs_meta(r: &mut Value, meta: &Value) -> bool {
+fn apply_docs_meta(r: &mut Value, meta: &Value, sub_group: Option<&str>) -> bool {
     if let Some(name) = meta.get("name").filter(|n| truthy(Some(n))) {
         r["title"] = name.clone();
     }
     if let Some(group) = meta.get("group").filter(|g| truthy(Some(g))) {
         // JS: `if (ref.context) ref.context.group = [meta.group]`
         if r.get("context").map(|c| truthy(Some(c))).unwrap_or(false) {
-            r["context"]["group"] = json!([group]);
+            r["context"]["group"] = match sub_group {
+                Some(sub) => json!([group, sub]),
+                None => json!([group]),
+            };
         }
     }
     truthy(meta.get("hidden"))
@@ -687,6 +714,7 @@ mod tests {
     fn region_after_xdocs(doc: &Value, region: &str) -> Vec<Value> {
         let options = crate::Options {
             regions: Some(vec![region.to_string()]),
+            ..Default::default()
         };
         let refs = oap_schema_to_references(doc, Some(options));
         let mut refs: Vec<Value> = refs
@@ -825,8 +853,10 @@ mod tests {
     }
 
     /// Outside sidebar mode a component schema's `x-docs.name` / `.group`
-    /// retitle and regroup its page; `hidden` drops it; the rest keep the
-    /// defaults (`<Name>` under "Objects").
+    /// retitle and regroup its page — under the "Objects" sub-group of that
+    /// resource group, which the navigation lists after the group's
+    /// operations; `hidden` drops it; the rest keep the defaults (`<Name>`
+    /// under the flat top-level "Objects").
     #[test]
     fn component_xdocs_outside_sidebar_mode() {
         let refs = refs_after_xdocs(&widgets_doc(None));
@@ -839,15 +869,67 @@ mod tests {
                 "PartBase"
             ]
         );
-        assert_eq!(group_of(&refs, "The widget object"), vec!["widgets"]);
-        assert_eq!(group_of(&refs, "The part object"), vec!["parts"]);
+        assert_eq!(
+            group_of(&refs, "The widget object"),
+            vec!["widgets", "Objects"]
+        );
+        assert_eq!(group_of(&refs, "The part object"), vec!["parts", "Objects"]);
         assert_eq!(group_of(&refs, "PartBase"), vec!["Objects"]);
+        // An operation's `x-docs.group` is never nested.
+        assert_eq!(group_of(&refs, "List widgets"), vec!["widgets"]);
         // The canonical is untouched — the page keeps its default URL.
         let widget = refs
             .iter()
             .find(|r| r["title"] == "The widget object")
             .unwrap();
         assert_eq!(widget["canonical"], "objects/Widget");
+    }
+
+    /// The `objectsGroup` option renames both the flat top-level group and
+    /// the sub-group; an empty name means the default.
+    #[test]
+    fn objects_group_option_renames_the_flat_group_and_the_sub_group() {
+        let doc = widgets_doc(None);
+        let options = crate::Options {
+            regions: None,
+            objects_group: Some("Types".into()),
+        };
+        let refs = oap_schema_to_references(&doc, Some(options.clone()));
+        let mut refs: Vec<Value> = refs
+            .iter()
+            .map(|r| serde_json::to_value(r).expect("Reference serializes"))
+            .collect();
+        assert_eq!(group_of(&refs, "Widget"), vec!["Types"]);
+        let (processed, stamps) = DocCtx::preprocess(&doc);
+        let ctx = DocCtx::with_merged_stamps(&processed, &stamps);
+        apply_xdocs_sidebar_with_options(&ctx, &processed, &mut refs, &options);
+        assert_eq!(
+            group_of(&refs, "The widget object"),
+            vec!["widgets", "Types"]
+        );
+        assert_eq!(group_of(&refs, "The part object"), vec!["parts", "Types"]);
+        assert_eq!(group_of(&refs, "PartBase"), vec!["Types"]);
+
+        let empty = crate::Options {
+            regions: None,
+            objects_group: Some(String::new()),
+        };
+        assert_eq!(empty.objects_group(), crate::DEFAULT_OBJECTS_GROUP);
+    }
+
+    /// A sidebar entry's group path is the sidebar's: no sub-group is added
+    /// to a listed object page.
+    #[test]
+    fn sidebar_mode_does_not_nest_listed_object_pages() {
+        let sidebar = json!([{
+            "group": "Reference",
+            "pages": [
+                { "type": "endpoint", "key": "listWidgets" },
+                { "type": "object", "key": "Widget" }
+            ]
+        }]);
+        let refs = refs_after_xdocs(&widgets_doc(Some(sidebar)));
+        assert_eq!(group_of(&refs, "The widget object"), vec!["Reference"]);
     }
 
     /// `x-docs.hidden` on an operation and on a schema both drop the ref.
@@ -915,6 +997,19 @@ mod tests {
             )),
             "{list_links:?}"
         );
+        // The response ROOT links to the hidden envelope: the variant's own
+        // symbolDef loses its canonical too (and keeps its id and label).
+        assert!(
+            list_links.contains(&("#/components/schemas/WidgetList".to_string(), None)),
+            "{list_links:?}"
+        );
+        let list = refs
+            .iter()
+            .find(|r| r["canonical"] == "listWidgets")
+            .unwrap();
+        let root = &list["definitions"][0]["variants"][0]["symbolDef"];
+        assert_eq!(root["label"], "WidgetList");
+        assert!(root.get("canonical").is_none(), "{root}");
     }
 
     /// In sidebar mode a nested link follows the listed page's canonical (a

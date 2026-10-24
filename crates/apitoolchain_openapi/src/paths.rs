@@ -255,8 +255,7 @@ fn request_body_properties(ctx: &ConvCtx, req_body: &Value, content_type: &str) 
 
     let has = |k: &str| schema.get(k).map(|v| !v.is_null()).unwrap_or(false);
     if has("allOf") || has("anyOf") || has("oneOf") {
-        let mut visited = VisitedRefs::new();
-        return schema_object_to_properties(ctx, schema, false, &mut visited);
+        return schema_object_to_properties(ctx, schema, false);
     }
 
     let (schema_object, array) = match schema.get("type").and_then(|t| t.as_str()) {
@@ -268,8 +267,7 @@ fn request_body_properties(ctx: &ConvCtx, req_body: &Value, content_type: &str) 
         return PropsResult::None;
     };
 
-    let mut visited = VisitedRefs::new();
-    let properties = schema_object_to_properties(ctx, schema_object, false, &mut visited);
+    let properties = schema_object_to_properties(ctx, schema_object, false);
     if array {
         let list = match properties {
             PropsResult::List(l) => l,
@@ -398,8 +396,7 @@ fn response_properties(
         }
     }
 
-    let mut visited = VisitedRefs::new();
-    let properties = schema_object_to_properties(ctx, schema_object, true, &mut visited);
+    let properties = schema_object_to_properties(ctx, schema_object, true);
 
     let mut description = String::new();
     if let Some(all_of) = schema_object.get("allOf").and_then(|a| a.as_array()) {
@@ -434,11 +431,17 @@ fn response_properties(
     })
 }
 
-/// `definitionPropertyTypeDef` — the `__internal_getRefPath` symbol link.
+/// `definitionPropertyTypeDef` — the link of a request/response root (an
+/// array's is its items'): the component schema's own link (`id`,
+/// `canonical`, `label`) when the root IS one, else the legacy
+/// `__internal_getRefPath` list of an inline composition.
 pub fn definition_property_type_def(ctx: &ConvCtx, schema: &Value) -> Option<SymbolDef> {
     let mut oas_schema = schema;
     if oas_schema.get("type").and_then(|t| t.as_str()) == Some("array") {
         oas_schema = ctx.resolve(oas_schema.get("items")?);
+    }
+    if let Some(link) = ctx.component_link(oas_schema) {
+        return Some(link);
     }
     let paths = ctx.internal_ref_path(oas_schema)?;
     Some(SymbolDef {

@@ -116,12 +116,14 @@
                   },
                   "symbolDef": {
                     "id": "#/components/schemas/Status",
-                    "canonical": "objects/Status"
+                    "canonical": "objects/Status",
+                    "label": "Status"
                   }
                 },
                 "symbolDef": {
                   "id": "#/components/schemas/Status",
-                  "canonical": "objects/Status"
+                  "canonical": "objects/Status",
+                  "label": "Status"
                 }
               }
             ],
@@ -233,7 +235,12 @@
                 "name": "definitionDescription",
                 "value": ""
               }
-            ]
+            ],
+            "symbolDef": {
+              "id": "#/components/schemas/User",
+              "canonical": "objects/User",
+              "label": "User"
+            }
           }
         ],
         "properties": []
@@ -319,7 +326,12 @@
             "meta": []
           }
         ],
-        "meta": []
+        "meta": [],
+        "symbolDef": {
+          "id": "#/components/schemas/User",
+          "canonical": "objects/User",
+          "label": "User"
+        }
       }
     ],
     "examples": {
@@ -358,7 +370,12 @@
       {
         "title": "Status",
         "properties": [],
-        "meta": []
+        "meta": [],
+        "symbolDef": {
+          "id": "#/components/schemas/Status",
+          "canonical": "objects/Status",
+          "label": "Status"
+        }
       }
     ],
     "examples": {

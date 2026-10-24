@@ -203,7 +203,8 @@
                 },
                 "symbolDef": {
                   "id": "#/components/schemas/RelativeDateString",
-                  "canonical": "objects/RelativeDateString"
+                  "canonical": "objects/RelativeDateString",
+                  "label": "RelativeDateString"
                 }
               }
             ],
@@ -281,7 +282,8 @@
                 },
                 "symbolDef": {
                   "id": "#/components/schemas/RelativeDateString",
-                  "canonical": "objects/RelativeDateString"
+                  "canonical": "objects/RelativeDateString",
+                  "label": "RelativeDateString"
                 }
               }
             ],
@@ -311,7 +313,8 @@
                 "meta": [],
                 "symbolDef": {
                   "id": "#/components/schemas/Pagination",
-                  "canonical": "objects/Pagination"
+                  "canonical": "objects/Pagination",
+                  "label": "Pagination"
                 },
                 "properties": [
                   {
@@ -467,7 +470,8 @@
                       "meta": [],
                       "symbolDef": {
                         "id": "#/components/schemas/SessionVisitorData",
-                        "canonical": "objects/SessionVisitorData"
+                        "canonical": "objects/SessionVisitorData",
+                        "label": "SessionVisitorData"
                       },
                       "properties": [
                         {
@@ -489,7 +493,8 @@
                           "meta": [],
                           "symbolDef": {
                             "id": "#/components/schemas/SessionVisitorDataGeolocation",
-                            "canonical": "objects/SessionVisitorDataGeolocation"
+                            "canonical": "objects/SessionVisitorDataGeolocation",
+                            "label": "SessionVisitorDataGeolocation"
                           },
                           "properties": [
                             {
@@ -557,12 +562,14 @@
                             "meta": [],
                             "symbolDef": {
                               "id": "#/components/schemas/SessionVisitorDataParams",
-                              "canonical": "objects/SessionVisitorDataParams"
+                              "canonical": "objects/SessionVisitorDataParams",
+                              "label": "SessionVisitorDataParams"
                             }
                           },
                           "symbolDef": {
                             "id": "#/components/schemas/SessionVisitorDataParams",
-                            "canonical": "objects/SessionVisitorDataParams"
+                            "canonical": "objects/SessionVisitorDataParams",
+                            "label": "SessionVisitorDataParams"
                           }
                         },
                         {
@@ -586,7 +593,8 @@
                       "meta": [],
                       "symbolDef": {
                         "id": "#/components/schemas/SessionResolutionData",
-                        "canonical": "objects/SessionResolutionData"
+                        "canonical": "objects/SessionResolutionData",
+                        "label": "SessionResolutionData"
                       },
                       "properties": [
                         {
@@ -616,7 +624,8 @@
                       "meta": [],
                       "symbolDef": {
                         "id": "#/components/schemas/SessionOsData",
-                        "canonical": "objects/SessionOsData"
+                        "canonical": "objects/SessionOsData",
+                        "label": "SessionOsData"
                       },
                       "properties": [
                         {
@@ -640,7 +649,8 @@
                       "meta": [],
                       "symbolDef": {
                         "id": "#/components/schemas/SessionBrowserData",
-                        "canonical": "objects/SessionBrowserData"
+                        "canonical": "objects/SessionBrowserData",
+                        "label": "SessionBrowserData"
                       },
                       "properties": [
                         {
@@ -670,7 +680,8 @@
                       "meta": [],
                       "symbolDef": {
                         "id": "#/components/schemas/SessionUTMData",
-                        "canonical": "objects/SessionUTMData"
+                        "canonical": "objects/SessionUTMData",
+                        "label": "SessionUTMData"
                       },
                       "properties": [
                         {
@@ -712,7 +723,8 @@
                       "meta": [],
                       "symbolDef": {
                         "id": "#/components/schemas/SessionPageViewsStatisticsData",
-                        "canonical": "objects/SessionPageViewsStatisticsData"
+                        "canonical": "objects/SessionPageViewsStatisticsData",
+                        "label": "SessionPageViewsStatisticsData"
                       },
                       "properties": [
                         {
@@ -730,7 +742,8 @@
                       "meta": [],
                       "symbolDef": {
                         "id": "#/components/schemas/SessionEventsStatisticsData",
-                        "canonical": "objects/SessionEventsStatisticsData"
+                        "canonical": "objects/SessionEventsStatisticsData",
+                        "label": "SessionEventsStatisticsData"
                       },
                       "properties": [
                         {
@@ -770,12 +783,14 @@
                   "meta": [],
                   "symbolDef": {
                     "id": "#/components/schemas/Session",
-                    "canonical": "objects/Session"
+                    "canonical": "objects/Session",
+                    "label": "Session"
                   }
                 },
                 "symbolDef": {
                   "id": "#/components/schemas/Session",
-                  "canonical": "objects/Session"
+                  "canonical": "objects/Session",
+                  "label": "Session"
                 }
               }
             ],
@@ -792,7 +807,12 @@
                 "name": "definitionDescription",
                 "value": ""
               }
-            ]
+            ],
+            "symbolDef": {
+              "id": "#/components/schemas/GetListSessionsResponse",
+              "canonical": "objects/GetListSessionsResponse",
+              "label": "GetListSessionsResponse"
+            }
           },
           {
             "title": "400",
@@ -856,7 +876,12 @@
                 "name": "definitionDescription",
                 "value": ""
               }
-            ]
+            ],
+            "symbolDef": {
+              "id": "#/components/schemas/ErrorResponse",
+              "canonical": "objects/ErrorResponse",
+              "label": "ErrorResponse"
+            }
           },
           {
             "title": "500",
@@ -920,7 +945,12 @@
                 "name": "definitionDescription",
                 "value": ""
               }
-            ]
+            ],
+            "symbolDef": {
+              "id": "#/components/schemas/ErrorResponse",
+              "canonical": "objects/ErrorResponse",
+              "label": "ErrorResponse"
+            }
           }
         ],
         "properties": []
@@ -1076,12 +1106,14 @@
                     "meta": [],
                     "symbolDef": {
                       "id": "#/components/schemas/AlertEvent",
-                      "canonical": "objects/AlertEvent"
+                      "canonical": "objects/AlertEvent",
+                      "label": "AlertEvent"
                     }
                   },
                   "symbolDef": {
                     "id": "#/components/schemas/AlertEvent",
-                    "canonical": "objects/AlertEvent"
+                    "canonical": "objects/AlertEvent",
+                    "label": "AlertEvent"
                   }
                 },
                 {
@@ -1153,7 +1185,12 @@
                 "name": "definitionDescription",
                 "value": ""
               }
-            ]
+            ],
+            "symbolDef": {
+              "id": "#/components/schemas/Alert",
+              "canonical": "objects/Alert",
+              "label": "Alert"
+            }
           },
           {
             "title": "400",
@@ -1217,7 +1254,12 @@
                 "name": "definitionDescription",
                 "value": ""
               }
-            ]
+            ],
+            "symbolDef": {
+              "id": "#/components/schemas/ErrorResponse",
+              "canonical": "objects/ErrorResponse",
+              "label": "ErrorResponse"
+            }
           },
           {
             "title": "500",
@@ -1281,7 +1323,12 @@
                 "name": "definitionDescription",
                 "value": ""
               }
-            ]
+            ],
+            "symbolDef": {
+              "id": "#/components/schemas/ErrorResponse",
+              "canonical": "objects/ErrorResponse",
+              "label": "ErrorResponse"
+            }
           }
         ],
         "properties": []
@@ -1442,12 +1489,14 @@
                   ],
                   "symbolDef": {
                     "id": "#/components/schemas/AlertEvent",
-                    "canonical": "objects/AlertEvent"
+                    "canonical": "objects/AlertEvent",
+                    "label": "AlertEvent"
                   }
                 },
                 "symbolDef": {
                   "id": "#/components/schemas/AlertEvent",
-                  "canonical": "objects/AlertEvent"
+                  "canonical": "objects/AlertEvent",
+                  "label": "AlertEvent"
                 }
               },
               {
@@ -1506,7 +1555,12 @@
                 "name": "required",
                 "value": "true"
               }
-            ]
+            ],
+            "symbolDef": {
+              "id": "#/components/schemas/AlertCreate",
+              "canonical": "objects/AlertCreate",
+              "label": "AlertCreate"
+            }
           }
         ],
         "properties": [],
@@ -1565,12 +1619,14 @@
                   "meta": [],
                   "symbolDef": {
                     "id": "#/components/schemas/AlertEvent",
-                    "canonical": "objects/AlertEvent"
+                    "canonical": "objects/AlertEvent",
+                    "label": "AlertEvent"
                   }
                 },
                 "symbolDef": {
                   "id": "#/components/schemas/AlertEvent",
-                  "canonical": "objects/AlertEvent"
+                  "canonical": "objects/AlertEvent",
+                  "label": "AlertEvent"
                 }
               },
               {
@@ -1641,7 +1697,12 @@
                 "name": "definitionDescription",
                 "value": ""
               }
-            ]
+            ],
+            "symbolDef": {
+              "id": "#/components/schemas/Alert",
+              "canonical": "objects/Alert",
+              "label": "Alert"
+            }
           },
           {
             "title": "400",
@@ -1705,7 +1766,12 @@
                 "name": "definitionDescription",
                 "value": ""
               }
-            ]
+            ],
+            "symbolDef": {
+              "id": "#/components/schemas/ErrorResponse",
+              "canonical": "objects/ErrorResponse",
+              "label": "ErrorResponse"
+            }
           },
           {
             "title": "500",
@@ -1769,7 +1835,12 @@
                 "name": "definitionDescription",
                 "value": ""
               }
-            ]
+            ],
+            "symbolDef": {
+              "id": "#/components/schemas/ErrorResponse",
+              "canonical": "objects/ErrorResponse",
+              "label": "ErrorResponse"
+            }
           }
         ],
         "properties": []
@@ -1932,12 +2003,14 @@
                   "meta": [],
                   "symbolDef": {
                     "id": "#/components/schemas/AlertEvent",
-                    "canonical": "objects/AlertEvent"
+                    "canonical": "objects/AlertEvent",
+                    "label": "AlertEvent"
                   }
                 },
                 "symbolDef": {
                   "id": "#/components/schemas/AlertEvent",
-                  "canonical": "objects/AlertEvent"
+                  "canonical": "objects/AlertEvent",
+                  "label": "AlertEvent"
                 }
               },
               {
@@ -1988,7 +2061,12 @@
                 "name": "contentType",
                 "value": "application/json"
               }
-            ]
+            ],
+            "symbolDef": {
+              "id": "#/components/schemas/AlertUpdate",
+              "canonical": "objects/AlertUpdate",
+              "label": "AlertUpdate"
+            }
           }
         ],
         "properties": [],
@@ -2047,12 +2125,14 @@
                   "meta": [],
                   "symbolDef": {
                     "id": "#/components/schemas/AlertEvent",
-                    "canonical": "objects/AlertEvent"
+                    "canonical": "objects/AlertEvent",
+                    "label": "AlertEvent"
                   }
                 },
                 "symbolDef": {
                   "id": "#/components/schemas/AlertEvent",
-                  "canonical": "objects/AlertEvent"
+                  "canonical": "objects/AlertEvent",
+                  "label": "AlertEvent"
                 }
               },
               {
@@ -2123,7 +2203,12 @@
                 "name": "definitionDescription",
                 "value": ""
               }
-            ]
+            ],
+            "symbolDef": {
+              "id": "#/components/schemas/Alert",
+              "canonical": "objects/Alert",
+              "label": "Alert"
+            }
           },
           {
             "title": "400",
@@ -2187,7 +2272,12 @@
                 "name": "definitionDescription",
                 "value": ""
               }
-            ]
+            ],
+            "symbolDef": {
+              "id": "#/components/schemas/ErrorResponse",
+              "canonical": "objects/ErrorResponse",
+              "label": "ErrorResponse"
+            }
           },
           {
             "title": "500",
@@ -2251,7 +2341,12 @@
                 "name": "definitionDescription",
                 "value": ""
               }
-            ]
+            ],
+            "symbolDef": {
+              "id": "#/components/schemas/ErrorResponse",
+              "canonical": "objects/ErrorResponse",
+              "label": "ErrorResponse"
+            }
           }
         ],
         "properties": []
@@ -2472,7 +2567,12 @@
                 "name": "definitionDescription",
                 "value": ""
               }
-            ]
+            ],
+            "symbolDef": {
+              "id": "#/components/schemas/ErrorResponse",
+              "canonical": "objects/ErrorResponse",
+              "label": "ErrorResponse"
+            }
           },
           {
             "title": "500",
@@ -2536,7 +2636,12 @@
                 "name": "definitionDescription",
                 "value": ""
               }
-            ]
+            ],
+            "symbolDef": {
+              "id": "#/components/schemas/ErrorResponse",
+              "canonical": "objects/ErrorResponse",
+              "label": "ErrorResponse"
+            }
           }
         ],
         "properties": []
@@ -2716,7 +2821,12 @@
                 "name": "definitionDescription",
                 "value": ""
               }
-            ]
+            ],
+            "symbolDef": {
+              "id": "#/components/schemas/Webhook",
+              "canonical": "objects/Webhook",
+              "label": "Webhook"
+            }
           },
           {
             "title": "400",
@@ -2780,7 +2890,12 @@
                 "name": "definitionDescription",
                 "value": ""
               }
-            ]
+            ],
+            "symbolDef": {
+              "id": "#/components/schemas/ErrorResponse",
+              "canonical": "objects/ErrorResponse",
+              "label": "ErrorResponse"
+            }
           },
           {
             "title": "500",
@@ -2844,7 +2959,12 @@
                 "name": "definitionDescription",
                 "value": ""
               }
-            ]
+            ],
+            "symbolDef": {
+              "id": "#/components/schemas/ErrorResponse",
+              "canonical": "objects/ErrorResponse",
+              "label": "ErrorResponse"
+            }
           }
         ],
         "properties": []
@@ -3000,7 +3120,12 @@
                 "name": "required",
                 "value": "true"
               }
-            ]
+            ],
+            "symbolDef": {
+              "id": "#/components/schemas/WebhookCreate",
+              "canonical": "objects/WebhookCreate",
+              "label": "WebhookCreate"
+            }
           }
         ],
         "properties": [],
@@ -3082,7 +3207,12 @@
                 "name": "definitionDescription",
                 "value": ""
               }
-            ]
+            ],
+            "symbolDef": {
+              "id": "#/components/schemas/Webhook",
+              "canonical": "objects/Webhook",
+              "label": "Webhook"
+            }
           },
           {
             "title": "400",
@@ -3146,7 +3276,12 @@
                 "name": "definitionDescription",
                 "value": ""
               }
-            ]
+            ],
+            "symbolDef": {
+              "id": "#/components/schemas/ErrorResponse",
+              "canonical": "objects/ErrorResponse",
+              "label": "ErrorResponse"
+            }
           },
           {
             "title": "500",
@@ -3210,7 +3345,12 @@
                 "name": "definitionDescription",
                 "value": ""
               }
-            ]
+            ],
+            "symbolDef": {
+              "id": "#/components/schemas/ErrorResponse",
+              "canonical": "objects/ErrorResponse",
+              "label": "ErrorResponse"
+            }
           }
         ],
         "properties": []
@@ -3421,7 +3561,12 @@
                 "name": "required",
                 "value": "true"
               }
-            ]
+            ],
+            "symbolDef": {
+              "id": "#/components/schemas/WebhookUpdate",
+              "canonical": "objects/WebhookUpdate",
+              "label": "WebhookUpdate"
+            }
           }
         ],
         "properties": [],
@@ -3503,7 +3648,12 @@
                 "name": "definitionDescription",
                 "value": ""
               }
-            ]
+            ],
+            "symbolDef": {
+              "id": "#/components/schemas/Webhook",
+              "canonical": "objects/Webhook",
+              "label": "Webhook"
+            }
           },
           {
             "title": "400",
@@ -3567,7 +3717,12 @@
                 "name": "definitionDescription",
                 "value": ""
               }
-            ]
+            ],
+            "symbolDef": {
+              "id": "#/components/schemas/ErrorResponse",
+              "canonical": "objects/ErrorResponse",
+              "label": "ErrorResponse"
+            }
           },
           {
             "title": "404",
@@ -3642,7 +3797,12 @@
                 "name": "definitionDescription",
                 "value": ""
               }
-            ]
+            ],
+            "symbolDef": {
+              "id": "#/components/schemas/ErrorResponse",
+              "canonical": "objects/ErrorResponse",
+              "label": "ErrorResponse"
+            }
           }
         ],
         "properties": []
@@ -3799,7 +3959,12 @@
                 "name": "definitionDescription",
                 "value": ""
               }
-            ]
+            ],
+            "symbolDef": {
+              "id": "#/components/schemas/WebhookDeleted",
+              "canonical": "objects/WebhookDeleted",
+              "label": "WebhookDeleted"
+            }
           },
           {
             "title": "400",
@@ -3863,7 +4028,12 @@
                 "name": "definitionDescription",
                 "value": ""
               }
-            ]
+            ],
+            "symbolDef": {
+              "id": "#/components/schemas/ErrorResponse",
+              "canonical": "objects/ErrorResponse",
+              "label": "ErrorResponse"
+            }
           },
           {
             "title": "404",
@@ -3938,7 +4108,12 @@
                 "name": "definitionDescription",
                 "value": ""
               }
-            ]
+            ],
+            "symbolDef": {
+              "id": "#/components/schemas/ErrorResponse",
+              "canonical": "objects/ErrorResponse",
+              "label": "ErrorResponse"
+            }
           }
         ],
         "properties": []
@@ -4082,7 +4257,12 @@
                 "name": "definitionDescription",
                 "value": ""
               }
-            ]
+            ],
+            "symbolDef": {
+              "id": "#/components/schemas/Website",
+              "canonical": "objects/Website",
+              "label": "Website"
+            }
           },
           {
             "title": "400",
@@ -4146,7 +4326,12 @@
                 "name": "definitionDescription",
                 "value": ""
               }
-            ]
+            ],
+            "symbolDef": {
+              "id": "#/components/schemas/ErrorResponse",
+              "canonical": "objects/ErrorResponse",
+              "label": "ErrorResponse"
+            }
           },
           {
             "title": "500",
@@ -4210,7 +4395,12 @@
                 "name": "definitionDescription",
                 "value": ""
               }
-            ]
+            ],
+            "symbolDef": {
+              "id": "#/components/schemas/ErrorResponse",
+              "canonical": "objects/ErrorResponse",
+              "label": "ErrorResponse"
+            }
           }
         ],
         "properties": []
@@ -4350,7 +4540,12 @@
                 "name": "required",
                 "value": "true"
               }
-            ]
+            ],
+            "symbolDef": {
+              "id": "#/components/schemas/WebsiteCreate",
+              "canonical": "objects/WebsiteCreate",
+              "label": "WebsiteCreate"
+            }
           }
         ],
         "properties": [],
@@ -4460,7 +4655,12 @@
                 "name": "definitionDescription",
                 "value": ""
               }
-            ]
+            ],
+            "symbolDef": {
+              "id": "#/components/schemas/ErrorResponse",
+              "canonical": "objects/ErrorResponse",
+              "label": "ErrorResponse"
+            }
           },
           {
             "title": "500",
@@ -4524,7 +4724,12 @@
                 "name": "definitionDescription",
                 "value": ""
               }
-            ]
+            ],
+            "symbolDef": {
+              "id": "#/components/schemas/ErrorResponse",
+              "canonical": "objects/ErrorResponse",
+              "label": "ErrorResponse"
+            }
           }
         ],
         "properties": []
@@ -4584,7 +4789,12 @@
             ]
           }
         ],
-        "meta": []
+        "meta": [],
+        "symbolDef": {
+          "id": "#/components/schemas/ErrorResponse",
+          "canonical": "objects/ErrorResponse",
+          "label": "ErrorResponse"
+        }
       }
     ],
     "examples": {
@@ -4752,7 +4962,8 @@
             "meta": [],
             "symbolDef": {
               "id": "#/components/schemas/SessionVisitorData",
-              "canonical": "objects/SessionVisitorData"
+              "canonical": "objects/SessionVisitorData",
+              "label": "SessionVisitorData"
             },
             "properties": [
               {
@@ -4774,7 +4985,8 @@
                 "meta": [],
                 "symbolDef": {
                   "id": "#/components/schemas/SessionVisitorDataGeolocation",
-                  "canonical": "objects/SessionVisitorDataGeolocation"
+                  "canonical": "objects/SessionVisitorDataGeolocation",
+                  "label": "SessionVisitorDataGeolocation"
                 },
                 "properties": [
                   {
@@ -4842,12 +5054,14 @@
                   "meta": [],
                   "symbolDef": {
                     "id": "#/components/schemas/SessionVisitorDataParams",
-                    "canonical": "objects/SessionVisitorDataParams"
+                    "canonical": "objects/SessionVisitorDataParams",
+                    "label": "SessionVisitorDataParams"
                   }
                 },
                 "symbolDef": {
                   "id": "#/components/schemas/SessionVisitorDataParams",
-                  "canonical": "objects/SessionVisitorDataParams"
+                  "canonical": "objects/SessionVisitorDataParams",
+                  "label": "SessionVisitorDataParams"
                 }
               },
               {
@@ -4871,7 +5085,8 @@
             "meta": [],
             "symbolDef": {
               "id": "#/components/schemas/SessionResolutionData",
-              "canonical": "objects/SessionResolutionData"
+              "canonical": "objects/SessionResolutionData",
+              "label": "SessionResolutionData"
             },
             "properties": [
               {
@@ -4901,7 +5116,8 @@
             "meta": [],
             "symbolDef": {
               "id": "#/components/schemas/SessionOsData",
-              "canonical": "objects/SessionOsData"
+              "canonical": "objects/SessionOsData",
+              "label": "SessionOsData"
             },
             "properties": [
               {
@@ -4925,7 +5141,8 @@
             "meta": [],
             "symbolDef": {
               "id": "#/components/schemas/SessionBrowserData",
-              "canonical": "objects/SessionBrowserData"
+              "canonical": "objects/SessionBrowserData",
+              "label": "SessionBrowserData"
             },
             "properties": [
               {
@@ -4955,7 +5172,8 @@
             "meta": [],
             "symbolDef": {
               "id": "#/components/schemas/SessionUTMData",
-              "canonical": "objects/SessionUTMData"
+              "canonical": "objects/SessionUTMData",
+              "label": "SessionUTMData"
             },
             "properties": [
               {
@@ -4997,7 +5215,8 @@
             "meta": [],
             "symbolDef": {
               "id": "#/components/schemas/SessionPageViewsStatisticsData",
-              "canonical": "objects/SessionPageViewsStatisticsData"
+              "canonical": "objects/SessionPageViewsStatisticsData",
+              "label": "SessionPageViewsStatisticsData"
             },
             "properties": [
               {
@@ -5015,7 +5234,8 @@
             "meta": [],
             "symbolDef": {
               "id": "#/components/schemas/SessionEventsStatisticsData",
-              "canonical": "objects/SessionEventsStatisticsData"
+              "canonical": "objects/SessionEventsStatisticsData",
+              "label": "SessionEventsStatisticsData"
             },
             "properties": [
               {
@@ -5051,7 +5271,12 @@
             ]
           }
         ],
-        "meta": []
+        "meta": [],
+        "symbolDef": {
+          "id": "#/components/schemas/Session",
+          "canonical": "objects/Session",
+          "label": "Session"
+        }
       }
     ],
     "examples": {
@@ -5109,7 +5334,8 @@
             "meta": [],
             "symbolDef": {
               "id": "#/components/schemas/SessionVisitorDataGeolocation",
-              "canonical": "objects/SessionVisitorDataGeolocation"
+              "canonical": "objects/SessionVisitorDataGeolocation",
+              "label": "SessionVisitorDataGeolocation"
             },
             "properties": [
               {
@@ -5177,12 +5403,14 @@
               "meta": [],
               "symbolDef": {
                 "id": "#/components/schemas/SessionVisitorDataParams",
-                "canonical": "objects/SessionVisitorDataParams"
+                "canonical": "objects/SessionVisitorDataParams",
+                "label": "SessionVisitorDataParams"
               }
             },
             "symbolDef": {
               "id": "#/components/schemas/SessionVisitorDataParams",
-              "canonical": "objects/SessionVisitorDataParams"
+              "canonical": "objects/SessionVisitorDataParams",
+              "label": "SessionVisitorDataParams"
             }
           },
           {
@@ -5198,7 +5426,12 @@
             "meta": []
           }
         ],
-        "meta": []
+        "meta": [],
+        "symbolDef": {
+          "id": "#/components/schemas/SessionVisitorData",
+          "canonical": "objects/SessionVisitorData",
+          "label": "SessionVisitorData"
+        }
       }
     ],
     "examples": {
@@ -5250,7 +5483,12 @@
             "meta": []
           }
         ],
-        "meta": []
+        "meta": [],
+        "symbolDef": {
+          "id": "#/components/schemas/SessionOsData",
+          "canonical": "objects/SessionOsData",
+          "label": "SessionOsData"
+        }
       }
     ],
     "examples": {
@@ -5308,7 +5546,12 @@
             "meta": []
           }
         ],
-        "meta": []
+        "meta": [],
+        "symbolDef": {
+          "id": "#/components/schemas/SessionBrowserData",
+          "canonical": "objects/SessionBrowserData",
+          "label": "SessionBrowserData"
+        }
       }
     ],
     "examples": {
@@ -5378,7 +5621,12 @@
             "meta": []
           }
         ],
-        "meta": []
+        "meta": [],
+        "symbolDef": {
+          "id": "#/components/schemas/SessionUTMData",
+          "canonical": "objects/SessionUTMData",
+          "label": "SessionUTMData"
+        }
       }
     ],
     "examples": {
@@ -5448,7 +5696,12 @@
             "meta": []
           }
         ],
-        "meta": []
+        "meta": [],
+        "symbolDef": {
+          "id": "#/components/schemas/SessionEventsStatisticsData",
+          "canonical": "objects/SessionEventsStatisticsData",
+          "label": "SessionEventsStatisticsData"
+        }
       }
     ],
     "examples": {
@@ -5512,7 +5765,12 @@
             "meta": []
           }
         ],
-        "meta": []
+        "meta": [],
+        "symbolDef": {
+          "id": "#/components/schemas/SessionPageViewLocationData",
+          "canonical": "objects/SessionPageViewLocationData",
+          "label": "SessionPageViewLocationData"
+        }
       }
     ],
     "examples": {
@@ -5564,7 +5822,12 @@
             "meta": []
           }
         ],
-        "meta": []
+        "meta": [],
+        "symbolDef": {
+          "id": "#/components/schemas/SessionPageViewViewPortData",
+          "canonical": "objects/SessionPageViewViewPortData",
+          "label": "SessionPageViewViewPortData"
+        }
       }
     ],
     "examples": {
@@ -5622,7 +5885,12 @@
             "meta": []
           }
         ],
-        "meta": []
+        "meta": [],
+        "symbolDef": {
+          "id": "#/components/schemas/SessionVisitorDataGeolocation",
+          "canonical": "objects/SessionVisitorDataGeolocation",
+          "label": "SessionVisitorDataGeolocation"
+        }
       }
     ],
     "examples": {
@@ -5674,7 +5942,12 @@
             "meta": []
           }
         ],
-        "meta": []
+        "meta": [],
+        "symbolDef": {
+          "id": "#/components/schemas/SessionVisitorDataParams",
+          "canonical": "objects/SessionVisitorDataParams",
+          "label": "SessionVisitorDataParams"
+        }
       }
     ],
     "examples": {
@@ -5732,7 +6005,12 @@
             "meta": []
           }
         ],
-        "meta": []
+        "meta": [],
+        "symbolDef": {
+          "id": "#/components/schemas/SessionResolutionData",
+          "canonical": "objects/SessionResolutionData",
+          "label": "SessionResolutionData"
+        }
       }
     ],
     "examples": {
@@ -5778,7 +6056,12 @@
             "meta": []
           }
         ],
-        "meta": []
+        "meta": [],
+        "symbolDef": {
+          "id": "#/components/schemas/SessionPageViewsStatisticsData",
+          "canonical": "objects/SessionPageViewsStatisticsData",
+          "label": "SessionPageViewsStatisticsData"
+        }
       }
     ],
     "examples": {
@@ -5830,7 +6113,8 @@
             "meta": [],
             "symbolDef": {
               "id": "#/components/schemas/Pagination",
-              "canonical": "objects/Pagination"
+              "canonical": "objects/Pagination",
+              "label": "Pagination"
             },
             "properties": [
               {
@@ -5986,7 +6270,8 @@
                   "meta": [],
                   "symbolDef": {
                     "id": "#/components/schemas/SessionVisitorData",
-                    "canonical": "objects/SessionVisitorData"
+                    "canonical": "objects/SessionVisitorData",
+                    "label": "SessionVisitorData"
                   },
                   "properties": [
                     {
@@ -6008,7 +6293,8 @@
                       "meta": [],
                       "symbolDef": {
                         "id": "#/components/schemas/SessionVisitorDataGeolocation",
-                        "canonical": "objects/SessionVisitorDataGeolocation"
+                        "canonical": "objects/SessionVisitorDataGeolocation",
+                        "label": "SessionVisitorDataGeolocation"
                       },
                       "properties": [
                         {
@@ -6076,12 +6362,14 @@
                         "meta": [],
                         "symbolDef": {
                           "id": "#/components/schemas/SessionVisitorDataParams",
-                          "canonical": "objects/SessionVisitorDataParams"
+                          "canonical": "objects/SessionVisitorDataParams",
+                          "label": "SessionVisitorDataParams"
                         }
                       },
                       "symbolDef": {
                         "id": "#/components/schemas/SessionVisitorDataParams",
-                        "canonical": "objects/SessionVisitorDataParams"
+                        "canonical": "objects/SessionVisitorDataParams",
+                        "label": "SessionVisitorDataParams"
                       }
                     },
                     {
@@ -6105,7 +6393,8 @@
                   "meta": [],
                   "symbolDef": {
                     "id": "#/components/schemas/SessionResolutionData",
-                    "canonical": "objects/SessionResolutionData"
+                    "canonical": "objects/SessionResolutionData",
+                    "label": "SessionResolutionData"
                   },
                   "properties": [
                     {
@@ -6135,7 +6424,8 @@
                   "meta": [],
                   "symbolDef": {
                     "id": "#/components/schemas/SessionOsData",
-                    "canonical": "objects/SessionOsData"
+                    "canonical": "objects/SessionOsData",
+                    "label": "SessionOsData"
                   },
                   "properties": [
                     {
@@ -6159,7 +6449,8 @@
                   "meta": [],
                   "symbolDef": {
                     "id": "#/components/schemas/SessionBrowserData",
-                    "canonical": "objects/SessionBrowserData"
+                    "canonical": "objects/SessionBrowserData",
+                    "label": "SessionBrowserData"
                   },
                   "properties": [
                     {
@@ -6189,7 +6480,8 @@
                   "meta": [],
                   "symbolDef": {
                     "id": "#/components/schemas/SessionUTMData",
-                    "canonical": "objects/SessionUTMData"
+                    "canonical": "objects/SessionUTMData",
+                    "label": "SessionUTMData"
                   },
                   "properties": [
                     {
@@ -6231,7 +6523,8 @@
                   "meta": [],
                   "symbolDef": {
                     "id": "#/components/schemas/SessionPageViewsStatisticsData",
-                    "canonical": "objects/SessionPageViewsStatisticsData"
+                    "canonical": "objects/SessionPageViewsStatisticsData",
+                    "label": "SessionPageViewsStatisticsData"
                   },
                   "properties": [
                     {
@@ -6249,7 +6542,8 @@
                   "meta": [],
                   "symbolDef": {
                     "id": "#/components/schemas/SessionEventsStatisticsData",
-                    "canonical": "objects/SessionEventsStatisticsData"
+                    "canonical": "objects/SessionEventsStatisticsData",
+                    "label": "SessionEventsStatisticsData"
                   },
                   "properties": [
                     {
@@ -6289,16 +6583,23 @@
               "meta": [],
               "symbolDef": {
                 "id": "#/components/schemas/Session",
-                "canonical": "objects/Session"
+                "canonical": "objects/Session",
+                "label": "Session"
               }
             },
             "symbolDef": {
               "id": "#/components/schemas/Session",
-              "canonical": "objects/Session"
+              "canonical": "objects/Session",
+              "label": "Session"
             }
           }
         ],
-        "meta": []
+        "meta": [],
+        "symbolDef": {
+          "id": "#/components/schemas/GetListSessionsResponse",
+          "canonical": "objects/GetListSessionsResponse",
+          "label": "GetListSessionsResponse"
+        }
       }
     ],
     "examples": {
@@ -6350,7 +6651,12 @@
             "meta": []
           }
         ],
-        "meta": []
+        "meta": [],
+        "symbolDef": {
+          "id": "#/components/schemas/Pagination",
+          "canonical": "objects/Pagination",
+          "label": "Pagination"
+        }
       }
     ],
     "examples": {
@@ -6389,7 +6695,12 @@
       {
         "title": "RelativeDateString",
         "properties": [],
-        "meta": []
+        "meta": [],
+        "symbolDef": {
+          "id": "#/components/schemas/RelativeDateString",
+          "canonical": "objects/RelativeDateString",
+          "label": "RelativeDateString"
+        }
       }
     ],
     "examples": {
@@ -6459,12 +6770,14 @@
               ],
               "symbolDef": {
                 "id": "#/components/schemas/AlertEvent",
-                "canonical": "objects/AlertEvent"
+                "canonical": "objects/AlertEvent",
+                "label": "AlertEvent"
               }
             },
             "symbolDef": {
               "id": "#/components/schemas/AlertEvent",
-              "canonical": "objects/AlertEvent"
+              "canonical": "objects/AlertEvent",
+              "label": "AlertEvent"
             }
           },
           {
@@ -6514,7 +6827,12 @@
             "meta": []
           }
         ],
-        "meta": []
+        "meta": [],
+        "symbolDef": {
+          "id": "#/components/schemas/AlertCreate",
+          "canonical": "objects/AlertCreate",
+          "label": "AlertCreate"
+        }
       }
     ],
     "examples": {
@@ -6586,12 +6904,14 @@
               "meta": [],
               "symbolDef": {
                 "id": "#/components/schemas/AlertEvent",
-                "canonical": "objects/AlertEvent"
+                "canonical": "objects/AlertEvent",
+                "label": "AlertEvent"
               }
             },
             "symbolDef": {
               "id": "#/components/schemas/AlertEvent",
-              "canonical": "objects/AlertEvent"
+              "canonical": "objects/AlertEvent",
+              "label": "AlertEvent"
             }
           },
           {
@@ -6637,7 +6957,12 @@
             "meta": []
           }
         ],
-        "meta": []
+        "meta": [],
+        "symbolDef": {
+          "id": "#/components/schemas/AlertUpdate",
+          "canonical": "objects/AlertUpdate",
+          "label": "AlertUpdate"
+        }
       }
     ],
     "examples": {
@@ -6689,7 +7014,12 @@
             "meta": []
           }
         ],
-        "meta": []
+        "meta": [],
+        "symbolDef": {
+          "id": "#/components/schemas/AlertEvent",
+          "canonical": "objects/AlertEvent",
+          "label": "AlertEvent"
+        }
       }
     ],
     "examples": {
@@ -6767,12 +7097,14 @@
               "meta": [],
               "symbolDef": {
                 "id": "#/components/schemas/AlertEvent",
-                "canonical": "objects/AlertEvent"
+                "canonical": "objects/AlertEvent",
+                "label": "AlertEvent"
               }
             },
             "symbolDef": {
               "id": "#/components/schemas/AlertEvent",
-              "canonical": "objects/AlertEvent"
+              "canonical": "objects/AlertEvent",
+              "label": "AlertEvent"
             }
           },
           {
@@ -6830,7 +7162,12 @@
             "meta": []
           }
         ],
-        "meta": []
+        "meta": [],
+        "symbolDef": {
+          "id": "#/components/schemas/Alert",
+          "canonical": "objects/Alert",
+          "label": "Alert"
+        }
       }
     ],
     "examples": {
@@ -6882,7 +7219,12 @@
             "meta": []
           }
         ],
-        "meta": []
+        "meta": [],
+        "symbolDef": {
+          "id": "#/components/schemas/AlertDeleted",
+          "canonical": "objects/AlertDeleted",
+          "label": "AlertDeleted"
+        }
       }
     ],
     "examples": {
@@ -6921,7 +7263,12 @@
       {
         "title": "AlertProviderEnum",
         "properties": [],
-        "meta": []
+        "meta": [],
+        "symbolDef": {
+          "id": "#/components/schemas/AlertProviderEnum",
+          "canonical": "objects/AlertProviderEnum",
+          "label": "AlertProviderEnum"
+        }
       }
     ],
     "examples": {
@@ -6977,7 +7324,12 @@
             ]
           }
         ],
-        "meta": []
+        "meta": [],
+        "symbolDef": {
+          "id": "#/components/schemas/WebhookCreate",
+          "canonical": "objects/WebhookCreate",
+          "label": "WebhookCreate"
+        }
       }
     ],
     "examples": {
@@ -7050,7 +7402,12 @@
             ]
           }
         ],
-        "meta": []
+        "meta": [],
+        "symbolDef": {
+          "id": "#/components/schemas/WebhookUpdate",
+          "canonical": "objects/WebhookUpdate",
+          "label": "WebhookUpdate"
+        }
       }
     ],
     "examples": {
@@ -7138,7 +7495,12 @@
             "meta": []
           }
         ],
-        "meta": []
+        "meta": [],
+        "symbolDef": {
+          "id": "#/components/schemas/Webhook",
+          "canonical": "objects/Webhook",
+          "label": "Webhook"
+        }
       }
     ],
     "examples": {
@@ -7190,7 +7552,12 @@
             "meta": []
           }
         ],
-        "meta": []
+        "meta": [],
+        "symbolDef": {
+          "id": "#/components/schemas/WebhookDeleted",
+          "canonical": "objects/WebhookDeleted",
+          "label": "WebhookDeleted"
+        }
       }
     ],
     "examples": {
@@ -7242,7 +7609,12 @@
             "meta": []
           }
         ],
-        "meta": []
+        "meta": [],
+        "symbolDef": {
+          "id": "#/components/schemas/Website",
+          "canonical": "objects/Website",
+          "label": "Website"
+        }
       }
     ],
     "examples": {
@@ -7299,7 +7671,12 @@
             "meta": []
           }
         ],
-        "meta": []
+        "meta": [],
+        "symbolDef": {
+          "id": "#/components/schemas/WebsiteCreate",
+          "canonical": "objects/WebsiteCreate",
+          "label": "WebsiteCreate"
+        }
       }
     ],
     "examples": {

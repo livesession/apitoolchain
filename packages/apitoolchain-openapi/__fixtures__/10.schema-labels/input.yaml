@@ -1,0 +1,216 @@
+# Schema link labels — every `symbolDef` that points at a component schema
+# carries `label`: the schema's constant `object` value (a single-value `enum`
+# or a `const`, on the schema or on an `allOf` member), else the schema name.
+# - `Widget` → `widget`; `Part` (a `const`) → `part`; `Assembly` (the tag on an
+#   `allOf` member) → `assembly`; `Material` (no `object` property) → `Material`;
+#   `Shape` (a multi-value `object` enum) → `Shape`
+# - `WidgetList.data` is an array of widgets: the row and its `ofProperty` both
+#   carry `widget` — the label a renderer prints instead of `object`
+# - `Slot.widget` is a nullable widget (`allOf: [$ref]` + `nullable`), `Slot.spare`
+#   a union with a null branch: the wrapper row / the widget branch carry `widget`
+# - the request/response roots link too: `$ref Widget` → `widget`, an array of
+#   materials → `Material`; an inline root has no link
+# - each component page's definition carries the page's own link and label
+openapi: 3.0.3
+info:
+  title: Widgets API
+  version: 1.0.0
+servers:
+  - url: https://api.example.com/v1
+tags:
+  - name: widgets
+  - name: slots
+paths:
+  /widgets:
+    get:
+      operationId: listWidgets
+      summary: List widgets
+      tags: [widgets]
+      responses:
+        '200':
+          description: A page of widgets.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WidgetList'
+    post:
+      operationId: createWidget
+      summary: Create widget
+      tags: [widgets]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Widget'
+      responses:
+        '201':
+          description: The widget that was created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Widget'
+  /widgets/{widgetId}:
+    get:
+      operationId: getWidget
+      summary: Retrieve widget
+      tags: [widgets]
+      parameters:
+        - name: widgetId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The widget.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Widget'
+  /materials:
+    get:
+      operationId: listMaterials
+      summary: List materials
+      tags: [widgets]
+      responses:
+        '200':
+          description: Every material.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Material'
+  /slots/{slotId}:
+    get:
+      operationId: getSlot
+      summary: Retrieve slot
+      tags: [slots]
+      parameters:
+        - name: slotId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The slot.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Slot'
+        '404':
+          description: No such slot.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+components:
+  schemas:
+    Widget:
+      type: object
+      description: A widget.
+      required: [object, id]
+      properties:
+        object:
+          type: string
+          enum: [widget]
+          description: The object type, always `widget`.
+        id:
+          type: string
+          description: Unique identifier for the widget.
+        material:
+          $ref: '#/components/schemas/Material'
+        shape:
+          $ref: '#/components/schemas/Shape'
+        parts:
+          type: array
+          description: The parts the widget is made of.
+          items:
+            $ref: '#/components/schemas/Part'
+        assembly:
+          $ref: '#/components/schemas/Assembly'
+    WidgetList:
+      type: object
+      required: [object, data]
+      properties:
+        object:
+          type: string
+          enum: [list]
+          description: The object type, always `list`.
+        data:
+          type: array
+          description: The widgets on this page.
+          items:
+            $ref: '#/components/schemas/Widget'
+    Material:
+      type: object
+      description: What a widget is made of.
+      properties:
+        name:
+          type: string
+          description: The material's name.
+    Shape:
+      type: object
+      description: The outline of a widget.
+      properties:
+        object:
+          type: string
+          enum: [round, square]
+          description: Not a constant — two values.
+    Part:
+      type: object
+      required: [object, sku]
+      properties:
+        object:
+          type: string
+          const: part
+          description: The object type, always `part`.
+        sku:
+          type: string
+          description: The part's stock-keeping unit.
+    AssemblyBase:
+      type: object
+      required: [id]
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the assembly.
+    Assembly:
+      description: An assembly of parts.
+      allOf:
+        - $ref: '#/components/schemas/AssemblyBase'
+        - type: object
+          required: [object]
+          properties:
+            object:
+              type: string
+              enum: [assembly]
+              description: The object type, always `assembly`.
+    Slot:
+      type: object
+      description: A slot a widget can sit in.
+      required: [object, id]
+      properties:
+        object:
+          type: string
+          enum: [slot]
+          description: The object type, always `slot`.
+        id:
+          type: string
+        widget:
+          allOf:
+            - $ref: '#/components/schemas/Widget'
+          nullable: true
+          description: The widget in the slot, if any.
+        spare:
+          description: A spare widget, or nothing.
+          anyOf:
+            - $ref: '#/components/schemas/Widget'
+            - type: string
+              nullable: true
+              description: Nothing.

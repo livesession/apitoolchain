@@ -58,11 +58,17 @@ pub enum PropsResult {
     None,
 }
 
+/// Every top-level row gets its OWN visited map: the TS passes `visitedRefs`
+/// through undefined, so each `schemaObjectToUniformDefinitionProperty` call
+/// from here allocates a fresh `Map` and a snapshot never crosses from one row
+/// to the next. One map shared by all rows handed the second row that reached
+/// a stamped schema the first row's snapshot (`parts` under a union branch
+/// came back as the `parts` built under an `allOf` wrapper — children instead
+/// of an `ofProperty`).
 pub fn schema_object_to_properties(
     ctx: &ConvCtx,
     schema_object: &Value,
     root_property: bool,
-    visited: &mut VisitedRefs,
 ) -> PropsResult {
     let schema_object = ctx.resolve(schema_object);
     let mut properties: Vec<DefinitionProperty> = Vec::new();
@@ -70,9 +76,15 @@ pub fn schema_object_to_properties(
     let has = |k: &str| schema_object.get(k).map(|v| !v.is_null()).unwrap_or(false);
 
     if has("anyOf") || has("oneOf") {
-        if let Some(property) =
-            schema_object_to_property(ctx, "", schema_object, false, false, visited, None)
-        {
+        if let Some(property) = schema_object_to_property(
+            ctx,
+            "",
+            schema_object,
+            false,
+            false,
+            &mut VisitedRefs::new(),
+            None,
+        ) {
             if root_property {
                 return PropsResult::Single(Box::new(property));
             }
@@ -100,7 +112,7 @@ pub fn schema_object_to_properties(
                         prop_schema,
                         required,
                         array_of,
-                        visited,
+                        &mut VisitedRefs::new(),
                         None,
                     ) {
                         merge_or_push(&mut properties, prop_name, property);
@@ -123,7 +135,7 @@ pub fn schema_object_to_properties(
                 prop_schema,
                 required,
                 array_of,
-                visited,
+                &mut VisitedRefs::new(),
                 None,
             ) {
                 properties.push(property);
@@ -800,6 +812,147 @@ mod tests {
             StrOrList::One(s) => Some(s.as_str()),
             StrOrList::Many(_) => None,
         }
+    }
+
+    fn label_of(p: &DefinitionProperty) -> Option<&str> {
+        p.symbol_def.as_ref()?.label.as_deref()
+    }
+
+    /// Every link to a component schema carries a `label`: the schema's
+    /// constant `object` value (a single-value enum or a `const`, on the
+    /// schema or on an `allOf` member), else the schema name — on nested
+    /// rows, an array's items, a nullable wrapper, a union's variants, the
+    /// request/response roots and the component pages themselves.
+    #[test]
+    fn schema_links_carry_the_schema_label() {
+        let doc = json!({
+            "openapi": "3.0.3",
+            "info": { "title": "Widgets", "version": "1.0.0" },
+            "paths": {
+                "/widgets/{id}": {
+                    "get": {
+                        "operationId": "getWidget",
+                        "responses": { "200": { "description": "ok", "content": { "application/json": {
+                            "schema": { "$ref": "#/components/schemas/Widget" }
+                        } } } }
+                    }
+                },
+                "/materials": {
+                    "get": {
+                        "operationId": "listMaterials",
+                        "responses": { "200": { "description": "ok", "content": { "application/json": {
+                            "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Material" } }
+                        } } } }
+                    },
+                    "post": {
+                        "operationId": "createMaterial",
+                        "requestBody": { "content": { "application/json": {
+                            "schema": { "$ref": "#/components/schemas/Material" }
+                        } } },
+                        "responses": { "200": { "description": "ok", "content": { "application/json": {
+                            "schema": { "type": "object", "properties": { "ok": { "type": "boolean" } } }
+                        } } } }
+                    }
+                }
+            },
+            "components": { "schemas": {
+                "Widget": {
+                    "type": "object",
+                    "properties": {
+                        "object": { "type": "string", "enum": ["widget"] },
+                        "material": { "$ref": "#/components/schemas/Material" },
+                        "parts": { "type": "array", "items": { "$ref": "#/components/schemas/Part" } },
+                        "assembly": { "$ref": "#/components/schemas/Assembly" },
+                        "shape": { "$ref": "#/components/schemas/Shape" },
+                        "rank": { "$ref": "#/components/schemas/Rank" },
+                        "spare": { "allOf": [{ "$ref": "#/components/schemas/Part" }], "nullable": true },
+                        "backup": { "anyOf": [{ "$ref": "#/components/schemas/Part" }, { "type": "string", "nullable": true }] }
+                    }
+                },
+                "Material": { "type": "object", "properties": { "name": { "type": "string" } } },
+                "Part": { "type": "object", "properties": { "object": { "type": "string", "const": "part" } } },
+                "AssemblyBase": { "type": "object", "properties": { "id": { "type": "string" } } },
+                "Assembly": { "allOf": [
+                    { "$ref": "#/components/schemas/AssemblyBase" },
+                    { "type": "object", "properties": { "object": { "type": "string", "enum": ["assembly"] } } }
+                ] },
+                // A multi-value enum is not a constant; neither is a number.
+                "Shape": { "type": "object", "properties": { "object": { "type": "string", "enum": ["round", "square"] } } },
+                "Rank": { "type": "object", "properties": { "object": { "type": "integer", "enum": [1] } } }
+            } }
+        });
+        let refs = oap_schema_to_references(&doc, None);
+        let page = |canonical: &str| {
+            refs.iter()
+                .find(|r| r.canonical == canonical)
+                .unwrap_or_else(|| panic!("no page {canonical}"))
+        };
+
+        let widget = page("objects/Widget");
+        let rows = &widget.definitions[0].properties;
+        assert_eq!(label_of(row(rows, "material")), Some("Material"));
+        assert_eq!(label_of(row(rows, "assembly")), Some("assembly"));
+        assert_eq!(label_of(row(rows, "shape")), Some("Shape"));
+        assert_eq!(label_of(row(rows, "rank")), Some("Rank"));
+        let parts = row(rows, "parts");
+        assert_eq!(label_of(parts), Some("part"));
+        assert_eq!(label_of(parts.of_property.as_ref().unwrap()), Some("part"));
+        let spare = row(rows, "spare");
+        assert_eq!(spare.property_type, "object");
+        assert_eq!(meta_value(spare, "nullable"), Some(&json!("true")));
+        assert_eq!(label_of(spare), Some("part"));
+        let backup = row(rows, "backup");
+        assert_eq!(backup.property_type, "$$union");
+        assert!(backup.symbol_def.is_none());
+        assert_eq!(
+            label_of(&backup.properties.as_ref().unwrap()[0]),
+            Some("part")
+        );
+
+        // The component pages' own links.
+        let own = |canonical: &str| {
+            page(canonical).definitions[0]
+                .symbol_def
+                .clone()
+                .unwrap_or_else(|| panic!("no symbolDef on {canonical}"))
+        };
+        assert_eq!(own("objects/Widget").label.as_deref(), Some("widget"));
+        assert_eq!(
+            own("objects/Widget").canonical,
+            Some(StrOrList::One("objects/Widget".into()))
+        );
+        assert_eq!(own("objects/Material").label.as_deref(), Some("Material"));
+        assert_eq!(own("objects/Assembly").label.as_deref(), Some("assembly"));
+
+        // The request/response roots: a `$ref` root, an array root (its
+        // items'), and an inline root (no component → no link).
+        let root = |canonical: &str, title: &str| {
+            page(canonical)
+                .definitions
+                .iter()
+                .find(|d| d.title == title)
+                .unwrap()
+                .variants
+                .as_ref()
+                .unwrap()[0]
+                .symbol_def
+                .clone()
+        };
+        let get = root("getWidget", "Response").expect("a link");
+        assert_eq!(get.label.as_deref(), Some("widget"));
+        assert_eq!(get.canonical, Some(StrOrList::One("objects/Widget".into())));
+        assert_eq!(
+            root("listMaterials", "Response").unwrap().label.as_deref(),
+            Some("Material")
+        );
+        assert_eq!(
+            root("createMaterial", "Request body")
+                .unwrap()
+                .label
+                .as_deref(),
+            Some("Material")
+        );
+        assert!(root("createMaterial", "Response").is_none());
     }
 
     /// A single-value enum and a `const` both carry `{ name: "const", value }`

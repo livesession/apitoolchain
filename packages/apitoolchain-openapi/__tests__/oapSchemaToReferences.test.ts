@@ -76,20 +76,24 @@ const tests: {
         plugins: [
             uniformPluginXDocsSidebar
         ]
+    },
+    {
+        name: "10.schema-labels",
+        description: "schema link labels: the constant `object` value, else the schema name; the request/response roots",
     }
 ]
 
-// Fixtures whose oracles carry the docs-metadata output (the `const` meta,
-// `symbolDef`s on nested properties, the allOf fold): a published
-// @xyd-js/native built from a core that predates it cannot produce them, so
-// under the NATIVE path they run only once the addon has caught up. The gate is
-// a feature probe, not a version pin — it lifts by itself the moment a native
-// core that produces this core's 9.schema-links rows resolves (every feature
-// at once: the `const` meta, a nested link, the scalar fold, the merged rows
-// of a composed member — an addon carrying only some of them stays gated);
-// until then these cases are exercised on the JS impl (XYD_NATIVE=0) and the
-// Rust core by `cargo test` (tests/parity.rs).
-const DOCS_METADATA_FIXTURES = new Set(["-3.random", "8.enums", "9.schema-links", "5.xdocs.objects"])
+// Every oracle carries the docs-metadata output (the `const` meta, `symbolDef`s
+// on nested properties and on the request/response roots, their `label`, the
+// allOf fold): a published @xyd-js/native built from a core that predates it
+// cannot produce them, so under the NATIVE path the matrix runs only once the
+// addon has caught up. The gate is a feature probe, not a version pin — it
+// lifts by itself the moment a native core that produces this core's
+// 9.schema-links rows resolves (every feature at once: the `const` meta, a
+// nested link with its label, the scalar fold, the merged rows of a composed
+// member, the response root's link — an addon carrying only some of them stays
+// gated); until then the matrix is exercised on the JS impl (XYD_NATIVE=0) and
+// the Rust core by `cargo test` (tests/parity.rs).
 const nativeHasDocsMetadata = (() => {
     if (typeof native?.oapSchemaToReferencesFromFile !== "function") {
         return false
@@ -99,10 +103,14 @@ const nativeHasDocsMetadata = (() => {
         const refs: any[] = JSON.parse(native.oapSchemaToReferencesFromFile(probe))
         const rows: any[] = refs.find(r => r.canonical === "objects/Widget")?.definitions?.[0]?.properties ?? []
         const row = (name: string) => rows.find(p => p.name === name)
+        const getWidget = refs.find(r => r.canonical === "getWidget")
+        const response = getWidget?.definitions?.find((d: any) => d.title === "Response")?.variants?.[0]
         return !!row("object")?.meta?.some((m: any) => m.name === "const")
             && row("definition")?.symbolDef?.canonical === "objects/WidgetDefinition"
+            && row("definition")?.symbolDef?.label === "WidgetDefinition"
             && row("id")?.type === "string"
             && row("assembly")?.properties?.map((p: any) => p.name).join(",") === "label,id,sku"
+            && response?.symbolDef?.label === "widget"
     } catch {
         return false
     }
@@ -123,7 +131,7 @@ describe("oapSchemaToReferences", {timeout: 60000}, () => {
         const nativePath = process.env.XYD_NATIVE !== "0"
         const skipNative = nativePath && (
             test.name === "-2.complex.openai"
-            || (DOCS_METADATA_FIXTURES.has(test.name) && !!native && !nativeHasDocsMetadata)
+            || (!!native && !nativeHasDocsMetadata)
         );
         (skipNative ? it.skip : it)(`[${test.name}]: ${test.description}`, async () => {
             await testOasSchemaToReferences(test.name, test.options, test.plugins, test.url);

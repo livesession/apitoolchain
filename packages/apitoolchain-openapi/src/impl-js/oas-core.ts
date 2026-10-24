@@ -3,11 +3,13 @@ import {OpenAPIV3} from "openapi-types";
 import {
     DEFINED_DEFINITION_PROPERTY_TYPE,
     DefinitionProperty,
-    DefinitionPropertyMeta
+    DefinitionPropertyMeta,
+    SymbolDef
 } from "@xyd-js/uniform";
 
 import {OasJSONSchema} from "./types";
 import {BUILT_IN_PROPERTIES} from "./const";
+import {componentLink} from "./component-links";
 
 export function schemaObjectToUniformDefinitionProperties(
     schemaObject: OpenAPIV3.ReferenceObject | OpenAPIV3.SchemaObject,
@@ -165,6 +167,12 @@ export function schemaObjectToUniformDefinitionProperty(
         visitedRefs.set(refPath, parentProperty);
     }
 
+    // A property whose schema IS a component schema links to that schema's
+    // page (`objects/<Name>`) — the same link the SDK-type pass emits for
+    // nested types. Identity-based (component-links.ts), so a schema that
+    // merely contains a `$ref` never links to its member.
+    const link = componentLink(schema)
+
     // Handle anyOf case
     if ('anyOf' in schema && schema.anyOf) {
         const componentPaths: string[] = []
@@ -206,12 +214,15 @@ export function schemaObjectToUniformDefinitionProperty(
         const oasSchema = schema as OasJSONSchema;
         oasSchema.__internal_getRefPath = () => componentPaths
 
-        const prop = {
+        const prop: DefinitionProperty = {
             name,
             type: DEFINED_DEFINITION_PROPERTY_TYPE.UNION,
             description: schema.description || "",
             properties
         };
+        if (link) {
+            prop.symbolDef = link
+        }
 
         if (refPath) {
             visitedRefs.set(refPath, prop);
@@ -269,6 +280,9 @@ export function schemaObjectToUniformDefinitionProperty(
             properties,
             meta,
         };
+        if (link) {
+            prop.symbolDef = link
+        }
 
         if (refPath) {
             visitedRefs.set(refPath, prop);
@@ -280,6 +294,13 @@ export function schemaObjectToUniformDefinitionProperty(
     // Handle allOf case
     if ('allOf' in schema && schema.allOf) {
         const componentPaths: string[] = []
+        // Whether the wrapper declares a `type` of its own; when it does not, a
+        // folded scalar member decides the row's type (see `foldMember`).
+        const wrapperTyped = typeof schema.type === "string" && !!schema.type
+        // The members that are component schemas — ONE such member links the
+        // row to that schema's page (`id: allOf: [$ref WidgetId]`); two or more
+        // are a composition with no single page to point at.
+        const memberLinks: SymbolDef[] = []
         const mergedProperty: DefinitionProperty = {
             name,
             type: schema.type || "",
@@ -287,11 +308,19 @@ export function schemaObjectToUniformDefinitionProperty(
             properties: [],
             meta
         };
+        if (link) {
+            mergedProperty.symbolDef = link
+        }
 
         for (const variantSchema of schema.allOf) {
             if ('$ref' in variantSchema) {
                 console.warn("$ref is not supported in allOf schemas");
                 continue; // Skip reference objects
+            }
+
+            const memberLink = componentLink(variantSchema)
+            if (memberLink) {
+                memberLinks.push(memberLink)
             }
 
             const oasSchema = variantSchema as OasJSONSchema;
@@ -332,20 +361,8 @@ export function schemaObjectToUniformDefinitionProperty(
                     );
 
                     if (property && mergedProperty.properties) {
-                        // Check if property already exists and merge if needed
-                        const existingPropertyIndex = mergedProperty.properties.findIndex(p => p.name === propName);
-                        if (existingPropertyIndex >= 0) {
-                            // Merge properties if they exist in multiple schemas
-                            const existingProperty = mergedProperty.properties[existingPropertyIndex];
-                            mergedProperty.properties[existingPropertyIndex] = {
-                                ...existingProperty,
-                                ...property,
-                                description: property.description || existingProperty.description || "",
-                                meta: [...(existingProperty.meta || []), ...(property.meta || [])],
-                            };
-                        } else {
-                            mergedProperty.properties.push(property);
-                        }
+                        // A row declared by more than one member is merged.
+                        mergeOrPush(mergedProperty.properties, property)
                     }
                 }
             } else {
@@ -359,19 +376,17 @@ export function schemaObjectToUniformDefinitionProperty(
                 if (property) {
                     if (isOfType(property.type)) {
                         mergedProperty.ofProperty = property
+                    } else if (mergedProperty.ofProperty) {
+                        mergedProperty.description = property.description || mergedProperty.ofProperty.description || ""
                     } else {
-                        if (!mergedProperty.properties?.length) {
-                            mergedProperty.properties = []
-                        }
-
-                        if (mergedProperty.ofProperty) {
-                            mergedProperty.description = property.description || mergedProperty.ofProperty.description || ""
-                        } else {
-                            mergedProperty.properties.push(property);
-                        }
+                        foldMember(mergedProperty, property, wrapperTyped)
                     }
                 }
             }
+        }
+
+        if (!mergedProperty.symbolDef && memberLinks.length === 1) {
+            mergedProperty.symbolDef = memberLinks[0]
         }
 
         const oasSchema = schema as OasJSONSchema;
@@ -389,10 +404,19 @@ export function schemaObjectToUniformDefinitionProperty(
         description: schema.description || "",
         meta,
     };
+    if (link) {
+        property.symbolDef = link
+    }
 
-    if (schema.enum) {
+    // enum → $$enum with value-named child properties. A `const` (OpenAPI 3.1)
+    // is a one-value enum: same children, same `enum-type`, plus the `const`
+    // meta a single-value enum carries too.
+    const enumValues: any[] | undefined = schema.enum
+        ?? ("const" in schema ? [(schema as any).const] : undefined)
+
+    if (enumValues) {
         const enumProperties = schemaObjectToUniformDefinitionProperties({
-            properties: schema.enum.reduce((acc, enumName) => ({
+            properties: enumValues.reduce((acc, enumName) => ({
                 ...acc,
                 [enumName]: {
                     type: schema.type,
@@ -407,6 +431,16 @@ export function schemaObjectToUniformDefinitionProperty(
             name: "enum-type",
             value: schema.type
         })
+        // The constant's value: `{ name: "const", value: <literal> }` for a
+        // single-value enum or a `const`, beside the `$$enum` children a
+        // renderer already knows. Scalars stay what they are; an object or
+        // array literal is JSON-stringified, like the `example` meta.
+        if (enumValues.length === 1) {
+            meta.push({
+                name: "const",
+                value: literalMetaValue(enumValues[0])
+            })
+        }
 
         const enumProperty: DefinitionProperty = {
             name,
@@ -420,6 +454,9 @@ export function schemaObjectToUniformDefinitionProperty(
                 type: schema.type || "",
             }
         };
+        if (link) {
+            enumProperty.symbolDef = link
+        }
 
         if (refPath) {
             visitedRefs.set(refPath, enumProperty);
@@ -462,6 +499,9 @@ export function schemaObjectToUniformDefinitionProperty(
                 meta,
                 properties: []
             };
+            if (link) {
+                arrayProperty.symbolDef = link
+            }
 
             const itemsProperty = schemaObjectToUniformDefinitionProperty("", schema.items, required, true, visitedRefs, arrayProperty);
 
@@ -473,10 +513,17 @@ export function schemaObjectToUniformDefinitionProperty(
                         properties: itemsProperty.properties || [],
                         description: itemsProperty.description || "",
                         meta: itemsProperty.meta || [],
-                        ofProperty: itemsProperty.ofProperty || undefined
+                        ofProperty: itemsProperty.ofProperty || undefined,
+                        symbolDef: itemsProperty.symbolDef || undefined,
                     }
                 } else {
                     arrayProperty.properties = [itemsProperty];
+                }
+                // An array of a component links to that component — the rule
+                // the request/response roots already follow (an array's link is
+                // its items').
+                if (!arrayProperty.symbolDef && itemsProperty.symbolDef) {
+                    arrayProperty.symbolDef = itemsProperty.symbolDef
                 }
             }
             if (refPath) {
@@ -572,6 +619,74 @@ export function schemaObjectToUniformDefinitionPropertyMeta(objProp: OpenAPIV3.S
     }
 
     return meta
+}
+
+// The allOf rows merge: a row that exists already is spread-merged with the
+// newcomer (`{...existing, ...property}`; the newcomer's description when it
+// has one; both metas), otherwise the newcomer is pushed.
+function mergeOrPush(rows: DefinitionProperty[], property: DefinitionProperty) {
+    const existingIndex = rows.findIndex(p => p.name === property.name)
+    if (existingIndex >= 0) {
+        const existing = rows[existingIndex]
+        rows[existingIndex] = {
+            ...existing,
+            ...property,
+            description: property.description || existing.description || "",
+            meta: [...(existing.meta || []), ...(property.meta || [])],
+        }
+    } else {
+        rows.push(property)
+    }
+}
+
+// An `allOf` member that is not an of-type (a scalar, an enum, an object or a
+// composition without a `properties` key of its own) is folded onto the merged
+// row instead of being pushed as a NAMELESS CHILD (before this, a described
+// `id: allOf: [$ref Uuid]` rendered as a parent with one empty-named `string`
+// row):
+// - type: a `$$enum` member decides the row's type whatever the wrapper
+//   declares (its `type: string` is the enum's base type, kept in `enum-type`
+//   and `ofProperty`); otherwise the wrapper's declared type wins, else the
+//   member's;
+// - description: the wrapper's, else the member's;
+// - meta: merged by name, the wrapper's winning;
+// - rows: an enum's value rows or an object's property rows, merged by name
+//   into the rows the wrapper (or an earlier member) already has — a composed
+//   member keeps every row whatever the member order;
+// - ofProperty: the first one seen.
+function foldMember(merged: DefinitionProperty, member: DefinitionProperty, wrapperTyped: boolean) {
+    if (member.type === DEFINED_DEFINITION_PROPERTY_TYPE.ENUM || !wrapperTyped) {
+        merged.type = member.type
+    }
+    if (!merged.description) {
+        merged.description = member.description || ""
+    }
+    if (!merged.meta) {
+        merged.meta = []
+    }
+    for (const m of member.meta || []) {
+        if (!merged.meta.some(existing => existing.name === m.name)) {
+            merged.meta.push(m)
+        }
+    }
+    if (member.properties?.length) {
+        if (!merged.properties?.length) {
+            merged.properties = member.properties
+        } else {
+            for (const row of member.properties) {
+                mergeOrPush(merged.properties, row)
+            }
+        }
+    }
+    if (!merged.ofProperty && member.ofProperty) {
+        merged.ofProperty = member.ofProperty
+    }
+}
+
+// The `const` meta value: scalars as they are, object/array/null literals
+// JSON-stringified (the `example` meta rule).
+function literalMetaValue(v: unknown) {
+    return typeof v === "object" ? JSON.stringify(v) : v
 }
 
 function isMergeType(type: string) {

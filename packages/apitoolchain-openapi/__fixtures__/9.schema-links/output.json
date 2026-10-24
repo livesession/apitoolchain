@@ -1,0 +1,2339 @@
+[
+  {
+    "title": "Create widget",
+    "canonical": "createWidget",
+    "description": "Creates a widget from a definition.",
+    "type": "rest_post",
+    "category": "rest",
+    "context": {
+      "method": "post",
+      "path": "/widgets",
+      "group": [
+        "widgets"
+      ],
+      "fullPath": "https://api.example.com/v1/widgets",
+      "servers": [
+        "https://api.example.com/v1"
+      ],
+      "scopes": []
+    },
+    "examples": {
+      "groups": [
+        {
+          "description": "Example request",
+          "examples": [
+            {
+              "codeblock": {
+                "tabs": [
+                  {
+                    "title": "shell",
+                    "language": "shell",
+                    "code": "curl --request POST \\\n     --url https://api.example.com/v1/widgets \\\n     --header 'accept: application/json' \\\n     --header 'content-type: application/json' \\\n     --data '\n{\n  \"definition\": {\n    \"steps\": [\n      {\n        \"name\": \"string\",\n        \"count\": 1\n      }\n    ],\n    \"mode\": \"strict\"\n  },\n  \"parts\": [\n    {\n      \"object\": \"part\",\n      \"sku\": \"string\"\n    }\n  ]\n}\n'"
+                  },
+                  {
+                    "title": "javascript",
+                    "language": "javascript",
+                    "code": "const options = {\n  method: 'POST',\n  headers: {accept: 'application/json', 'content-type': 'application/json'},\n  body: JSON.stringify({\n    definition: {steps: [{name: 'string', count: 1}], mode: 'strict'},\n    parts: [{object: 'part', sku: 'string'}]\n  })\n};\n\nfetch('https://api.example.com/v1/widgets', options)\n  .then(res => res.json())\n  .then(res => console.log(res))\n  .catch(err => console.error(err));"
+                  },
+                  {
+                    "title": "python",
+                    "language": "python",
+                    "code": "import requests\n\nurl = \"https://api.example.com/v1/widgets\"\n\npayload = {\n    \"definition\": {\n        \"steps\": [\n            {\n                \"name\": \"string\",\n                \"count\": 1\n            }\n        ],\n        \"mode\": \"strict\"\n    },\n    \"parts\": [\n        {\n            \"object\": \"part\",\n            \"sku\": \"string\"\n        }\n    ]\n}\nheaders = {\n    \"accept\": \"application/json\",\n    \"content-type\": \"application/json\"\n}\n\nresponse = requests.post(url, json=payload, headers=headers)\n\nprint(response.text)"
+                  },
+                  {
+                    "title": "go",
+                    "language": "go",
+                    "code": "package main\n\nimport (\n\t\"fmt\"\n\t\"strings\"\n\t\"net/http\"\n\t\"io\"\n)\n\nfunc main() {\n\n\turl := \"https://api.example.com/v1/widgets\"\n\n\tpayload := strings.NewReader(\"{\\\"definition\\\":{\\\"steps\\\":[{\\\"name\\\":\\\"string\\\",\\\"count\\\":1}],\\\"mode\\\":\\\"strict\\\"},\\\"parts\\\":[{\\\"object\\\":\\\"part\\\",\\\"sku\\\":\\\"string\\\"}]}\")\n\n\treq, _ := http.NewRequest(\"POST\", url, payload)\n\n\treq.Header.Add(\"accept\", \"application/json\")\n\treq.Header.Add(\"content-type\", \"application/json\")\n\n\tres, _ := http.DefaultClient.Do(req)\n\n\tdefer res.Body.Close()\n\tbody, _ := io.ReadAll(res.Body)\n\n\tfmt.Println(string(body))\n\n}"
+                  }
+                ]
+              }
+            }
+          ],
+          "kind": "request"
+        },
+        {
+          "description": "Example response",
+          "examples": [
+            {
+              "codeblock": {
+                "title": "201",
+                "tabs": [
+                  {
+                    "title": "application/json",
+                    "language": "json",
+                    "code": "{\n  \"object\": \"widget\",\n  \"id\": \"0d4f1e2a-6b2c-4f33-9d7e-1a2b3c4d5e6f\",\n  \"kind\": \"standard\",\n  \"color\": \"red\",\n  \"definition\": {\n    \"steps\": [\n      {\n        \"name\": \"string\",\n        \"count\": 1\n      }\n    ],\n    \"mode\": \"strict\"\n  },\n  \"parts\": [\n    {\n      \"object\": \"part\",\n      \"sku\": \"string\"\n    }\n  ],\n  \"created_at\": \"2019-08-24T14:15:22Z\",\n  \"status\": \"active\",\n  \"shade\": \"red\",\n  \"assembly\": {\n    \"label\": \"string\",\n    \"id\": \"string\",\n    \"sku\": \"string\"\n  }\n}"
+                  }
+                ]
+              }
+            }
+          ],
+          "kind": "response"
+        }
+      ]
+    },
+    "definitions": [
+      {
+        "title": "Request body",
+        "variants": [
+          {
+            "title": "application/json",
+            "description": "",
+            "properties": [
+              {
+                "name": "definition",
+                "type": "object",
+                "description": "The definition of the new widget.",
+                "properties": [
+                  {
+                    "name": "steps",
+                    "type": "$$array",
+                    "description": "The steps, in order.",
+                    "meta": [
+                      {
+                        "name": "required",
+                        "value": "true"
+                      }
+                    ],
+                    "properties": [
+                      {
+                        "name": "",
+                        "type": "object",
+                        "description": "",
+                        "meta": [
+                          {
+                            "name": "required",
+                            "value": "true"
+                          }
+                        ],
+                        "symbolDef": {
+                          "id": "#/components/schemas/Step",
+                          "canonical": "objects/Step"
+                        },
+                        "properties": [
+                          {
+                            "name": "name",
+                            "type": "string",
+                            "description": "The step's name.",
+                            "meta": [
+                              {
+                                "name": "required",
+                                "value": "true"
+                              }
+                            ]
+                          },
+                          {
+                            "name": "count",
+                            "type": "integer",
+                            "description": "How many times the step must happen.",
+                            "meta": [
+                              {
+                                "name": "minimum",
+                                "value": 1
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ],
+                    "symbolDef": {
+                      "id": "#/components/schemas/Step",
+                      "canonical": "objects/Step"
+                    }
+                  },
+                  {
+                    "name": "mode",
+                    "type": "$$enum",
+                    "description": "How the steps are matched.",
+                    "meta": [
+                      {
+                        "name": "defaults",
+                        "value": "strict"
+                      },
+                      {
+                        "name": "enum-type",
+                        "value": "string"
+                      }
+                    ],
+                    "properties": [
+                      {
+                        "name": "strict",
+                        "type": "string",
+                        "description": "",
+                        "meta": []
+                      },
+                      {
+                        "name": "loose",
+                        "type": "string",
+                        "description": "",
+                        "meta": []
+                      }
+                    ],
+                    "ofProperty": {
+                      "name": "",
+                      "description": "",
+                      "type": "string"
+                    }
+                  }
+                ],
+                "meta": [
+                  {
+                    "name": "required",
+                    "value": "true"
+                  }
+                ],
+                "symbolDef": {
+                  "id": "#/components/schemas/WidgetDefinition",
+                  "canonical": "objects/WidgetDefinition"
+                }
+              },
+              {
+                "name": "parts",
+                "type": "$$array",
+                "description": "",
+                "meta": [],
+                "properties": [],
+                "ofProperty": {
+                  "name": "",
+                  "type": "object",
+                  "properties": [
+                    {
+                      "name": "object",
+                      "type": "$$enum",
+                      "description": "The object type, always `part`.",
+                      "meta": [
+                        {
+                          "name": "required",
+                          "value": "true"
+                        },
+                        {
+                          "name": "enum-type",
+                          "value": "string"
+                        },
+                        {
+                          "name": "const",
+                          "value": "part"
+                        }
+                      ],
+                      "properties": [
+                        {
+                          "name": "part",
+                          "type": "string",
+                          "description": "",
+                          "meta": []
+                        }
+                      ],
+                      "ofProperty": {
+                        "name": "",
+                        "description": "",
+                        "type": "string"
+                      }
+                    },
+                    {
+                      "name": "sku",
+                      "type": "string",
+                      "description": "The part's stock-keeping unit.",
+                      "meta": [
+                        {
+                          "name": "required",
+                          "value": "true"
+                        }
+                      ]
+                    }
+                  ],
+                  "description": "",
+                  "meta": [],
+                  "symbolDef": {
+                    "id": "#/components/schemas/Part",
+                    "canonical": "objects/Part"
+                  }
+                },
+                "symbolDef": {
+                  "id": "#/components/schemas/Part",
+                  "canonical": "objects/Part"
+                }
+              }
+            ],
+            "meta": [
+              {
+                "name": "contentType",
+                "value": "application/json"
+              },
+              {
+                "name": "required",
+                "value": "true"
+              }
+            ]
+          }
+        ],
+        "properties": [],
+        "meta": [
+          {
+            "name": "required",
+            "value": "true"
+          }
+        ],
+        "type": "$rest.request.body"
+      },
+      {
+        "title": "Response",
+        "type": "return",
+        "variants": [
+          {
+            "title": "201",
+            "description": "The widget that was created.",
+            "properties": [
+              {
+                "name": "object",
+                "type": "$$enum",
+                "description": "The object type, always `widget`.",
+                "meta": [
+                  {
+                    "name": "required",
+                    "value": "true"
+                  },
+                  {
+                    "name": "enum-type",
+                    "value": "string"
+                  },
+                  {
+                    "name": "const",
+                    "value": "widget"
+                  }
+                ],
+                "properties": [
+                  {
+                    "name": "widget",
+                    "type": "string",
+                    "description": "",
+                    "meta": []
+                  }
+                ],
+                "ofProperty": {
+                  "name": "",
+                  "description": "",
+                  "type": "string"
+                }
+              },
+              {
+                "name": "id",
+                "type": "string",
+                "description": "Unique identifier for the widget.",
+                "properties": [],
+                "meta": [
+                  {
+                    "name": "required",
+                    "value": "true"
+                  },
+                  {
+                    "name": "example",
+                    "value": "0d4f1e2a-6b2c-4f33-9d7e-1a2b3c4d5e6f"
+                  }
+                ],
+                "symbolDef": {
+                  "id": "#/components/schemas/WidgetId",
+                  "canonical": "objects/WidgetId"
+                }
+              },
+              {
+                "name": "kind",
+                "type": "$$enum",
+                "description": "The kind of widget, always `standard`.",
+                "meta": [
+                  {
+                    "name": "enum-type",
+                    "value": "string"
+                  },
+                  {
+                    "name": "const",
+                    "value": "standard"
+                  }
+                ],
+                "properties": [
+                  {
+                    "name": "standard",
+                    "type": "string",
+                    "description": "",
+                    "meta": []
+                  }
+                ],
+                "ofProperty": {
+                  "name": "",
+                  "description": "",
+                  "type": "string"
+                }
+              },
+              {
+                "name": "color",
+                "type": "$$enum",
+                "description": "The colour of the widget.",
+                "properties": [
+                  {
+                    "name": "red",
+                    "type": "string",
+                    "description": "",
+                    "meta": []
+                  },
+                  {
+                    "name": "green",
+                    "type": "string",
+                    "description": "",
+                    "meta": []
+                  },
+                  {
+                    "name": "blue",
+                    "type": "string",
+                    "description": "",
+                    "meta": []
+                  }
+                ],
+                "meta": [
+                  {
+                    "name": "enum-type",
+                    "value": "string"
+                  }
+                ],
+                "ofProperty": {
+                  "name": "",
+                  "description": "",
+                  "type": "string"
+                },
+                "symbolDef": {
+                  "id": "#/components/schemas/Color",
+                  "canonical": "objects/Color"
+                }
+              },
+              {
+                "name": "definition",
+                "type": "object",
+                "description": "What a widget does — its steps and how they are evaluated.",
+                "meta": [
+                  {
+                    "name": "required",
+                    "value": "true"
+                  }
+                ],
+                "symbolDef": {
+                  "id": "#/components/schemas/WidgetDefinition",
+                  "canonical": "objects/WidgetDefinition"
+                },
+                "properties": [
+                  {
+                    "name": "steps",
+                    "type": "$$array",
+                    "description": "The steps, in order.",
+                    "meta": [
+                      {
+                        "name": "required",
+                        "value": "true"
+                      }
+                    ],
+                    "properties": [],
+                    "ofProperty": {
+                      "name": "",
+                      "type": "object",
+                      "properties": [
+                        {
+                          "name": "name",
+                          "type": "string",
+                          "description": "The step's name.",
+                          "meta": [
+                            {
+                              "name": "required",
+                              "value": "true"
+                            }
+                          ]
+                        },
+                        {
+                          "name": "count",
+                          "type": "integer",
+                          "description": "How many times the step must happen.",
+                          "meta": [
+                            {
+                              "name": "minimum",
+                              "value": 1
+                            }
+                          ]
+                        }
+                      ],
+                      "description": "",
+                      "meta": [
+                        {
+                          "name": "required",
+                          "value": "true"
+                        }
+                      ],
+                      "symbolDef": {
+                        "id": "#/components/schemas/Step",
+                        "canonical": "objects/Step"
+                      }
+                    },
+                    "symbolDef": {
+                      "id": "#/components/schemas/Step",
+                      "canonical": "objects/Step"
+                    }
+                  },
+                  {
+                    "name": "mode",
+                    "type": "$$enum",
+                    "description": "How the steps are matched.",
+                    "meta": [
+                      {
+                        "name": "defaults",
+                        "value": "strict"
+                      },
+                      {
+                        "name": "enum-type",
+                        "value": "string"
+                      }
+                    ],
+                    "properties": [
+                      {
+                        "name": "strict",
+                        "type": "string",
+                        "description": "",
+                        "meta": []
+                      },
+                      {
+                        "name": "loose",
+                        "type": "string",
+                        "description": "",
+                        "meta": []
+                      }
+                    ],
+                    "ofProperty": {
+                      "name": "",
+                      "description": "",
+                      "type": "string"
+                    }
+                  }
+                ]
+              },
+              {
+                "name": "parts",
+                "type": "$$array",
+                "description": "The parts the widget is made of.",
+                "meta": [],
+                "properties": [],
+                "ofProperty": {
+                  "name": "",
+                  "type": "object",
+                  "properties": [
+                    {
+                      "name": "object",
+                      "type": "$$enum",
+                      "description": "The object type, always `part`.",
+                      "meta": [
+                        {
+                          "name": "required",
+                          "value": "true"
+                        },
+                        {
+                          "name": "enum-type",
+                          "value": "string"
+                        },
+                        {
+                          "name": "const",
+                          "value": "part"
+                        }
+                      ],
+                      "properties": [
+                        {
+                          "name": "part",
+                          "type": "string",
+                          "description": "",
+                          "meta": []
+                        }
+                      ],
+                      "ofProperty": {
+                        "name": "",
+                        "description": "",
+                        "type": "string"
+                      }
+                    },
+                    {
+                      "name": "sku",
+                      "type": "string",
+                      "description": "The part's stock-keeping unit.",
+                      "meta": [
+                        {
+                          "name": "required",
+                          "value": "true"
+                        }
+                      ]
+                    }
+                  ],
+                  "description": "",
+                  "meta": [],
+                  "symbolDef": {
+                    "id": "#/components/schemas/Part",
+                    "canonical": "objects/Part"
+                  }
+                },
+                "symbolDef": {
+                  "id": "#/components/schemas/Part",
+                  "canonical": "objects/Part"
+                }
+              },
+              {
+                "name": "created_at",
+                "type": "string",
+                "description": "When the widget was created, RFC 3339.",
+                "meta": [
+                  {
+                    "name": "required",
+                    "value": "true"
+                  }
+                ]
+              },
+              {
+                "name": "status",
+                "type": "$$enum",
+                "description": "Whether the widget is in use.",
+                "meta": [
+                  {
+                    "name": "enum-type",
+                    "value": "string"
+                  }
+                ],
+                "properties": [
+                  {
+                    "name": "active",
+                    "type": "string",
+                    "description": "",
+                    "meta": []
+                  },
+                  {
+                    "name": "archived",
+                    "type": "string",
+                    "description": "",
+                    "meta": []
+                  }
+                ],
+                "ofProperty": {
+                  "name": "",
+                  "description": "",
+                  "type": "string"
+                }
+              },
+              {
+                "name": "shade",
+                "type": "$$enum",
+                "description": "The shade of the widget.",
+                "properties": [
+                  {
+                    "name": "red",
+                    "type": "string",
+                    "description": "",
+                    "meta": []
+                  },
+                  {
+                    "name": "green",
+                    "type": "string",
+                    "description": "",
+                    "meta": []
+                  },
+                  {
+                    "name": "blue",
+                    "type": "string",
+                    "description": "",
+                    "meta": []
+                  }
+                ],
+                "meta": [
+                  {
+                    "name": "enum-type",
+                    "value": "string"
+                  }
+                ],
+                "ofProperty": {
+                  "name": "",
+                  "description": "",
+                  "type": "string"
+                },
+                "symbolDef": {
+                  "id": "#/components/schemas/Color",
+                  "canonical": "objects/Color"
+                }
+              },
+              {
+                "name": "assembly",
+                "type": "object",
+                "description": "How the widget is assembled.",
+                "properties": [
+                  {
+                    "name": "label",
+                    "type": "string",
+                    "description": "A label for the assembly.",
+                    "meta": []
+                  },
+                  {
+                    "name": "id",
+                    "type": "string",
+                    "description": "Unique identifier for the assembly.",
+                    "meta": [
+                      {
+                        "name": "required",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "sku",
+                    "type": "string",
+                    "description": "The assembly's stock-keeping unit.",
+                    "meta": []
+                  }
+                ],
+                "meta": [],
+                "symbolDef": {
+                  "id": "#/components/schemas/Assembly",
+                  "canonical": "objects/Assembly"
+                }
+              }
+            ],
+            "meta": [
+              {
+                "name": "status",
+                "value": "201"
+              },
+              {
+                "name": "contentType",
+                "value": "application/json"
+              },
+              {
+                "name": "definitionDescription",
+                "value": ""
+              }
+            ]
+          }
+        ],
+        "properties": []
+      }
+    ]
+  },
+  {
+    "title": "Retrieve widget",
+    "canonical": "getWidget",
+    "description": "Returns one widget.",
+    "type": "rest_get",
+    "category": "rest",
+    "context": {
+      "method": "get",
+      "path": "/widgets/{widgetId}",
+      "group": [
+        "widgets"
+      ],
+      "fullPath": "https://api.example.com/v1/widgets/{widgetId}",
+      "servers": [
+        "https://api.example.com/v1"
+      ],
+      "scopes": []
+    },
+    "examples": {
+      "groups": [
+        {
+          "description": "Example request",
+          "examples": [
+            {
+              "codeblock": {
+                "tabs": [
+                  {
+                    "title": "shell",
+                    "language": "shell",
+                    "code": "curl --request GET \\\n     --url https://api.example.com/v1/widgets/0d4f1e2a-6b2c-4f33-9d7e-1a2b3c4d5e6f \\\n     --header 'accept: application/json'"
+                  },
+                  {
+                    "title": "javascript",
+                    "language": "javascript",
+                    "code": "const options = {method: 'GET', headers: {accept: 'application/json'}};\n\nfetch('https://api.example.com/v1/widgets/0d4f1e2a-6b2c-4f33-9d7e-1a2b3c4d5e6f', options)\n  .then(res => res.json())\n  .then(res => console.log(res))\n  .catch(err => console.error(err));"
+                  },
+                  {
+                    "title": "python",
+                    "language": "python",
+                    "code": "import requests\n\nurl = \"https://api.example.com/v1/widgets/0d4f1e2a-6b2c-4f33-9d7e-1a2b3c4d5e6f\"\n\nheaders = {\"accept\": \"application/json\"}\n\nresponse = requests.get(url, headers=headers)\n\nprint(response.text)"
+                  },
+                  {
+                    "title": "go",
+                    "language": "go",
+                    "code": "package main\n\nimport (\n\t\"fmt\"\n\t\"net/http\"\n\t\"io\"\n)\n\nfunc main() {\n\n\turl := \"https://api.example.com/v1/widgets/0d4f1e2a-6b2c-4f33-9d7e-1a2b3c4d5e6f\"\n\n\treq, _ := http.NewRequest(\"GET\", url, nil)\n\n\treq.Header.Add(\"accept\", \"application/json\")\n\n\tres, _ := http.DefaultClient.Do(req)\n\n\tdefer res.Body.Close()\n\tbody, _ := io.ReadAll(res.Body)\n\n\tfmt.Println(string(body))\n\n}"
+                  }
+                ]
+              }
+            }
+          ],
+          "kind": "request"
+        },
+        {
+          "description": "Example response",
+          "examples": [
+            {
+              "codeblock": {
+                "title": "200",
+                "tabs": [
+                  {
+                    "title": "application/json",
+                    "language": "json",
+                    "code": "{\n  \"object\": \"widget\",\n  \"id\": \"0d4f1e2a-6b2c-4f33-9d7e-1a2b3c4d5e6f\",\n  \"kind\": \"standard\",\n  \"color\": \"red\",\n  \"definition\": {\n    \"steps\": [\n      {\n        \"name\": \"string\",\n        \"count\": 1\n      }\n    ],\n    \"mode\": \"strict\"\n  },\n  \"parts\": [\n    {\n      \"object\": \"part\",\n      \"sku\": \"string\"\n    }\n  ],\n  \"created_at\": \"2019-08-24T14:15:22Z\",\n  \"status\": \"active\",\n  \"shade\": \"red\",\n  \"assembly\": {\n    \"label\": \"string\",\n    \"id\": \"string\",\n    \"sku\": \"string\"\n  }\n}"
+                  }
+                ]
+              }
+            }
+          ],
+          "kind": "response"
+        }
+      ]
+    },
+    "definitions": [
+      {
+        "title": "Path parameters",
+        "properties": [
+          {
+            "name": "widgetId",
+            "type": "string",
+            "description": "The widget to return.",
+            "meta": [
+              {
+                "name": "required",
+                "value": "true"
+              },
+              {
+                "name": "example",
+                "value": "0d4f1e2a-6b2c-4f33-9d7e-1a2b3c4d5e6f"
+              }
+            ],
+            "symbolDef": {
+              "id": "#/components/schemas/WidgetId",
+              "canonical": "objects/WidgetId"
+            }
+          }
+        ],
+        "type": "$rest.param.path"
+      },
+      {
+        "title": "Response",
+        "type": "return",
+        "variants": [
+          {
+            "title": "200",
+            "description": "The widget.",
+            "properties": [
+              {
+                "name": "object",
+                "type": "$$enum",
+                "description": "The object type, always `widget`.",
+                "meta": [
+                  {
+                    "name": "required",
+                    "value": "true"
+                  },
+                  {
+                    "name": "enum-type",
+                    "value": "string"
+                  },
+                  {
+                    "name": "const",
+                    "value": "widget"
+                  }
+                ],
+                "properties": [
+                  {
+                    "name": "widget",
+                    "type": "string",
+                    "description": "",
+                    "meta": []
+                  }
+                ],
+                "ofProperty": {
+                  "name": "",
+                  "description": "",
+                  "type": "string"
+                }
+              },
+              {
+                "name": "id",
+                "type": "string",
+                "description": "Unique identifier for the widget.",
+                "properties": [],
+                "meta": [
+                  {
+                    "name": "required",
+                    "value": "true"
+                  },
+                  {
+                    "name": "example",
+                    "value": "0d4f1e2a-6b2c-4f33-9d7e-1a2b3c4d5e6f"
+                  }
+                ],
+                "symbolDef": {
+                  "id": "#/components/schemas/WidgetId",
+                  "canonical": "objects/WidgetId"
+                }
+              },
+              {
+                "name": "kind",
+                "type": "$$enum",
+                "description": "The kind of widget, always `standard`.",
+                "meta": [
+                  {
+                    "name": "enum-type",
+                    "value": "string"
+                  },
+                  {
+                    "name": "const",
+                    "value": "standard"
+                  }
+                ],
+                "properties": [
+                  {
+                    "name": "standard",
+                    "type": "string",
+                    "description": "",
+                    "meta": []
+                  }
+                ],
+                "ofProperty": {
+                  "name": "",
+                  "description": "",
+                  "type": "string"
+                }
+              },
+              {
+                "name": "color",
+                "type": "$$enum",
+                "description": "The colour of the widget.",
+                "properties": [
+                  {
+                    "name": "red",
+                    "type": "string",
+                    "description": "",
+                    "meta": []
+                  },
+                  {
+                    "name": "green",
+                    "type": "string",
+                    "description": "",
+                    "meta": []
+                  },
+                  {
+                    "name": "blue",
+                    "type": "string",
+                    "description": "",
+                    "meta": []
+                  }
+                ],
+                "meta": [
+                  {
+                    "name": "enum-type",
+                    "value": "string"
+                  }
+                ],
+                "ofProperty": {
+                  "name": "",
+                  "description": "",
+                  "type": "string"
+                },
+                "symbolDef": {
+                  "id": "#/components/schemas/Color",
+                  "canonical": "objects/Color"
+                }
+              },
+              {
+                "name": "definition",
+                "type": "object",
+                "description": "What a widget does — its steps and how they are evaluated.",
+                "meta": [
+                  {
+                    "name": "required",
+                    "value": "true"
+                  }
+                ],
+                "symbolDef": {
+                  "id": "#/components/schemas/WidgetDefinition",
+                  "canonical": "objects/WidgetDefinition"
+                },
+                "properties": [
+                  {
+                    "name": "steps",
+                    "type": "$$array",
+                    "description": "The steps, in order.",
+                    "meta": [
+                      {
+                        "name": "required",
+                        "value": "true"
+                      }
+                    ],
+                    "properties": [],
+                    "ofProperty": {
+                      "name": "",
+                      "type": "object",
+                      "properties": [
+                        {
+                          "name": "name",
+                          "type": "string",
+                          "description": "The step's name.",
+                          "meta": [
+                            {
+                              "name": "required",
+                              "value": "true"
+                            }
+                          ]
+                        },
+                        {
+                          "name": "count",
+                          "type": "integer",
+                          "description": "How many times the step must happen.",
+                          "meta": [
+                            {
+                              "name": "minimum",
+                              "value": 1
+                            }
+                          ]
+                        }
+                      ],
+                      "description": "",
+                      "meta": [
+                        {
+                          "name": "required",
+                          "value": "true"
+                        }
+                      ],
+                      "symbolDef": {
+                        "id": "#/components/schemas/Step",
+                        "canonical": "objects/Step"
+                      }
+                    },
+                    "symbolDef": {
+                      "id": "#/components/schemas/Step",
+                      "canonical": "objects/Step"
+                    }
+                  },
+                  {
+                    "name": "mode",
+                    "type": "$$enum",
+                    "description": "How the steps are matched.",
+                    "meta": [
+                      {
+                        "name": "defaults",
+                        "value": "strict"
+                      },
+                      {
+                        "name": "enum-type",
+                        "value": "string"
+                      }
+                    ],
+                    "properties": [
+                      {
+                        "name": "strict",
+                        "type": "string",
+                        "description": "",
+                        "meta": []
+                      },
+                      {
+                        "name": "loose",
+                        "type": "string",
+                        "description": "",
+                        "meta": []
+                      }
+                    ],
+                    "ofProperty": {
+                      "name": "",
+                      "description": "",
+                      "type": "string"
+                    }
+                  }
+                ]
+              },
+              {
+                "name": "parts",
+                "type": "$$array",
+                "description": "The parts the widget is made of.",
+                "meta": [],
+                "properties": [],
+                "ofProperty": {
+                  "name": "",
+                  "type": "object",
+                  "properties": [
+                    {
+                      "name": "object",
+                      "type": "$$enum",
+                      "description": "The object type, always `part`.",
+                      "meta": [
+                        {
+                          "name": "required",
+                          "value": "true"
+                        },
+                        {
+                          "name": "enum-type",
+                          "value": "string"
+                        },
+                        {
+                          "name": "const",
+                          "value": "part"
+                        }
+                      ],
+                      "properties": [
+                        {
+                          "name": "part",
+                          "type": "string",
+                          "description": "",
+                          "meta": []
+                        }
+                      ],
+                      "ofProperty": {
+                        "name": "",
+                        "description": "",
+                        "type": "string"
+                      }
+                    },
+                    {
+                      "name": "sku",
+                      "type": "string",
+                      "description": "The part's stock-keeping unit.",
+                      "meta": [
+                        {
+                          "name": "required",
+                          "value": "true"
+                        }
+                      ]
+                    }
+                  ],
+                  "description": "",
+                  "meta": [],
+                  "symbolDef": {
+                    "id": "#/components/schemas/Part",
+                    "canonical": "objects/Part"
+                  }
+                },
+                "symbolDef": {
+                  "id": "#/components/schemas/Part",
+                  "canonical": "objects/Part"
+                }
+              },
+              {
+                "name": "created_at",
+                "type": "string",
+                "description": "When the widget was created, RFC 3339.",
+                "meta": [
+                  {
+                    "name": "required",
+                    "value": "true"
+                  }
+                ]
+              },
+              {
+                "name": "status",
+                "type": "$$enum",
+                "description": "Whether the widget is in use.",
+                "meta": [
+                  {
+                    "name": "enum-type",
+                    "value": "string"
+                  }
+                ],
+                "properties": [
+                  {
+                    "name": "active",
+                    "type": "string",
+                    "description": "",
+                    "meta": []
+                  },
+                  {
+                    "name": "archived",
+                    "type": "string",
+                    "description": "",
+                    "meta": []
+                  }
+                ],
+                "ofProperty": {
+                  "name": "",
+                  "description": "",
+                  "type": "string"
+                }
+              },
+              {
+                "name": "shade",
+                "type": "$$enum",
+                "description": "The shade of the widget.",
+                "properties": [
+                  {
+                    "name": "red",
+                    "type": "string",
+                    "description": "",
+                    "meta": []
+                  },
+                  {
+                    "name": "green",
+                    "type": "string",
+                    "description": "",
+                    "meta": []
+                  },
+                  {
+                    "name": "blue",
+                    "type": "string",
+                    "description": "",
+                    "meta": []
+                  }
+                ],
+                "meta": [
+                  {
+                    "name": "enum-type",
+                    "value": "string"
+                  }
+                ],
+                "ofProperty": {
+                  "name": "",
+                  "description": "",
+                  "type": "string"
+                },
+                "symbolDef": {
+                  "id": "#/components/schemas/Color",
+                  "canonical": "objects/Color"
+                }
+              },
+              {
+                "name": "assembly",
+                "type": "object",
+                "description": "How the widget is assembled.",
+                "properties": [
+                  {
+                    "name": "label",
+                    "type": "string",
+                    "description": "A label for the assembly.",
+                    "meta": []
+                  },
+                  {
+                    "name": "id",
+                    "type": "string",
+                    "description": "Unique identifier for the assembly.",
+                    "meta": [
+                      {
+                        "name": "required",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "sku",
+                    "type": "string",
+                    "description": "The assembly's stock-keeping unit.",
+                    "meta": []
+                  }
+                ],
+                "meta": [],
+                "symbolDef": {
+                  "id": "#/components/schemas/Assembly",
+                  "canonical": "objects/Assembly"
+                }
+              }
+            ],
+            "meta": [
+              {
+                "name": "status",
+                "value": "200"
+              },
+              {
+                "name": "contentType",
+                "value": "application/json"
+              },
+              {
+                "name": "definitionDescription",
+                "value": ""
+              }
+            ]
+          }
+        ],
+        "properties": []
+      }
+    ]
+  },
+  {
+    "title": "WidgetId",
+    "description": "The identifier of a widget.",
+    "canonical": "objects/WidgetId",
+    "definitions": [
+      {
+        "title": "WidgetId",
+        "properties": [],
+        "meta": []
+      }
+    ],
+    "examples": {
+      "groups": [
+        {
+          "description": "Example",
+          "examples": [
+            {
+              "codeblock": {
+                "tabs": [
+                  {
+                    "title": "json",
+                    "language": "json",
+                    "code": "\"0d4f1e2a-6b2c-4f33-9d7e-1a2b3c4d5e6f\""
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "type": "rest_component_schema",
+    "context": {
+      "componentSchema": "WidgetId",
+      "group": [
+        "Objects"
+      ]
+    }
+  },
+  {
+    "title": "Color",
+    "description": "",
+    "canonical": "objects/Color",
+    "definitions": [
+      {
+        "title": "Color",
+        "properties": [],
+        "meta": []
+      }
+    ],
+    "examples": {
+      "groups": []
+    },
+    "type": "rest_component_schema",
+    "context": {
+      "componentSchema": "Color",
+      "group": [
+        "Objects"
+      ]
+    }
+  },
+  {
+    "title": "Widget",
+    "description": "",
+    "canonical": "objects/Widget",
+    "definitions": [
+      {
+        "title": "Widget",
+        "properties": [
+          {
+            "name": "object",
+            "type": "$$enum",
+            "description": "The object type, always `widget`.",
+            "meta": [
+              {
+                "name": "required",
+                "value": "true"
+              },
+              {
+                "name": "enum-type",
+                "value": "string"
+              },
+              {
+                "name": "const",
+                "value": "widget"
+              }
+            ],
+            "properties": [
+              {
+                "name": "widget",
+                "type": "string",
+                "description": "",
+                "meta": []
+              }
+            ],
+            "ofProperty": {
+              "name": "",
+              "description": "",
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "type": "string",
+            "description": "Unique identifier for the widget.",
+            "properties": [],
+            "meta": [
+              {
+                "name": "required",
+                "value": "true"
+              },
+              {
+                "name": "example",
+                "value": "0d4f1e2a-6b2c-4f33-9d7e-1a2b3c4d5e6f"
+              }
+            ],
+            "symbolDef": {
+              "id": "#/components/schemas/WidgetId",
+              "canonical": "objects/WidgetId"
+            }
+          },
+          {
+            "name": "kind",
+            "type": "$$enum",
+            "description": "The kind of widget, always `standard`.",
+            "meta": [
+              {
+                "name": "enum-type",
+                "value": "string"
+              },
+              {
+                "name": "const",
+                "value": "standard"
+              }
+            ],
+            "properties": [
+              {
+                "name": "standard",
+                "type": "string",
+                "description": "",
+                "meta": []
+              }
+            ],
+            "ofProperty": {
+              "name": "",
+              "description": "",
+              "type": "string"
+            }
+          },
+          {
+            "name": "color",
+            "type": "$$enum",
+            "description": "The colour of the widget.",
+            "properties": [
+              {
+                "name": "red",
+                "type": "string",
+                "description": "",
+                "meta": []
+              },
+              {
+                "name": "green",
+                "type": "string",
+                "description": "",
+                "meta": []
+              },
+              {
+                "name": "blue",
+                "type": "string",
+                "description": "",
+                "meta": []
+              }
+            ],
+            "meta": [
+              {
+                "name": "enum-type",
+                "value": "string"
+              }
+            ],
+            "ofProperty": {
+              "name": "",
+              "description": "",
+              "type": "string"
+            },
+            "symbolDef": {
+              "id": "#/components/schemas/Color",
+              "canonical": "objects/Color"
+            }
+          },
+          {
+            "name": "definition",
+            "type": "object",
+            "description": "What a widget does — its steps and how they are evaluated.",
+            "meta": [
+              {
+                "name": "required",
+                "value": "true"
+              }
+            ],
+            "symbolDef": {
+              "id": "#/components/schemas/WidgetDefinition",
+              "canonical": "objects/WidgetDefinition"
+            },
+            "properties": [
+              {
+                "name": "steps",
+                "type": "$$array",
+                "description": "The steps, in order.",
+                "meta": [
+                  {
+                    "name": "required",
+                    "value": "true"
+                  }
+                ],
+                "properties": [],
+                "ofProperty": {
+                  "name": "",
+                  "type": "object",
+                  "properties": [
+                    {
+                      "name": "name",
+                      "type": "string",
+                      "description": "The step's name.",
+                      "meta": [
+                        {
+                          "name": "required",
+                          "value": "true"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "count",
+                      "type": "integer",
+                      "description": "How many times the step must happen.",
+                      "meta": [
+                        {
+                          "name": "minimum",
+                          "value": 1
+                        }
+                      ]
+                    }
+                  ],
+                  "description": "",
+                  "meta": [
+                    {
+                      "name": "required",
+                      "value": "true"
+                    }
+                  ],
+                  "symbolDef": {
+                    "id": "#/components/schemas/Step",
+                    "canonical": "objects/Step"
+                  }
+                },
+                "symbolDef": {
+                  "id": "#/components/schemas/Step",
+                  "canonical": "objects/Step"
+                }
+              },
+              {
+                "name": "mode",
+                "type": "$$enum",
+                "description": "How the steps are matched.",
+                "meta": [
+                  {
+                    "name": "defaults",
+                    "value": "strict"
+                  },
+                  {
+                    "name": "enum-type",
+                    "value": "string"
+                  }
+                ],
+                "properties": [
+                  {
+                    "name": "strict",
+                    "type": "string",
+                    "description": "",
+                    "meta": []
+                  },
+                  {
+                    "name": "loose",
+                    "type": "string",
+                    "description": "",
+                    "meta": []
+                  }
+                ],
+                "ofProperty": {
+                  "name": "",
+                  "description": "",
+                  "type": "string"
+                }
+              }
+            ]
+          },
+          {
+            "name": "parts",
+            "type": "$$array",
+            "description": "The parts the widget is made of.",
+            "meta": [],
+            "properties": [],
+            "ofProperty": {
+              "name": "",
+              "type": "object",
+              "properties": [
+                {
+                  "name": "object",
+                  "type": "$$enum",
+                  "description": "The object type, always `part`.",
+                  "meta": [
+                    {
+                      "name": "required",
+                      "value": "true"
+                    },
+                    {
+                      "name": "enum-type",
+                      "value": "string"
+                    },
+                    {
+                      "name": "const",
+                      "value": "part"
+                    }
+                  ],
+                  "properties": [
+                    {
+                      "name": "part",
+                      "type": "string",
+                      "description": "",
+                      "meta": []
+                    }
+                  ],
+                  "ofProperty": {
+                    "name": "",
+                    "description": "",
+                    "type": "string"
+                  }
+                },
+                {
+                  "name": "sku",
+                  "type": "string",
+                  "description": "The part's stock-keeping unit.",
+                  "meta": [
+                    {
+                      "name": "required",
+                      "value": "true"
+                    }
+                  ]
+                }
+              ],
+              "description": "",
+              "meta": [],
+              "symbolDef": {
+                "id": "#/components/schemas/Part",
+                "canonical": "objects/Part"
+              }
+            },
+            "symbolDef": {
+              "id": "#/components/schemas/Part",
+              "canonical": "objects/Part"
+            }
+          },
+          {
+            "name": "created_at",
+            "type": "string",
+            "description": "When the widget was created, RFC 3339.",
+            "meta": [
+              {
+                "name": "required",
+                "value": "true"
+              }
+            ]
+          },
+          {
+            "name": "status",
+            "type": "$$enum",
+            "description": "Whether the widget is in use.",
+            "meta": [
+              {
+                "name": "enum-type",
+                "value": "string"
+              }
+            ],
+            "properties": [
+              {
+                "name": "active",
+                "type": "string",
+                "description": "",
+                "meta": []
+              },
+              {
+                "name": "archived",
+                "type": "string",
+                "description": "",
+                "meta": []
+              }
+            ],
+            "ofProperty": {
+              "name": "",
+              "description": "",
+              "type": "string"
+            }
+          },
+          {
+            "name": "shade",
+            "type": "$$enum",
+            "description": "The shade of the widget.",
+            "properties": [
+              {
+                "name": "red",
+                "type": "string",
+                "description": "",
+                "meta": []
+              },
+              {
+                "name": "green",
+                "type": "string",
+                "description": "",
+                "meta": []
+              },
+              {
+                "name": "blue",
+                "type": "string",
+                "description": "",
+                "meta": []
+              }
+            ],
+            "meta": [
+              {
+                "name": "enum-type",
+                "value": "string"
+              }
+            ],
+            "ofProperty": {
+              "name": "",
+              "description": "",
+              "type": "string"
+            },
+            "symbolDef": {
+              "id": "#/components/schemas/Color",
+              "canonical": "objects/Color"
+            }
+          },
+          {
+            "name": "assembly",
+            "type": "object",
+            "description": "How the widget is assembled.",
+            "properties": [
+              {
+                "name": "label",
+                "type": "string",
+                "description": "A label for the assembly.",
+                "meta": []
+              },
+              {
+                "name": "id",
+                "type": "string",
+                "description": "Unique identifier for the assembly.",
+                "meta": [
+                  {
+                    "name": "required",
+                    "value": "true"
+                  }
+                ]
+              },
+              {
+                "name": "sku",
+                "type": "string",
+                "description": "The assembly's stock-keeping unit.",
+                "meta": []
+              }
+            ],
+            "meta": [],
+            "symbolDef": {
+              "id": "#/components/schemas/Assembly",
+              "canonical": "objects/Assembly"
+            }
+          }
+        ],
+        "meta": []
+      }
+    ],
+    "examples": {
+      "groups": [
+        {
+          "description": "Example",
+          "examples": [
+            {
+              "codeblock": {
+                "tabs": [
+                  {
+                    "title": "json",
+                    "language": "json",
+                    "code": "{\n  \"object\": \"\",\n  \"id\": null,\n  \"kind\": \"\",\n  \"color\": null,\n  \"definition\": {\n    \"steps\": [\n      {\n        \"name\": \"\",\n        \"count\": 0\n      }\n    ],\n    \"mode\": \"\"\n  },\n  \"parts\": [\n    {\n      \"object\": \"\",\n      \"sku\": \"\"\n    }\n  ],\n  \"created_at\": \"\",\n  \"status\": \"\",\n  \"shade\": \"\",\n  \"assembly\": null,\n  \"__UNSAFE_refPath\": null\n}"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "type": "rest_component_schema",
+    "context": {
+      "componentSchema": "Widget",
+      "group": [
+        "Objects"
+      ]
+    }
+  },
+  {
+    "title": "NewWidget",
+    "description": "",
+    "canonical": "objects/NewWidget",
+    "definitions": [
+      {
+        "title": "NewWidget",
+        "properties": [
+          {
+            "name": "definition",
+            "type": "object",
+            "description": "The definition of the new widget.",
+            "properties": [
+              {
+                "name": "steps",
+                "type": "$$array",
+                "description": "The steps, in order.",
+                "meta": [
+                  {
+                    "name": "required",
+                    "value": "true"
+                  }
+                ],
+                "properties": [
+                  {
+                    "name": "",
+                    "type": "object",
+                    "description": "",
+                    "meta": [
+                      {
+                        "name": "required",
+                        "value": "true"
+                      }
+                    ],
+                    "symbolDef": {
+                      "id": "#/components/schemas/Step",
+                      "canonical": "objects/Step"
+                    },
+                    "properties": [
+                      {
+                        "name": "name",
+                        "type": "string",
+                        "description": "The step's name.",
+                        "meta": [
+                          {
+                            "name": "required",
+                            "value": "true"
+                          }
+                        ]
+                      },
+                      {
+                        "name": "count",
+                        "type": "integer",
+                        "description": "How many times the step must happen.",
+                        "meta": [
+                          {
+                            "name": "minimum",
+                            "value": 1
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ],
+                "symbolDef": {
+                  "id": "#/components/schemas/Step",
+                  "canonical": "objects/Step"
+                }
+              },
+              {
+                "name": "mode",
+                "type": "$$enum",
+                "description": "How the steps are matched.",
+                "meta": [
+                  {
+                    "name": "defaults",
+                    "value": "strict"
+                  },
+                  {
+                    "name": "enum-type",
+                    "value": "string"
+                  }
+                ],
+                "properties": [
+                  {
+                    "name": "strict",
+                    "type": "string",
+                    "description": "",
+                    "meta": []
+                  },
+                  {
+                    "name": "loose",
+                    "type": "string",
+                    "description": "",
+                    "meta": []
+                  }
+                ],
+                "ofProperty": {
+                  "name": "",
+                  "description": "",
+                  "type": "string"
+                }
+              }
+            ],
+            "meta": [
+              {
+                "name": "required",
+                "value": "true"
+              }
+            ],
+            "symbolDef": {
+              "id": "#/components/schemas/WidgetDefinition",
+              "canonical": "objects/WidgetDefinition"
+            }
+          },
+          {
+            "name": "parts",
+            "type": "$$array",
+            "description": "",
+            "meta": [],
+            "properties": [],
+            "ofProperty": {
+              "name": "",
+              "type": "object",
+              "properties": [
+                {
+                  "name": "object",
+                  "type": "$$enum",
+                  "description": "The object type, always `part`.",
+                  "meta": [
+                    {
+                      "name": "required",
+                      "value": "true"
+                    },
+                    {
+                      "name": "enum-type",
+                      "value": "string"
+                    },
+                    {
+                      "name": "const",
+                      "value": "part"
+                    }
+                  ],
+                  "properties": [
+                    {
+                      "name": "part",
+                      "type": "string",
+                      "description": "",
+                      "meta": []
+                    }
+                  ],
+                  "ofProperty": {
+                    "name": "",
+                    "description": "",
+                    "type": "string"
+                  }
+                },
+                {
+                  "name": "sku",
+                  "type": "string",
+                  "description": "The part's stock-keeping unit.",
+                  "meta": [
+                    {
+                      "name": "required",
+                      "value": "true"
+                    }
+                  ]
+                }
+              ],
+              "description": "",
+              "meta": [],
+              "symbolDef": {
+                "id": "#/components/schemas/Part",
+                "canonical": "objects/Part"
+              }
+            },
+            "symbolDef": {
+              "id": "#/components/schemas/Part",
+              "canonical": "objects/Part"
+            }
+          }
+        ],
+        "meta": []
+      }
+    ],
+    "examples": {
+      "groups": [
+        {
+          "description": "Example",
+          "examples": [
+            {
+              "codeblock": {
+                "tabs": [
+                  {
+                    "title": "json",
+                    "language": "json",
+                    "code": "{\n  \"definition\": null,\n  \"parts\": [\n    {\n      \"object\": \"\",\n      \"sku\": \"\"\n    }\n  ]\n}"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "type": "rest_component_schema",
+    "context": {
+      "componentSchema": "NewWidget",
+      "group": [
+        "Objects"
+      ]
+    }
+  },
+  {
+    "title": "WidgetDefinition",
+    "description": "What a widget does — its steps and how they are evaluated.",
+    "canonical": "objects/WidgetDefinition",
+    "definitions": [
+      {
+        "title": "WidgetDefinition",
+        "properties": [
+          {
+            "name": "steps",
+            "type": "$$array",
+            "description": "The steps, in order.",
+            "meta": [
+              {
+                "name": "required",
+                "value": "true"
+              }
+            ],
+            "properties": [],
+            "ofProperty": {
+              "name": "",
+              "type": "object",
+              "properties": [
+                {
+                  "name": "name",
+                  "type": "string",
+                  "description": "The step's name.",
+                  "meta": [
+                    {
+                      "name": "required",
+                      "value": "true"
+                    }
+                  ]
+                },
+                {
+                  "name": "count",
+                  "type": "integer",
+                  "description": "How many times the step must happen.",
+                  "meta": [
+                    {
+                      "name": "minimum",
+                      "value": 1
+                    }
+                  ]
+                }
+              ],
+              "description": "",
+              "meta": [
+                {
+                  "name": "required",
+                  "value": "true"
+                }
+              ],
+              "symbolDef": {
+                "id": "#/components/schemas/Step",
+                "canonical": "objects/Step"
+              }
+            },
+            "symbolDef": {
+              "id": "#/components/schemas/Step",
+              "canonical": "objects/Step"
+            }
+          },
+          {
+            "name": "mode",
+            "type": "$$enum",
+            "description": "How the steps are matched.",
+            "meta": [
+              {
+                "name": "defaults",
+                "value": "strict"
+              },
+              {
+                "name": "enum-type",
+                "value": "string"
+              }
+            ],
+            "properties": [
+              {
+                "name": "strict",
+                "type": "string",
+                "description": "",
+                "meta": []
+              },
+              {
+                "name": "loose",
+                "type": "string",
+                "description": "",
+                "meta": []
+              }
+            ],
+            "ofProperty": {
+              "name": "",
+              "description": "",
+              "type": "string"
+            }
+          }
+        ],
+        "meta": []
+      }
+    ],
+    "examples": {
+      "groups": [
+        {
+          "description": "Example",
+          "examples": [
+            {
+              "codeblock": {
+                "tabs": [
+                  {
+                    "title": "json",
+                    "language": "json",
+                    "code": "{\n  \"steps\": [\n    {\n      \"name\": \"\",\n      \"count\": 0\n    }\n  ],\n  \"mode\": \"\"\n}"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "type": "rest_component_schema",
+    "context": {
+      "componentSchema": "WidgetDefinition",
+      "group": [
+        "Objects"
+      ]
+    }
+  },
+  {
+    "title": "Step",
+    "description": "",
+    "canonical": "objects/Step",
+    "definitions": [
+      {
+        "title": "Step",
+        "properties": [
+          {
+            "name": "name",
+            "type": "string",
+            "description": "The step's name.",
+            "meta": [
+              {
+                "name": "required",
+                "value": "true"
+              }
+            ]
+          },
+          {
+            "name": "count",
+            "type": "integer",
+            "description": "How many times the step must happen.",
+            "meta": [
+              {
+                "name": "minimum",
+                "value": 1
+              }
+            ]
+          }
+        ],
+        "meta": []
+      }
+    ],
+    "examples": {
+      "groups": [
+        {
+          "description": "Example",
+          "examples": [
+            {
+              "codeblock": {
+                "tabs": [
+                  {
+                    "title": "json",
+                    "language": "json",
+                    "code": "{\n  \"name\": \"\",\n  \"count\": 0\n}"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "type": "rest_component_schema",
+    "context": {
+      "componentSchema": "Step",
+      "group": [
+        "Objects"
+      ]
+    }
+  },
+  {
+    "title": "Part",
+    "description": "",
+    "canonical": "objects/Part",
+    "definitions": [
+      {
+        "title": "Part",
+        "properties": [
+          {
+            "name": "object",
+            "type": "$$enum",
+            "description": "The object type, always `part`.",
+            "meta": [
+              {
+                "name": "required",
+                "value": "true"
+              },
+              {
+                "name": "enum-type",
+                "value": "string"
+              },
+              {
+                "name": "const",
+                "value": "part"
+              }
+            ],
+            "properties": [
+              {
+                "name": "part",
+                "type": "string",
+                "description": "",
+                "meta": []
+              }
+            ],
+            "ofProperty": {
+              "name": "",
+              "description": "",
+              "type": "string"
+            }
+          },
+          {
+            "name": "sku",
+            "type": "string",
+            "description": "The part's stock-keeping unit.",
+            "meta": [
+              {
+                "name": "required",
+                "value": "true"
+              }
+            ]
+          }
+        ],
+        "meta": []
+      }
+    ],
+    "examples": {
+      "groups": [
+        {
+          "description": "Example",
+          "examples": [
+            {
+              "codeblock": {
+                "tabs": [
+                  {
+                    "title": "json",
+                    "language": "json",
+                    "code": "{\n  \"object\": \"\",\n  \"sku\": \"\"\n}"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "type": "rest_component_schema",
+    "context": {
+      "componentSchema": "Part",
+      "group": [
+        "Objects"
+      ]
+    }
+  },
+  {
+    "title": "AssemblyBase",
+    "description": "",
+    "canonical": "objects/AssemblyBase",
+    "definitions": [
+      {
+        "title": "AssemblyBase",
+        "properties": [
+          {
+            "name": "id",
+            "type": "string",
+            "description": "Unique identifier for the assembly.",
+            "meta": [
+              {
+                "name": "required",
+                "value": "true"
+              }
+            ]
+          }
+        ],
+        "meta": []
+      }
+    ],
+    "examples": {
+      "groups": [
+        {
+          "description": "Example",
+          "examples": [
+            {
+              "codeblock": {
+                "tabs": [
+                  {
+                    "title": "json",
+                    "language": "json",
+                    "code": "{\n  \"id\": \"\"\n}"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "type": "rest_component_schema",
+    "context": {
+      "componentSchema": "AssemblyBase",
+      "group": [
+        "Objects"
+      ]
+    }
+  },
+  {
+    "title": "Assembly",
+    "description": "An assembly of parts.",
+    "canonical": "objects/Assembly",
+    "definitions": [
+      {
+        "title": "Assembly",
+        "properties": [
+          {
+            "name": "id",
+            "type": "string",
+            "description": "Unique identifier for the assembly.",
+            "meta": [
+              {
+                "name": "required",
+                "value": "true"
+              }
+            ]
+          },
+          {
+            "name": "sku",
+            "type": "string",
+            "description": "The assembly's stock-keeping unit.",
+            "meta": []
+          }
+        ],
+        "meta": [],
+        "symbolDef": {
+          "id": []
+        }
+      }
+    ],
+    "examples": {
+      "groups": []
+    },
+    "type": "rest_component_schema",
+    "context": {
+      "componentSchema": "Assembly",
+      "group": [
+        "Objects"
+      ]
+    }
+  }
+]

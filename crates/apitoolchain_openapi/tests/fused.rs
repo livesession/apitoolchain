@@ -2,7 +2,9 @@
 //! pages} against fused.golden.json — goldens generated FROM THE JS IMPLS
 //! (XYD_NATIVE=0 bun scripts/build-fused-goldens.ts in packages/openapi).
 //! 5.xdocs.sidebar exercises the ported x-docs sidebar plugin end-to-end
-//! (canonical rewrites, group paths, endpoint + object pages).
+//! (canonical rewrites, group paths, endpoint + object pages); 5.xdocs.objects
+//! its per-schema half outside sidebar mode (`x-docs.name` / `.group` /
+//! `.hidden` on component schemas, `hidden` on an operation).
 
 use apitoolchain_openapi::fused::{uniform_oas_pages, FusedInput};
 use apitoolchain_uniform::canon;
@@ -67,3 +69,4 @@ fused_case!(more, "2.more");
 fused_case!(multiple_responses, "3.multiple-responses");
 fused_case!(xdocs_sidebar, "5.xdocs.sidebar");
 fused_case!(enums, "8.enums");
+fused_case!(xdocs_objects, "5.xdocs.objects");

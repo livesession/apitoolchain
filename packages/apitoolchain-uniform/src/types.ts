@@ -107,7 +107,10 @@ export interface Meta<T = string> {
     value?: unknown; // TODO: better type?
 }
 
-export type DefinitionPropertyMeta = Meta<"required" | "deprecated" | "internal" | "defaults" | "nullable" | "example" | "examples" | "minimum" | "maximum" | "enum-type"> // TODO: better solution than enum-type?
+/** `const`: the literal of a single-value enum or an OpenAPI 3.1 `const`
+ *  (`{ name: "const", value: "widget" }`), emitted beside the `$$enum` children
+ *  so a renderer can print the value inline. */
+export type DefinitionPropertyMeta = Meta<"required" | "deprecated" | "internal" | "defaults" | "nullable" | "example" | "examples" | "minimum" | "maximum" | "enum-type" | "const"> // TODO: better solution than enum-type?
 
 export enum DEFINED_DEFINITION_PROPERTY_TYPE {
     UNION = "$$union",

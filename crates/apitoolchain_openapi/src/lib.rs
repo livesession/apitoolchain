@@ -27,6 +27,12 @@ pub use oas_doc::{parse_spec, read_spec, DocCtx, OasError};
 
 const SUPPORTED_HTTP_METHODS: &[&str] = &["get", "put", "patch", "post", "delete"];
 
+/// The default name of the group the component-schema pages sit in: the flat
+/// top-level group of the schemas with no resource group, and the sub-group
+/// nested under a resource group (`x-docs.group`) for the schemas that have
+/// one. Renamed with [`Options::objects_group`].
+pub const DEFAULT_OBJECTS_GROUP: &str = "Objects";
+
 /// Port of `uniformOasOptions`.
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
@@ -34,6 +40,20 @@ pub struct Options {
     /// Format: `"METHOD /path"` (e.g. `"GET /users"`) or
     /// `"/components/schemas/Name"`.
     pub regions: Option<Vec<String>>,
+    /// The name of the component-schema pages' group (JSON: `objectsGroup`) —
+    /// both the flat top-level group and the sub-group under a resource group.
+    /// `None` / empty → [`DEFAULT_OBJECTS_GROUP`].
+    pub objects_group: Option<String>,
+}
+
+impl Options {
+    /// The effective name of the component-schema pages' group.
+    pub fn objects_group(&self) -> &str {
+        match self.objects_group.as_deref() {
+            Some(name) if !name.is_empty() => name,
+            _ => DEFAULT_OBJECTS_GROUP,
+        }
+    }
 }
 
 /// Port of `oapSchemaToReferences` (endpoint `examples.groups` left EMPTY —

@@ -192,7 +192,12 @@
                 "name": "definitionDescription",
                 "value": ""
               }
-            ]
+            ],
+            "symbolDef": {
+              "id": "#/components/schemas/User",
+              "canonical": "objects/User",
+              "label": "User"
+            }
           }
         ],
         "properties": []
@@ -278,7 +283,12 @@
             "meta": []
           }
         ],
-        "meta": []
+        "meta": [],
+        "symbolDef": {
+          "id": "#/components/schemas/User",
+          "canonical": "objects/User",
+          "label": "User"
+        }
       }
     ],
     "examples": {

@@ -22,6 +22,7 @@ import {
     slug
 } from "../utils";
 import {OasJSONSchema} from "../types";
+import {componentLink} from "../component-links";
 import path from "node:path";
 import {DefinitionTypeREST} from "@xyd-js/uniform/dist";
 
@@ -303,6 +304,9 @@ export function oapResponseOperationToUniformDefinition(
     }
 }
 
+// The link of a request/response root (an array's is its items'): the
+// component schema's own link (`id`, `canonical`, `label`) when the root IS
+// one, else the legacy `__internal_getRefPath` list of an inline composition.
 function definitionPropertyTypeDef(
     schema: OpenAPIV3.SchemaObject | undefined,
 ) {
@@ -314,6 +318,10 @@ function definitionPropertyTypeDef(
     let oasSchema = schema as OasJSONSchema
     if (oasSchema.type === "array") {
         oasSchema = oasSchema.items as OasJSONSchema
+    }
+    const link = componentLink(oasSchema)
+    if (link) {
+        return link
     }
     if (oasSchema?.__internal_getRefPath) {
         const symbolId = oasSchema.__internal_getRefPath()

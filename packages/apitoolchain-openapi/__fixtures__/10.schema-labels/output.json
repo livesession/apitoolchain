@@ -1,0 +1,3739 @@
+[
+  {
+    "title": "List widgets",
+    "canonical": "listWidgets",
+    "description": "List widgets",
+    "type": "rest_get",
+    "category": "rest",
+    "context": {
+      "method": "get",
+      "path": "/widgets",
+      "group": [
+        "widgets"
+      ],
+      "fullPath": "https://api.example.com/v1/widgets",
+      "servers": [
+        "https://api.example.com/v1"
+      ],
+      "scopes": []
+    },
+    "examples": {
+      "groups": [
+        {
+          "description": "Example request",
+          "examples": [
+            {
+              "codeblock": {
+                "tabs": [
+                  {
+                    "title": "shell",
+                    "language": "shell",
+                    "code": "curl --request GET \\\n     --url https://api.example.com/v1/widgets \\\n     --header 'accept: application/json'"
+                  },
+                  {
+                    "title": "javascript",
+                    "language": "javascript",
+                    "code": "const options = {method: 'GET', headers: {accept: 'application/json'}};\n\nfetch('https://api.example.com/v1/widgets', options)\n  .then(res => res.json())\n  .then(res => console.log(res))\n  .catch(err => console.error(err));"
+                  },
+                  {
+                    "title": "python",
+                    "language": "python",
+                    "code": "import requests\n\nurl = \"https://api.example.com/v1/widgets\"\n\nheaders = {\"accept\": \"application/json\"}\n\nresponse = requests.get(url, headers=headers)\n\nprint(response.text)"
+                  },
+                  {
+                    "title": "go",
+                    "language": "go",
+                    "code": "package main\n\nimport (\n\t\"fmt\"\n\t\"net/http\"\n\t\"io\"\n)\n\nfunc main() {\n\n\turl := \"https://api.example.com/v1/widgets\"\n\n\treq, _ := http.NewRequest(\"GET\", url, nil)\n\n\treq.Header.Add(\"accept\", \"application/json\")\n\n\tres, _ := http.DefaultClient.Do(req)\n\n\tdefer res.Body.Close()\n\tbody, _ := io.ReadAll(res.Body)\n\n\tfmt.Println(string(body))\n\n}"
+                  }
+                ]
+              }
+            }
+          ],
+          "kind": "request"
+        },
+        {
+          "description": "Example response",
+          "examples": [
+            {
+              "codeblock": {
+                "title": "200",
+                "tabs": [
+                  {
+                    "title": "application/json",
+                    "language": "json",
+                    "code": "{\n  \"object\": \"list\",\n  \"data\": [\n    {\n      \"object\": \"widget\",\n      \"id\": \"string\",\n      \"material\": {\n        \"name\": \"string\"\n      },\n      \"shape\": {\n        \"object\": \"round\"\n      },\n      \"parts\": [\n        {\n          \"object\": \"part\",\n          \"sku\": \"string\"\n        }\n      ],\n      \"assembly\": {\n        \"id\": \"string\",\n        \"object\": \"assembly\"\n      }\n    }\n  ]\n}"
+                  }
+                ]
+              }
+            }
+          ],
+          "kind": "response"
+        }
+      ]
+    },
+    "definitions": [
+      {
+        "title": "Response",
+        "type": "return",
+        "variants": [
+          {
+            "title": "200",
+            "description": "A page of widgets.",
+            "properties": [
+              {
+                "name": "object",
+                "type": "$$enum",
+                "description": "The object type, always `list`.",
+                "meta": [
+                  {
+                    "name": "required",
+                    "value": "true"
+                  },
+                  {
+                    "name": "enum-type",
+                    "value": "string"
+                  },
+                  {
+                    "name": "const",
+                    "value": "list"
+                  }
+                ],
+                "properties": [
+                  {
+                    "name": "list",
+                    "type": "string",
+                    "description": "",
+                    "meta": []
+                  }
+                ],
+                "ofProperty": {
+                  "name": "",
+                  "description": "",
+                  "type": "string"
+                }
+              },
+              {
+                "name": "data",
+                "type": "$$array",
+                "description": "The widgets on this page.",
+                "meta": [
+                  {
+                    "name": "required",
+                    "value": "true"
+                  }
+                ],
+                "properties": [],
+                "ofProperty": {
+                  "name": "",
+                  "type": "object",
+                  "properties": [
+                    {
+                      "name": "object",
+                      "type": "$$enum",
+                      "description": "The object type, always `widget`.",
+                      "meta": [
+                        {
+                          "name": "required",
+                          "value": "true"
+                        },
+                        {
+                          "name": "enum-type",
+                          "value": "string"
+                        },
+                        {
+                          "name": "const",
+                          "value": "widget"
+                        }
+                      ],
+                      "properties": [
+                        {
+                          "name": "widget",
+                          "type": "string",
+                          "description": "",
+                          "meta": []
+                        }
+                      ],
+                      "ofProperty": {
+                        "name": "",
+                        "description": "",
+                        "type": "string"
+                      }
+                    },
+                    {
+                      "name": "id",
+                      "type": "string",
+                      "description": "Unique identifier for the widget.",
+                      "meta": [
+                        {
+                          "name": "required",
+                          "value": "true"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "material",
+                      "type": "object",
+                      "description": "What a widget is made of.",
+                      "meta": [],
+                      "symbolDef": {
+                        "id": "#/components/schemas/Material",
+                        "canonical": "objects/Material",
+                        "label": "Material"
+                      },
+                      "properties": [
+                        {
+                          "name": "name",
+                          "type": "string",
+                          "description": "The material's name.",
+                          "meta": []
+                        }
+                      ]
+                    },
+                    {
+                      "name": "shape",
+                      "type": "object",
+                      "description": "The outline of a widget.",
+                      "meta": [],
+                      "symbolDef": {
+                        "id": "#/components/schemas/Shape",
+                        "canonical": "objects/Shape",
+                        "label": "Shape"
+                      },
+                      "properties": [
+                        {
+                          "name": "object",
+                          "type": "$$enum",
+                          "description": "Not a constant — two values.",
+                          "meta": [
+                            {
+                              "name": "enum-type",
+                              "value": "string"
+                            }
+                          ],
+                          "properties": [
+                            {
+                              "name": "round",
+                              "type": "string",
+                              "description": "",
+                              "meta": []
+                            },
+                            {
+                              "name": "square",
+                              "type": "string",
+                              "description": "",
+                              "meta": []
+                            }
+                          ],
+                          "ofProperty": {
+                            "name": "",
+                            "description": "",
+                            "type": "string"
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "name": "parts",
+                      "type": "$$array",
+                      "description": "The parts the widget is made of.",
+                      "meta": [],
+                      "properties": [],
+                      "ofProperty": {
+                        "name": "",
+                        "type": "object",
+                        "properties": [
+                          {
+                            "name": "object",
+                            "type": "$$enum",
+                            "description": "The object type, always `part`.",
+                            "meta": [
+                              {
+                                "name": "required",
+                                "value": "true"
+                              },
+                              {
+                                "name": "enum-type",
+                                "value": "string"
+                              },
+                              {
+                                "name": "const",
+                                "value": "part"
+                              }
+                            ],
+                            "properties": [
+                              {
+                                "name": "part",
+                                "type": "string",
+                                "description": "",
+                                "meta": []
+                              }
+                            ],
+                            "ofProperty": {
+                              "name": "",
+                              "description": "",
+                              "type": "string"
+                            }
+                          },
+                          {
+                            "name": "sku",
+                            "type": "string",
+                            "description": "The part's stock-keeping unit.",
+                            "meta": [
+                              {
+                                "name": "required",
+                                "value": "true"
+                              }
+                            ]
+                          }
+                        ],
+                        "description": "",
+                        "meta": [],
+                        "symbolDef": {
+                          "id": "#/components/schemas/Part",
+                          "canonical": "objects/Part",
+                          "label": "part"
+                        }
+                      },
+                      "symbolDef": {
+                        "id": "#/components/schemas/Part",
+                        "canonical": "objects/Part",
+                        "label": "part"
+                      }
+                    },
+                    {
+                      "name": "assembly",
+                      "type": "object",
+                      "description": "An assembly of parts.",
+                      "properties": [
+                        {
+                          "name": "id",
+                          "type": "string",
+                          "description": "Unique identifier for the assembly.",
+                          "meta": [
+                            {
+                              "name": "required",
+                              "value": "true"
+                            }
+                          ]
+                        },
+                        {
+                          "name": "object",
+                          "type": "$$enum",
+                          "description": "The object type, always `assembly`.",
+                          "meta": [
+                            {
+                              "name": "required",
+                              "value": "true"
+                            },
+                            {
+                              "name": "enum-type",
+                              "value": "string"
+                            },
+                            {
+                              "name": "const",
+                              "value": "assembly"
+                            }
+                          ],
+                          "properties": [
+                            {
+                              "name": "assembly",
+                              "type": "string",
+                              "description": "",
+                              "meta": []
+                            }
+                          ],
+                          "ofProperty": {
+                            "name": "",
+                            "description": "",
+                            "type": "string"
+                          }
+                        }
+                      ],
+                      "meta": [],
+                      "symbolDef": {
+                        "id": "#/components/schemas/Assembly",
+                        "canonical": "objects/Assembly",
+                        "label": "assembly"
+                      }
+                    }
+                  ],
+                  "description": "A widget.",
+                  "meta": [
+                    {
+                      "name": "required",
+                      "value": "true"
+                    }
+                  ],
+                  "symbolDef": {
+                    "id": "#/components/schemas/Widget",
+                    "canonical": "objects/Widget",
+                    "label": "widget"
+                  }
+                },
+                "symbolDef": {
+                  "id": "#/components/schemas/Widget",
+                  "canonical": "objects/Widget",
+                  "label": "widget"
+                }
+              }
+            ],
+            "meta": [
+              {
+                "name": "status",
+                "value": "200"
+              },
+              {
+                "name": "contentType",
+                "value": "application/json"
+              },
+              {
+                "name": "definitionDescription",
+                "value": ""
+              }
+            ],
+            "symbolDef": {
+              "id": "#/components/schemas/WidgetList",
+              "canonical": "objects/WidgetList",
+              "label": "list"
+            }
+          }
+        ],
+        "properties": []
+      }
+    ]
+  },
+  {
+    "title": "Create widget",
+    "canonical": "createWidget",
+    "description": "Create widget",
+    "type": "rest_post",
+    "category": "rest",
+    "context": {
+      "method": "post",
+      "path": "/widgets",
+      "group": [
+        "widgets"
+      ],
+      "fullPath": "https://api.example.com/v1/widgets",
+      "servers": [
+        "https://api.example.com/v1"
+      ],
+      "scopes": []
+    },
+    "examples": {
+      "groups": [
+        {
+          "description": "Example request",
+          "examples": [
+            {
+              "codeblock": {
+                "tabs": [
+                  {
+                    "title": "shell",
+                    "language": "shell",
+                    "code": "curl --request POST \\\n     --url https://api.example.com/v1/widgets \\\n     --header 'accept: application/json' \\\n     --header 'content-type: application/json' \\\n     --data '\n{\n  \"object\": \"widget\",\n  \"id\": \"string\",\n  \"material\": {\n    \"name\": \"string\"\n  },\n  \"shape\": {\n    \"object\": \"round\"\n  },\n  \"parts\": [\n    {\n      \"object\": \"part\",\n      \"sku\": \"string\"\n    }\n  ],\n  \"assembly\": {\n    \"id\": \"string\",\n    \"object\": \"assembly\"\n  }\n}\n'"
+                  },
+                  {
+                    "title": "javascript",
+                    "language": "javascript",
+                    "code": "const options = {\n  method: 'POST',\n  headers: {accept: 'application/json', 'content-type': 'application/json'},\n  body: JSON.stringify({\n    object: 'widget',\n    id: 'string',\n    material: {name: 'string'},\n    shape: {object: 'round'},\n    parts: [{object: 'part', sku: 'string'}],\n    assembly: {id: 'string', object: 'assembly'}\n  })\n};\n\nfetch('https://api.example.com/v1/widgets', options)\n  .then(res => res.json())\n  .then(res => console.log(res))\n  .catch(err => console.error(err));"
+                  },
+                  {
+                    "title": "python",
+                    "language": "python",
+                    "code": "import requests\n\nurl = \"https://api.example.com/v1/widgets\"\n\npayload = {\n    \"object\": \"widget\",\n    \"id\": \"string\",\n    \"material\": { \"name\": \"string\" },\n    \"shape\": { \"object\": \"round\" },\n    \"parts\": [\n        {\n            \"object\": \"part\",\n            \"sku\": \"string\"\n        }\n    ],\n    \"assembly\": {\n        \"id\": \"string\",\n        \"object\": \"assembly\"\n    }\n}\nheaders = {\n    \"accept\": \"application/json\",\n    \"content-type\": \"application/json\"\n}\n\nresponse = requests.post(url, json=payload, headers=headers)\n\nprint(response.text)"
+                  },
+                  {
+                    "title": "go",
+                    "language": "go",
+                    "code": "package main\n\nimport (\n\t\"fmt\"\n\t\"strings\"\n\t\"net/http\"\n\t\"io\"\n)\n\nfunc main() {\n\n\turl := \"https://api.example.com/v1/widgets\"\n\n\tpayload := strings.NewReader(\"{\\\"object\\\":\\\"widget\\\",\\\"id\\\":\\\"string\\\",\\\"material\\\":{\\\"name\\\":\\\"string\\\"},\\\"shape\\\":{\\\"object\\\":\\\"round\\\"},\\\"parts\\\":[{\\\"object\\\":\\\"part\\\",\\\"sku\\\":\\\"string\\\"}],\\\"assembly\\\":{\\\"id\\\":\\\"string\\\",\\\"object\\\":\\\"assembly\\\"}}\")\n\n\treq, _ := http.NewRequest(\"POST\", url, payload)\n\n\treq.Header.Add(\"accept\", \"application/json\")\n\treq.Header.Add(\"content-type\", \"application/json\")\n\n\tres, _ := http.DefaultClient.Do(req)\n\n\tdefer res.Body.Close()\n\tbody, _ := io.ReadAll(res.Body)\n\n\tfmt.Println(string(body))\n\n}"
+                  }
+                ]
+              }
+            }
+          ],
+          "kind": "request"
+        },
+        {
+          "description": "Example response",
+          "examples": [
+            {
+              "codeblock": {
+                "title": "201",
+                "tabs": [
+                  {
+                    "title": "application/json",
+                    "language": "json",
+                    "code": "{\n  \"object\": \"widget\",\n  \"id\": \"string\",\n  \"material\": {\n    \"name\": \"string\"\n  },\n  \"shape\": {\n    \"object\": \"round\"\n  },\n  \"parts\": [\n    {\n      \"object\": \"part\",\n      \"sku\": \"string\"\n    }\n  ],\n  \"assembly\": {\n    \"id\": \"string\",\n    \"object\": \"assembly\"\n  }\n}"
+                  }
+                ]
+              }
+            }
+          ],
+          "kind": "response"
+        }
+      ]
+    },
+    "definitions": [
+      {
+        "title": "Request body",
+        "variants": [
+          {
+            "title": "application/json",
+            "description": "A widget.",
+            "properties": [
+              {
+                "name": "object",
+                "type": "$$enum",
+                "description": "The object type, always `widget`.",
+                "meta": [
+                  {
+                    "name": "required",
+                    "value": "true"
+                  },
+                  {
+                    "name": "enum-type",
+                    "value": "string"
+                  },
+                  {
+                    "name": "const",
+                    "value": "widget"
+                  }
+                ],
+                "properties": [
+                  {
+                    "name": "widget",
+                    "type": "string",
+                    "description": "",
+                    "meta": []
+                  }
+                ],
+                "ofProperty": {
+                  "name": "",
+                  "description": "",
+                  "type": "string"
+                }
+              },
+              {
+                "name": "id",
+                "type": "string",
+                "description": "Unique identifier for the widget.",
+                "meta": [
+                  {
+                    "name": "required",
+                    "value": "true"
+                  }
+                ]
+              },
+              {
+                "name": "material",
+                "type": "object",
+                "description": "What a widget is made of.",
+                "meta": [],
+                "symbolDef": {
+                  "id": "#/components/schemas/Material",
+                  "canonical": "objects/Material",
+                  "label": "Material"
+                },
+                "properties": [
+                  {
+                    "name": "name",
+                    "type": "string",
+                    "description": "The material's name.",
+                    "meta": []
+                  }
+                ]
+              },
+              {
+                "name": "shape",
+                "type": "object",
+                "description": "The outline of a widget.",
+                "meta": [],
+                "symbolDef": {
+                  "id": "#/components/schemas/Shape",
+                  "canonical": "objects/Shape",
+                  "label": "Shape"
+                },
+                "properties": [
+                  {
+                    "name": "object",
+                    "type": "$$enum",
+                    "description": "Not a constant — two values.",
+                    "meta": [
+                      {
+                        "name": "enum-type",
+                        "value": "string"
+                      }
+                    ],
+                    "properties": [
+                      {
+                        "name": "round",
+                        "type": "string",
+                        "description": "",
+                        "meta": []
+                      },
+                      {
+                        "name": "square",
+                        "type": "string",
+                        "description": "",
+                        "meta": []
+                      }
+                    ],
+                    "ofProperty": {
+                      "name": "",
+                      "description": "",
+                      "type": "string"
+                    }
+                  }
+                ]
+              },
+              {
+                "name": "parts",
+                "type": "$$array",
+                "description": "The parts the widget is made of.",
+                "meta": [],
+                "properties": [],
+                "ofProperty": {
+                  "name": "",
+                  "type": "object",
+                  "properties": [
+                    {
+                      "name": "object",
+                      "type": "$$enum",
+                      "description": "The object type, always `part`.",
+                      "meta": [
+                        {
+                          "name": "required",
+                          "value": "true"
+                        },
+                        {
+                          "name": "enum-type",
+                          "value": "string"
+                        },
+                        {
+                          "name": "const",
+                          "value": "part"
+                        }
+                      ],
+                      "properties": [
+                        {
+                          "name": "part",
+                          "type": "string",
+                          "description": "",
+                          "meta": []
+                        }
+                      ],
+                      "ofProperty": {
+                        "name": "",
+                        "description": "",
+                        "type": "string"
+                      }
+                    },
+                    {
+                      "name": "sku",
+                      "type": "string",
+                      "description": "The part's stock-keeping unit.",
+                      "meta": [
+                        {
+                          "name": "required",
+                          "value": "true"
+                        }
+                      ]
+                    }
+                  ],
+                  "description": "",
+                  "meta": [],
+                  "symbolDef": {
+                    "id": "#/components/schemas/Part",
+                    "canonical": "objects/Part",
+                    "label": "part"
+                  }
+                },
+                "symbolDef": {
+                  "id": "#/components/schemas/Part",
+                  "canonical": "objects/Part",
+                  "label": "part"
+                }
+              },
+              {
+                "name": "assembly",
+                "type": "object",
+                "description": "An assembly of parts.",
+                "properties": [
+                  {
+                    "name": "id",
+                    "type": "string",
+                    "description": "Unique identifier for the assembly.",
+                    "meta": [
+                      {
+                        "name": "required",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "object",
+                    "type": "$$enum",
+                    "description": "The object type, always `assembly`.",
+                    "meta": [
+                      {
+                        "name": "required",
+                        "value": "true"
+                      },
+                      {
+                        "name": "enum-type",
+                        "value": "string"
+                      },
+                      {
+                        "name": "const",
+                        "value": "assembly"
+                      }
+                    ],
+                    "properties": [
+                      {
+                        "name": "assembly",
+                        "type": "string",
+                        "description": "",
+                        "meta": []
+                      }
+                    ],
+                    "ofProperty": {
+                      "name": "",
+                      "description": "",
+                      "type": "string"
+                    }
+                  }
+                ],
+                "meta": [],
+                "symbolDef": {
+                  "id": "#/components/schemas/Assembly",
+                  "canonical": "objects/Assembly",
+                  "label": "assembly"
+                }
+              }
+            ],
+            "meta": [
+              {
+                "name": "contentType",
+                "value": "application/json"
+              },
+              {
+                "name": "required",
+                "value": "true"
+              }
+            ],
+            "symbolDef": {
+              "id": "#/components/schemas/Widget",
+              "canonical": "objects/Widget",
+              "label": "widget"
+            }
+          }
+        ],
+        "properties": [],
+        "meta": [
+          {
+            "name": "required",
+            "value": "true"
+          }
+        ],
+        "type": "$rest.request.body"
+      },
+      {
+        "title": "Response",
+        "type": "return",
+        "variants": [
+          {
+            "title": "201",
+            "description": "The widget that was created.",
+            "properties": [
+              {
+                "name": "object",
+                "type": "$$enum",
+                "description": "The object type, always `widget`.",
+                "meta": [
+                  {
+                    "name": "required",
+                    "value": "true"
+                  },
+                  {
+                    "name": "enum-type",
+                    "value": "string"
+                  },
+                  {
+                    "name": "const",
+                    "value": "widget"
+                  }
+                ],
+                "properties": [
+                  {
+                    "name": "widget",
+                    "type": "string",
+                    "description": "",
+                    "meta": []
+                  }
+                ],
+                "ofProperty": {
+                  "name": "",
+                  "description": "",
+                  "type": "string"
+                }
+              },
+              {
+                "name": "id",
+                "type": "string",
+                "description": "Unique identifier for the widget.",
+                "meta": [
+                  {
+                    "name": "required",
+                    "value": "true"
+                  }
+                ]
+              },
+              {
+                "name": "material",
+                "type": "object",
+                "description": "What a widget is made of.",
+                "meta": [],
+                "symbolDef": {
+                  "id": "#/components/schemas/Material",
+                  "canonical": "objects/Material",
+                  "label": "Material"
+                },
+                "properties": [
+                  {
+                    "name": "name",
+                    "type": "string",
+                    "description": "The material's name.",
+                    "meta": []
+                  }
+                ]
+              },
+              {
+                "name": "shape",
+                "type": "object",
+                "description": "The outline of a widget.",
+                "meta": [],
+                "symbolDef": {
+                  "id": "#/components/schemas/Shape",
+                  "canonical": "objects/Shape",
+                  "label": "Shape"
+                },
+                "properties": [
+                  {
+                    "name": "object",
+                    "type": "$$enum",
+                    "description": "Not a constant — two values.",
+                    "meta": [
+                      {
+                        "name": "enum-type",
+                        "value": "string"
+                      }
+                    ],
+                    "properties": [
+                      {
+                        "name": "round",
+                        "type": "string",
+                        "description": "",
+                        "meta": []
+                      },
+                      {
+                        "name": "square",
+                        "type": "string",
+                        "description": "",
+                        "meta": []
+                      }
+                    ],
+                    "ofProperty": {
+                      "name": "",
+                      "description": "",
+                      "type": "string"
+                    }
+                  }
+                ]
+              },
+              {
+                "name": "parts",
+                "type": "$$array",
+                "description": "The parts the widget is made of.",
+                "meta": [],
+                "properties": [],
+                "ofProperty": {
+                  "name": "",
+                  "type": "object",
+                  "properties": [
+                    {
+                      "name": "object",
+                      "type": "$$enum",
+                      "description": "The object type, always `part`.",
+                      "meta": [
+                        {
+                          "name": "required",
+                          "value": "true"
+                        },
+                        {
+                          "name": "enum-type",
+                          "value": "string"
+                        },
+                        {
+                          "name": "const",
+                          "value": "part"
+                        }
+                      ],
+                      "properties": [
+                        {
+                          "name": "part",
+                          "type": "string",
+                          "description": "",
+                          "meta": []
+                        }
+                      ],
+                      "ofProperty": {
+                        "name": "",
+                        "description": "",
+                        "type": "string"
+                      }
+                    },
+                    {
+                      "name": "sku",
+                      "type": "string",
+                      "description": "The part's stock-keeping unit.",
+                      "meta": [
+                        {
+                          "name": "required",
+                          "value": "true"
+                        }
+                      ]
+                    }
+                  ],
+                  "description": "",
+                  "meta": [],
+                  "symbolDef": {
+                    "id": "#/components/schemas/Part",
+                    "canonical": "objects/Part",
+                    "label": "part"
+                  }
+                },
+                "symbolDef": {
+                  "id": "#/components/schemas/Part",
+                  "canonical": "objects/Part",
+                  "label": "part"
+                }
+              },
+              {
+                "name": "assembly",
+                "type": "object",
+                "description": "An assembly of parts.",
+                "properties": [
+                  {
+                    "name": "id",
+                    "type": "string",
+                    "description": "Unique identifier for the assembly.",
+                    "meta": [
+                      {
+                        "name": "required",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "object",
+                    "type": "$$enum",
+                    "description": "The object type, always `assembly`.",
+                    "meta": [
+                      {
+                        "name": "required",
+                        "value": "true"
+                      },
+                      {
+                        "name": "enum-type",
+                        "value": "string"
+                      },
+                      {
+                        "name": "const",
+                        "value": "assembly"
+                      }
+                    ],
+                    "properties": [
+                      {
+                        "name": "assembly",
+                        "type": "string",
+                        "description": "",
+                        "meta": []
+                      }
+                    ],
+                    "ofProperty": {
+                      "name": "",
+                      "description": "",
+                      "type": "string"
+                    }
+                  }
+                ],
+                "meta": [],
+                "symbolDef": {
+                  "id": "#/components/schemas/Assembly",
+                  "canonical": "objects/Assembly",
+                  "label": "assembly"
+                }
+              }
+            ],
+            "meta": [
+              {
+                "name": "status",
+                "value": "201"
+              },
+              {
+                "name": "contentType",
+                "value": "application/json"
+              },
+              {
+                "name": "definitionDescription",
+                "value": ""
+              }
+            ],
+            "symbolDef": {
+              "id": "#/components/schemas/Widget",
+              "canonical": "objects/Widget",
+              "label": "widget"
+            }
+          }
+        ],
+        "properties": []
+      }
+    ]
+  },
+  {
+    "title": "Retrieve widget",
+    "canonical": "getWidget",
+    "description": "Retrieve widget",
+    "type": "rest_get",
+    "category": "rest",
+    "context": {
+      "method": "get",
+      "path": "/widgets/{widgetId}",
+      "group": [
+        "widgets"
+      ],
+      "fullPath": "https://api.example.com/v1/widgets/{widgetId}",
+      "servers": [
+        "https://api.example.com/v1"
+      ],
+      "scopes": []
+    },
+    "examples": {
+      "groups": [
+        {
+          "description": "Example request",
+          "examples": [
+            {
+              "codeblock": {
+                "tabs": [
+                  {
+                    "title": "shell",
+                    "language": "shell",
+                    "code": "curl --request GET \\\n     --url https://api.example.com/v1/widgets/string \\\n     --header 'accept: application/json'"
+                  },
+                  {
+                    "title": "javascript",
+                    "language": "javascript",
+                    "code": "const options = {method: 'GET', headers: {accept: 'application/json'}};\n\nfetch('https://api.example.com/v1/widgets/string', options)\n  .then(res => res.json())\n  .then(res => console.log(res))\n  .catch(err => console.error(err));"
+                  },
+                  {
+                    "title": "python",
+                    "language": "python",
+                    "code": "import requests\n\nurl = \"https://api.example.com/v1/widgets/string\"\n\nheaders = {\"accept\": \"application/json\"}\n\nresponse = requests.get(url, headers=headers)\n\nprint(response.text)"
+                  },
+                  {
+                    "title": "go",
+                    "language": "go",
+                    "code": "package main\n\nimport (\n\t\"fmt\"\n\t\"net/http\"\n\t\"io\"\n)\n\nfunc main() {\n\n\turl := \"https://api.example.com/v1/widgets/string\"\n\n\treq, _ := http.NewRequest(\"GET\", url, nil)\n\n\treq.Header.Add(\"accept\", \"application/json\")\n\n\tres, _ := http.DefaultClient.Do(req)\n\n\tdefer res.Body.Close()\n\tbody, _ := io.ReadAll(res.Body)\n\n\tfmt.Println(string(body))\n\n}"
+                  }
+                ]
+              }
+            }
+          ],
+          "kind": "request"
+        },
+        {
+          "description": "Example response",
+          "examples": [
+            {
+              "codeblock": {
+                "title": "200",
+                "tabs": [
+                  {
+                    "title": "application/json",
+                    "language": "json",
+                    "code": "{\n  \"object\": \"widget\",\n  \"id\": \"string\",\n  \"material\": {\n    \"name\": \"string\"\n  },\n  \"shape\": {\n    \"object\": \"round\"\n  },\n  \"parts\": [\n    {\n      \"object\": \"part\",\n      \"sku\": \"string\"\n    }\n  ],\n  \"assembly\": {\n    \"id\": \"string\",\n    \"object\": \"assembly\"\n  }\n}"
+                  }
+                ]
+              }
+            }
+          ],
+          "kind": "response"
+        }
+      ]
+    },
+    "definitions": [
+      {
+        "title": "Path parameters",
+        "properties": [
+          {
+            "name": "widgetId",
+            "type": "string",
+            "description": "",
+            "meta": [
+              {
+                "name": "required",
+                "value": "true"
+              }
+            ]
+          }
+        ],
+        "type": "$rest.param.path"
+      },
+      {
+        "title": "Response",
+        "type": "return",
+        "variants": [
+          {
+            "title": "200",
+            "description": "The widget.",
+            "properties": [
+              {
+                "name": "object",
+                "type": "$$enum",
+                "description": "The object type, always `widget`.",
+                "meta": [
+                  {
+                    "name": "required",
+                    "value": "true"
+                  },
+                  {
+                    "name": "enum-type",
+                    "value": "string"
+                  },
+                  {
+                    "name": "const",
+                    "value": "widget"
+                  }
+                ],
+                "properties": [
+                  {
+                    "name": "widget",
+                    "type": "string",
+                    "description": "",
+                    "meta": []
+                  }
+                ],
+                "ofProperty": {
+                  "name": "",
+                  "description": "",
+                  "type": "string"
+                }
+              },
+              {
+                "name": "id",
+                "type": "string",
+                "description": "Unique identifier for the widget.",
+                "meta": [
+                  {
+                    "name": "required",
+                    "value": "true"
+                  }
+                ]
+              },
+              {
+                "name": "material",
+                "type": "object",
+                "description": "What a widget is made of.",
+                "meta": [],
+                "symbolDef": {
+                  "id": "#/components/schemas/Material",
+                  "canonical": "objects/Material",
+                  "label": "Material"
+                },
+                "properties": [
+                  {
+                    "name": "name",
+                    "type": "string",
+                    "description": "The material's name.",
+                    "meta": []
+                  }
+                ]
+              },
+              {
+                "name": "shape",
+                "type": "object",
+                "description": "The outline of a widget.",
+                "meta": [],
+                "symbolDef": {
+                  "id": "#/components/schemas/Shape",
+                  "canonical": "objects/Shape",
+                  "label": "Shape"
+                },
+                "properties": [
+                  {
+                    "name": "object",
+                    "type": "$$enum",
+                    "description": "Not a constant — two values.",
+                    "meta": [
+                      {
+                        "name": "enum-type",
+                        "value": "string"
+                      }
+                    ],
+                    "properties": [
+                      {
+                        "name": "round",
+                        "type": "string",
+                        "description": "",
+                        "meta": []
+                      },
+                      {
+                        "name": "square",
+                        "type": "string",
+                        "description": "",
+                        "meta": []
+                      }
+                    ],
+                    "ofProperty": {
+                      "name": "",
+                      "description": "",
+                      "type": "string"
+                    }
+                  }
+                ]
+              },
+              {
+                "name": "parts",
+                "type": "$$array",
+                "description": "The parts the widget is made of.",
+                "meta": [],
+                "properties": [],
+                "ofProperty": {
+                  "name": "",
+                  "type": "object",
+                  "properties": [
+                    {
+                      "name": "object",
+                      "type": "$$enum",
+                      "description": "The object type, always `part`.",
+                      "meta": [
+                        {
+                          "name": "required",
+                          "value": "true"
+                        },
+                        {
+                          "name": "enum-type",
+                          "value": "string"
+                        },
+                        {
+                          "name": "const",
+                          "value": "part"
+                        }
+                      ],
+                      "properties": [
+                        {
+                          "name": "part",
+                          "type": "string",
+                          "description": "",
+                          "meta": []
+                        }
+                      ],
+                      "ofProperty": {
+                        "name": "",
+                        "description": "",
+                        "type": "string"
+                      }
+                    },
+                    {
+                      "name": "sku",
+                      "type": "string",
+                      "description": "The part's stock-keeping unit.",
+                      "meta": [
+                        {
+                          "name": "required",
+                          "value": "true"
+                        }
+                      ]
+                    }
+                  ],
+                  "description": "",
+                  "meta": [],
+                  "symbolDef": {
+                    "id": "#/components/schemas/Part",
+                    "canonical": "objects/Part",
+                    "label": "part"
+                  }
+                },
+                "symbolDef": {
+                  "id": "#/components/schemas/Part",
+                  "canonical": "objects/Part",
+                  "label": "part"
+                }
+              },
+              {
+                "name": "assembly",
+                "type": "object",
+                "description": "An assembly of parts.",
+                "properties": [
+                  {
+                    "name": "id",
+                    "type": "string",
+                    "description": "Unique identifier for the assembly.",
+                    "meta": [
+                      {
+                        "name": "required",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "object",
+                    "type": "$$enum",
+                    "description": "The object type, always `assembly`.",
+                    "meta": [
+                      {
+                        "name": "required",
+                        "value": "true"
+                      },
+                      {
+                        "name": "enum-type",
+                        "value": "string"
+                      },
+                      {
+                        "name": "const",
+                        "value": "assembly"
+                      }
+                    ],
+                    "properties": [
+                      {
+                        "name": "assembly",
+                        "type": "string",
+                        "description": "",
+                        "meta": []
+                      }
+                    ],
+                    "ofProperty": {
+                      "name": "",
+                      "description": "",
+                      "type": "string"
+                    }
+                  }
+                ],
+                "meta": [],
+                "symbolDef": {
+                  "id": "#/components/schemas/Assembly",
+                  "canonical": "objects/Assembly",
+                  "label": "assembly"
+                }
+              }
+            ],
+            "meta": [
+              {
+                "name": "status",
+                "value": "200"
+              },
+              {
+                "name": "contentType",
+                "value": "application/json"
+              },
+              {
+                "name": "definitionDescription",
+                "value": ""
+              }
+            ],
+            "symbolDef": {
+              "id": "#/components/schemas/Widget",
+              "canonical": "objects/Widget",
+              "label": "widget"
+            }
+          }
+        ],
+        "properties": []
+      }
+    ]
+  },
+  {
+    "title": "List materials",
+    "canonical": "listMaterials",
+    "description": "List materials",
+    "type": "rest_get",
+    "category": "rest",
+    "context": {
+      "method": "get",
+      "path": "/materials",
+      "group": [
+        "widgets"
+      ],
+      "fullPath": "https://api.example.com/v1/materials",
+      "servers": [
+        "https://api.example.com/v1"
+      ],
+      "scopes": []
+    },
+    "examples": {
+      "groups": [
+        {
+          "description": "Example request",
+          "examples": [
+            {
+              "codeblock": {
+                "tabs": [
+                  {
+                    "title": "shell",
+                    "language": "shell",
+                    "code": "curl --request GET \\\n     --url https://api.example.com/v1/materials \\\n     --header 'accept: application/json'"
+                  },
+                  {
+                    "title": "javascript",
+                    "language": "javascript",
+                    "code": "const options = {method: 'GET', headers: {accept: 'application/json'}};\n\nfetch('https://api.example.com/v1/materials', options)\n  .then(res => res.json())\n  .then(res => console.log(res))\n  .catch(err => console.error(err));"
+                  },
+                  {
+                    "title": "python",
+                    "language": "python",
+                    "code": "import requests\n\nurl = \"https://api.example.com/v1/materials\"\n\nheaders = {\"accept\": \"application/json\"}\n\nresponse = requests.get(url, headers=headers)\n\nprint(response.text)"
+                  },
+                  {
+                    "title": "go",
+                    "language": "go",
+                    "code": "package main\n\nimport (\n\t\"fmt\"\n\t\"net/http\"\n\t\"io\"\n)\n\nfunc main() {\n\n\turl := \"https://api.example.com/v1/materials\"\n\n\treq, _ := http.NewRequest(\"GET\", url, nil)\n\n\treq.Header.Add(\"accept\", \"application/json\")\n\n\tres, _ := http.DefaultClient.Do(req)\n\n\tdefer res.Body.Close()\n\tbody, _ := io.ReadAll(res.Body)\n\n\tfmt.Println(string(body))\n\n}"
+                  }
+                ]
+              }
+            }
+          ],
+          "kind": "request"
+        },
+        {
+          "description": "Example response",
+          "examples": [
+            {
+              "codeblock": {
+                "title": "200",
+                "tabs": [
+                  {
+                    "title": "application/json",
+                    "language": "json",
+                    "code": "[\n  {\n    \"name\": \"string\"\n  }\n]"
+                  }
+                ]
+              }
+            }
+          ],
+          "kind": "response"
+        }
+      ]
+    },
+    "definitions": [
+      {
+        "title": "Response",
+        "type": "return",
+        "variants": [
+          {
+            "title": "200",
+            "description": "Every material.",
+            "properties": [],
+            "rootProperty": {
+              "type": "$$array",
+              "properties": [
+                {
+                  "name": "name",
+                  "type": "string",
+                  "description": "The material's name.",
+                  "meta": []
+                }
+              ]
+            },
+            "meta": [
+              {
+                "name": "status",
+                "value": "200"
+              },
+              {
+                "name": "contentType",
+                "value": "application/json"
+              },
+              {
+                "name": "definitionDescription",
+                "value": ""
+              }
+            ],
+            "symbolDef": {
+              "id": "#/components/schemas/Material",
+              "canonical": "objects/Material",
+              "label": "Material"
+            }
+          }
+        ],
+        "properties": []
+      }
+    ]
+  },
+  {
+    "title": "Retrieve slot",
+    "canonical": "getSlot",
+    "description": "Retrieve slot",
+    "type": "rest_get",
+    "category": "rest",
+    "context": {
+      "method": "get",
+      "path": "/slots/{slotId}",
+      "group": [
+        "slots"
+      ],
+      "fullPath": "https://api.example.com/v1/slots/{slotId}",
+      "servers": [
+        "https://api.example.com/v1"
+      ],
+      "scopes": []
+    },
+    "examples": {
+      "groups": [
+        {
+          "description": "Example request",
+          "examples": [
+            {
+              "codeblock": {
+                "tabs": [
+                  {
+                    "title": "shell",
+                    "language": "shell",
+                    "code": "curl --request GET \\\n     --url https://api.example.com/v1/slots/string \\\n     --header 'accept: application/json'"
+                  },
+                  {
+                    "title": "javascript",
+                    "language": "javascript",
+                    "code": "const options = {method: 'GET', headers: {accept: 'application/json'}};\n\nfetch('https://api.example.com/v1/slots/string', options)\n  .then(res => res.json())\n  .then(res => console.log(res))\n  .catch(err => console.error(err));"
+                  },
+                  {
+                    "title": "python",
+                    "language": "python",
+                    "code": "import requests\n\nurl = \"https://api.example.com/v1/slots/string\"\n\nheaders = {\"accept\": \"application/json\"}\n\nresponse = requests.get(url, headers=headers)\n\nprint(response.text)"
+                  },
+                  {
+                    "title": "go",
+                    "language": "go",
+                    "code": "package main\n\nimport (\n\t\"fmt\"\n\t\"net/http\"\n\t\"io\"\n)\n\nfunc main() {\n\n\turl := \"https://api.example.com/v1/slots/string\"\n\n\treq, _ := http.NewRequest(\"GET\", url, nil)\n\n\treq.Header.Add(\"accept\", \"application/json\")\n\n\tres, _ := http.DefaultClient.Do(req)\n\n\tdefer res.Body.Close()\n\tbody, _ := io.ReadAll(res.Body)\n\n\tfmt.Println(string(body))\n\n}"
+                  }
+                ]
+              }
+            }
+          ],
+          "kind": "request"
+        },
+        {
+          "description": "Example response",
+          "examples": [
+            {
+              "codeblock": {
+                "title": "200",
+                "tabs": [
+                  {
+                    "title": "application/json",
+                    "language": "json",
+                    "code": "{\n  \"object\": \"slot\",\n  \"id\": \"string\",\n  \"widget\": {\n    \"object\": \"widget\",\n    \"id\": \"string\",\n    \"material\": {\n      \"name\": \"string\"\n    },\n    \"shape\": {\n      \"object\": \"round\"\n    },\n    \"parts\": [\n      {\n        \"object\": \"part\",\n        \"sku\": \"string\"\n      }\n    ],\n    \"assembly\": {\n      \"id\": \"string\",\n      \"object\": \"assembly\"\n    }\n  },\n  \"spare\": {\n    \"object\": \"widget\",\n    \"id\": \"string\",\n    \"material\": {\n      \"name\": \"string\"\n    },\n    \"shape\": {\n      \"object\": \"round\"\n    },\n    \"parts\": [\n      {\n        \"object\": \"part\",\n        \"sku\": \"string\"\n      }\n    ],\n    \"assembly\": {\n      \"id\": \"string\",\n      \"object\": \"assembly\"\n    }\n  }\n}"
+                  }
+                ]
+              }
+            },
+            {
+              "codeblock": {
+                "title": "404",
+                "tabs": [
+                  {
+                    "title": "application/json",
+                    "language": "json",
+                    "code": "{\n  \"message\": \"string\"\n}"
+                  }
+                ]
+              }
+            }
+          ],
+          "kind": "response"
+        }
+      ]
+    },
+    "definitions": [
+      {
+        "title": "Path parameters",
+        "properties": [
+          {
+            "name": "slotId",
+            "type": "string",
+            "description": "",
+            "meta": [
+              {
+                "name": "required",
+                "value": "true"
+              }
+            ]
+          }
+        ],
+        "type": "$rest.param.path"
+      },
+      {
+        "title": "Response",
+        "type": "return",
+        "variants": [
+          {
+            "title": "200",
+            "description": "The slot.",
+            "properties": [
+              {
+                "name": "object",
+                "type": "$$enum",
+                "description": "The object type, always `slot`.",
+                "meta": [
+                  {
+                    "name": "required",
+                    "value": "true"
+                  },
+                  {
+                    "name": "enum-type",
+                    "value": "string"
+                  },
+                  {
+                    "name": "const",
+                    "value": "slot"
+                  }
+                ],
+                "properties": [
+                  {
+                    "name": "slot",
+                    "type": "string",
+                    "description": "",
+                    "meta": []
+                  }
+                ],
+                "ofProperty": {
+                  "name": "",
+                  "description": "",
+                  "type": "string"
+                }
+              },
+              {
+                "name": "id",
+                "type": "string",
+                "description": "",
+                "meta": [
+                  {
+                    "name": "required",
+                    "value": "true"
+                  }
+                ]
+              },
+              {
+                "name": "widget",
+                "type": "object",
+                "description": "The widget in the slot, if any.",
+                "properties": [
+                  {
+                    "name": "object",
+                    "type": "$$enum",
+                    "description": "The object type, always `widget`.",
+                    "meta": [
+                      {
+                        "name": "required",
+                        "value": "true"
+                      },
+                      {
+                        "name": "enum-type",
+                        "value": "string"
+                      },
+                      {
+                        "name": "const",
+                        "value": "widget"
+                      }
+                    ],
+                    "properties": [
+                      {
+                        "name": "widget",
+                        "type": "string",
+                        "description": "",
+                        "meta": []
+                      }
+                    ],
+                    "ofProperty": {
+                      "name": "",
+                      "description": "",
+                      "type": "string"
+                    }
+                  },
+                  {
+                    "name": "id",
+                    "type": "string",
+                    "description": "Unique identifier for the widget.",
+                    "meta": [
+                      {
+                        "name": "required",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "material",
+                    "type": "object",
+                    "description": "What a widget is made of.",
+                    "meta": [],
+                    "symbolDef": {
+                      "id": "#/components/schemas/Material",
+                      "canonical": "objects/Material",
+                      "label": "Material"
+                    },
+                    "properties": [
+                      {
+                        "name": "name",
+                        "type": "string",
+                        "description": "The material's name.",
+                        "meta": []
+                      }
+                    ]
+                  },
+                  {
+                    "name": "shape",
+                    "type": "object",
+                    "description": "The outline of a widget.",
+                    "meta": [],
+                    "symbolDef": {
+                      "id": "#/components/schemas/Shape",
+                      "canonical": "objects/Shape",
+                      "label": "Shape"
+                    },
+                    "properties": [
+                      {
+                        "name": "object",
+                        "type": "$$enum",
+                        "description": "Not a constant — two values.",
+                        "meta": [
+                          {
+                            "name": "enum-type",
+                            "value": "string"
+                          }
+                        ],
+                        "properties": [
+                          {
+                            "name": "round",
+                            "type": "string",
+                            "description": "",
+                            "meta": []
+                          },
+                          {
+                            "name": "square",
+                            "type": "string",
+                            "description": "",
+                            "meta": []
+                          }
+                        ],
+                        "ofProperty": {
+                          "name": "",
+                          "description": "",
+                          "type": "string"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "name": "parts",
+                    "type": "$$array",
+                    "description": "The parts the widget is made of.",
+                    "meta": [],
+                    "properties": [
+                      {
+                        "name": "",
+                        "type": "object",
+                        "description": "",
+                        "meta": [],
+                        "symbolDef": {
+                          "id": "#/components/schemas/Part",
+                          "canonical": "objects/Part",
+                          "label": "part"
+                        },
+                        "properties": [
+                          {
+                            "name": "object",
+                            "type": "$$enum",
+                            "description": "The object type, always `part`.",
+                            "meta": [
+                              {
+                                "name": "required",
+                                "value": "true"
+                              },
+                              {
+                                "name": "enum-type",
+                                "value": "string"
+                              },
+                              {
+                                "name": "const",
+                                "value": "part"
+                              }
+                            ],
+                            "properties": [
+                              {
+                                "name": "part",
+                                "type": "string",
+                                "description": "",
+                                "meta": []
+                              }
+                            ],
+                            "ofProperty": {
+                              "name": "",
+                              "description": "",
+                              "type": "string"
+                            }
+                          },
+                          {
+                            "name": "sku",
+                            "type": "string",
+                            "description": "The part's stock-keeping unit.",
+                            "meta": [
+                              {
+                                "name": "required",
+                                "value": "true"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ],
+                    "symbolDef": {
+                      "id": "#/components/schemas/Part",
+                      "canonical": "objects/Part",
+                      "label": "part"
+                    }
+                  },
+                  {
+                    "name": "assembly",
+                    "type": "object",
+                    "description": "An assembly of parts.",
+                    "properties": [
+                      {
+                        "name": "id",
+                        "type": "string",
+                        "description": "Unique identifier for the assembly.",
+                        "meta": [
+                          {
+                            "name": "required",
+                            "value": "true"
+                          }
+                        ]
+                      },
+                      {
+                        "name": "object",
+                        "type": "$$enum",
+                        "description": "The object type, always `assembly`.",
+                        "meta": [
+                          {
+                            "name": "required",
+                            "value": "true"
+                          },
+                          {
+                            "name": "enum-type",
+                            "value": "string"
+                          },
+                          {
+                            "name": "const",
+                            "value": "assembly"
+                          }
+                        ],
+                        "properties": [
+                          {
+                            "name": "assembly",
+                            "type": "string",
+                            "description": "",
+                            "meta": []
+                          }
+                        ],
+                        "ofProperty": {
+                          "name": "",
+                          "description": "",
+                          "type": "string"
+                        }
+                      }
+                    ],
+                    "meta": [],
+                    "symbolDef": {
+                      "id": "#/components/schemas/Assembly",
+                      "canonical": "objects/Assembly",
+                      "label": "assembly"
+                    }
+                  }
+                ],
+                "meta": [
+                  {
+                    "name": "nullable",
+                    "value": "true"
+                  }
+                ],
+                "symbolDef": {
+                  "id": "#/components/schemas/Widget",
+                  "canonical": "objects/Widget",
+                  "label": "widget"
+                }
+              },
+              {
+                "name": "spare",
+                "type": "$$union",
+                "description": "A spare widget, or nothing.",
+                "properties": [
+                  {
+                    "name": "spare",
+                    "type": "object",
+                    "description": "A widget.",
+                    "meta": [],
+                    "symbolDef": {
+                      "id": "#/components/schemas/Widget",
+                      "canonical": "objects/Widget",
+                      "label": "widget"
+                    },
+                    "properties": [
+                      {
+                        "name": "object",
+                        "type": "$$enum",
+                        "description": "The object type, always `widget`.",
+                        "meta": [
+                          {
+                            "name": "required",
+                            "value": "true"
+                          },
+                          {
+                            "name": "enum-type",
+                            "value": "string"
+                          },
+                          {
+                            "name": "const",
+                            "value": "widget"
+                          }
+                        ],
+                        "properties": [
+                          {
+                            "name": "widget",
+                            "type": "string",
+                            "description": "",
+                            "meta": []
+                          }
+                        ],
+                        "ofProperty": {
+                          "name": "",
+                          "description": "",
+                          "type": "string"
+                        }
+                      },
+                      {
+                        "name": "id",
+                        "type": "string",
+                        "description": "Unique identifier for the widget.",
+                        "meta": [
+                          {
+                            "name": "required",
+                            "value": "true"
+                          }
+                        ]
+                      },
+                      {
+                        "name": "material",
+                        "type": "object",
+                        "description": "What a widget is made of.",
+                        "meta": [],
+                        "symbolDef": {
+                          "id": "#/components/schemas/Material",
+                          "canonical": "objects/Material",
+                          "label": "Material"
+                        },
+                        "properties": [
+                          {
+                            "name": "name",
+                            "type": "string",
+                            "description": "The material's name.",
+                            "meta": []
+                          }
+                        ]
+                      },
+                      {
+                        "name": "shape",
+                        "type": "object",
+                        "description": "The outline of a widget.",
+                        "meta": [],
+                        "symbolDef": {
+                          "id": "#/components/schemas/Shape",
+                          "canonical": "objects/Shape",
+                          "label": "Shape"
+                        },
+                        "properties": [
+                          {
+                            "name": "object",
+                            "type": "$$enum",
+                            "description": "Not a constant — two values.",
+                            "meta": [
+                              {
+                                "name": "enum-type",
+                                "value": "string"
+                              }
+                            ],
+                            "properties": [
+                              {
+                                "name": "round",
+                                "type": "string",
+                                "description": "",
+                                "meta": []
+                              },
+                              {
+                                "name": "square",
+                                "type": "string",
+                                "description": "",
+                                "meta": []
+                              }
+                            ],
+                            "ofProperty": {
+                              "name": "",
+                              "description": "",
+                              "type": "string"
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "name": "parts",
+                        "type": "$$array",
+                        "description": "The parts the widget is made of.",
+                        "meta": [],
+                        "properties": [],
+                        "ofProperty": {
+                          "name": "",
+                          "type": "object",
+                          "properties": [
+                            {
+                              "name": "object",
+                              "type": "$$enum",
+                              "description": "The object type, always `part`.",
+                              "meta": [
+                                {
+                                  "name": "required",
+                                  "value": "true"
+                                },
+                                {
+                                  "name": "enum-type",
+                                  "value": "string"
+                                },
+                                {
+                                  "name": "const",
+                                  "value": "part"
+                                }
+                              ],
+                              "properties": [
+                                {
+                                  "name": "part",
+                                  "type": "string",
+                                  "description": "",
+                                  "meta": []
+                                }
+                              ],
+                              "ofProperty": {
+                                "name": "",
+                                "description": "",
+                                "type": "string"
+                              }
+                            },
+                            {
+                              "name": "sku",
+                              "type": "string",
+                              "description": "The part's stock-keeping unit.",
+                              "meta": [
+                                {
+                                  "name": "required",
+                                  "value": "true"
+                                }
+                              ]
+                            }
+                          ],
+                          "description": "",
+                          "meta": [],
+                          "symbolDef": {
+                            "id": "#/components/schemas/Part",
+                            "canonical": "objects/Part",
+                            "label": "part"
+                          }
+                        },
+                        "symbolDef": {
+                          "id": "#/components/schemas/Part",
+                          "canonical": "objects/Part",
+                          "label": "part"
+                        }
+                      },
+                      {
+                        "name": "assembly",
+                        "type": "object",
+                        "description": "An assembly of parts.",
+                        "properties": [
+                          {
+                            "name": "id",
+                            "type": "string",
+                            "description": "Unique identifier for the assembly.",
+                            "meta": [
+                              {
+                                "name": "required",
+                                "value": "true"
+                              }
+                            ]
+                          },
+                          {
+                            "name": "object",
+                            "type": "$$enum",
+                            "description": "The object type, always `assembly`.",
+                            "meta": [
+                              {
+                                "name": "required",
+                                "value": "true"
+                              },
+                              {
+                                "name": "enum-type",
+                                "value": "string"
+                              },
+                              {
+                                "name": "const",
+                                "value": "assembly"
+                              }
+                            ],
+                            "properties": [
+                              {
+                                "name": "assembly",
+                                "type": "string",
+                                "description": "",
+                                "meta": []
+                              }
+                            ],
+                            "ofProperty": {
+                              "name": "",
+                              "description": "",
+                              "type": "string"
+                            }
+                          }
+                        ],
+                        "meta": [],
+                        "symbolDef": {
+                          "id": "#/components/schemas/Assembly",
+                          "canonical": "objects/Assembly",
+                          "label": "assembly"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "name": "spare",
+                    "type": "string",
+                    "description": "Nothing.",
+                    "meta": [
+                      {
+                        "name": "nullable",
+                        "value": "true"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "meta": [
+              {
+                "name": "status",
+                "value": "200"
+              },
+              {
+                "name": "contentType",
+                "value": "application/json"
+              },
+              {
+                "name": "definitionDescription",
+                "value": ""
+              }
+            ],
+            "symbolDef": {
+              "id": "#/components/schemas/Slot",
+              "canonical": "objects/Slot",
+              "label": "slot"
+            }
+          },
+          {
+            "title": "404",
+            "description": "No such slot.",
+            "properties": [
+              {
+                "name": "message",
+                "type": "string",
+                "description": "",
+                "meta": []
+              }
+            ],
+            "meta": [
+              {
+                "name": "status",
+                "value": "404"
+              },
+              {
+                "name": "contentType",
+                "value": "application/json"
+              },
+              {
+                "name": "definitionDescription",
+                "value": ""
+              }
+            ]
+          }
+        ],
+        "properties": []
+      }
+    ]
+  },
+  {
+    "title": "Widget",
+    "description": "A widget.",
+    "canonical": "objects/Widget",
+    "definitions": [
+      {
+        "title": "Widget",
+        "properties": [
+          {
+            "name": "object",
+            "type": "$$enum",
+            "description": "The object type, always `widget`.",
+            "meta": [
+              {
+                "name": "required",
+                "value": "true"
+              },
+              {
+                "name": "enum-type",
+                "value": "string"
+              },
+              {
+                "name": "const",
+                "value": "widget"
+              }
+            ],
+            "properties": [
+              {
+                "name": "widget",
+                "type": "string",
+                "description": "",
+                "meta": []
+              }
+            ],
+            "ofProperty": {
+              "name": "",
+              "description": "",
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "type": "string",
+            "description": "Unique identifier for the widget.",
+            "meta": [
+              {
+                "name": "required",
+                "value": "true"
+              }
+            ]
+          },
+          {
+            "name": "material",
+            "type": "object",
+            "description": "What a widget is made of.",
+            "meta": [],
+            "symbolDef": {
+              "id": "#/components/schemas/Material",
+              "canonical": "objects/Material",
+              "label": "Material"
+            },
+            "properties": [
+              {
+                "name": "name",
+                "type": "string",
+                "description": "The material's name.",
+                "meta": []
+              }
+            ]
+          },
+          {
+            "name": "shape",
+            "type": "object",
+            "description": "The outline of a widget.",
+            "meta": [],
+            "symbolDef": {
+              "id": "#/components/schemas/Shape",
+              "canonical": "objects/Shape",
+              "label": "Shape"
+            },
+            "properties": [
+              {
+                "name": "object",
+                "type": "$$enum",
+                "description": "Not a constant — two values.",
+                "meta": [
+                  {
+                    "name": "enum-type",
+                    "value": "string"
+                  }
+                ],
+                "properties": [
+                  {
+                    "name": "round",
+                    "type": "string",
+                    "description": "",
+                    "meta": []
+                  },
+                  {
+                    "name": "square",
+                    "type": "string",
+                    "description": "",
+                    "meta": []
+                  }
+                ],
+                "ofProperty": {
+                  "name": "",
+                  "description": "",
+                  "type": "string"
+                }
+              }
+            ]
+          },
+          {
+            "name": "parts",
+            "type": "$$array",
+            "description": "The parts the widget is made of.",
+            "meta": [],
+            "properties": [],
+            "ofProperty": {
+              "name": "",
+              "type": "object",
+              "properties": [
+                {
+                  "name": "object",
+                  "type": "$$enum",
+                  "description": "The object type, always `part`.",
+                  "meta": [
+                    {
+                      "name": "required",
+                      "value": "true"
+                    },
+                    {
+                      "name": "enum-type",
+                      "value": "string"
+                    },
+                    {
+                      "name": "const",
+                      "value": "part"
+                    }
+                  ],
+                  "properties": [
+                    {
+                      "name": "part",
+                      "type": "string",
+                      "description": "",
+                      "meta": []
+                    }
+                  ],
+                  "ofProperty": {
+                    "name": "",
+                    "description": "",
+                    "type": "string"
+                  }
+                },
+                {
+                  "name": "sku",
+                  "type": "string",
+                  "description": "The part's stock-keeping unit.",
+                  "meta": [
+                    {
+                      "name": "required",
+                      "value": "true"
+                    }
+                  ]
+                }
+              ],
+              "description": "",
+              "meta": [],
+              "symbolDef": {
+                "id": "#/components/schemas/Part",
+                "canonical": "objects/Part",
+                "label": "part"
+              }
+            },
+            "symbolDef": {
+              "id": "#/components/schemas/Part",
+              "canonical": "objects/Part",
+              "label": "part"
+            }
+          },
+          {
+            "name": "assembly",
+            "type": "object",
+            "description": "An assembly of parts.",
+            "properties": [
+              {
+                "name": "id",
+                "type": "string",
+                "description": "Unique identifier for the assembly.",
+                "meta": [
+                  {
+                    "name": "required",
+                    "value": "true"
+                  }
+                ]
+              },
+              {
+                "name": "object",
+                "type": "$$enum",
+                "description": "The object type, always `assembly`.",
+                "meta": [
+                  {
+                    "name": "required",
+                    "value": "true"
+                  },
+                  {
+                    "name": "enum-type",
+                    "value": "string"
+                  },
+                  {
+                    "name": "const",
+                    "value": "assembly"
+                  }
+                ],
+                "properties": [
+                  {
+                    "name": "assembly",
+                    "type": "string",
+                    "description": "",
+                    "meta": []
+                  }
+                ],
+                "ofProperty": {
+                  "name": "",
+                  "description": "",
+                  "type": "string"
+                }
+              }
+            ],
+            "meta": [],
+            "symbolDef": {
+              "id": "#/components/schemas/Assembly",
+              "canonical": "objects/Assembly",
+              "label": "assembly"
+            }
+          }
+        ],
+        "meta": [],
+        "symbolDef": {
+          "id": "#/components/schemas/Widget",
+          "canonical": "objects/Widget",
+          "label": "widget"
+        }
+      }
+    ],
+    "examples": {
+      "groups": [
+        {
+          "description": "Example",
+          "examples": [
+            {
+              "codeblock": {
+                "tabs": [
+                  {
+                    "title": "json",
+                    "language": "json",
+                    "code": "{\n  \"object\": \"\",\n  \"id\": \"\",\n  \"material\": {\n    \"name\": \"\"\n  },\n  \"shape\": {\n    \"object\": \"\"\n  },\n  \"parts\": [\n    {\n      \"object\": \"\",\n      \"sku\": \"\"\n    }\n  ],\n  \"assembly\": null,\n  \"__UNSAFE_refPath\": null\n}"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "type": "rest_component_schema",
+    "context": {
+      "componentSchema": "Widget",
+      "group": [
+        "Objects"
+      ]
+    }
+  },
+  {
+    "title": "WidgetList",
+    "description": "",
+    "canonical": "objects/WidgetList",
+    "definitions": [
+      {
+        "title": "WidgetList",
+        "properties": [
+          {
+            "name": "object",
+            "type": "$$enum",
+            "description": "The object type, always `list`.",
+            "meta": [
+              {
+                "name": "required",
+                "value": "true"
+              },
+              {
+                "name": "enum-type",
+                "value": "string"
+              },
+              {
+                "name": "const",
+                "value": "list"
+              }
+            ],
+            "properties": [
+              {
+                "name": "list",
+                "type": "string",
+                "description": "",
+                "meta": []
+              }
+            ],
+            "ofProperty": {
+              "name": "",
+              "description": "",
+              "type": "string"
+            }
+          },
+          {
+            "name": "data",
+            "type": "$$array",
+            "description": "The widgets on this page.",
+            "meta": [
+              {
+                "name": "required",
+                "value": "true"
+              }
+            ],
+            "properties": [],
+            "ofProperty": {
+              "name": "",
+              "type": "object",
+              "properties": [
+                {
+                  "name": "object",
+                  "type": "$$enum",
+                  "description": "The object type, always `widget`.",
+                  "meta": [
+                    {
+                      "name": "required",
+                      "value": "true"
+                    },
+                    {
+                      "name": "enum-type",
+                      "value": "string"
+                    },
+                    {
+                      "name": "const",
+                      "value": "widget"
+                    }
+                  ],
+                  "properties": [
+                    {
+                      "name": "widget",
+                      "type": "string",
+                      "description": "",
+                      "meta": []
+                    }
+                  ],
+                  "ofProperty": {
+                    "name": "",
+                    "description": "",
+                    "type": "string"
+                  }
+                },
+                {
+                  "name": "id",
+                  "type": "string",
+                  "description": "Unique identifier for the widget.",
+                  "meta": [
+                    {
+                      "name": "required",
+                      "value": "true"
+                    }
+                  ]
+                },
+                {
+                  "name": "material",
+                  "type": "object",
+                  "description": "What a widget is made of.",
+                  "meta": [],
+                  "symbolDef": {
+                    "id": "#/components/schemas/Material",
+                    "canonical": "objects/Material",
+                    "label": "Material"
+                  },
+                  "properties": [
+                    {
+                      "name": "name",
+                      "type": "string",
+                      "description": "The material's name.",
+                      "meta": []
+                    }
+                  ]
+                },
+                {
+                  "name": "shape",
+                  "type": "object",
+                  "description": "The outline of a widget.",
+                  "meta": [],
+                  "symbolDef": {
+                    "id": "#/components/schemas/Shape",
+                    "canonical": "objects/Shape",
+                    "label": "Shape"
+                  },
+                  "properties": [
+                    {
+                      "name": "object",
+                      "type": "$$enum",
+                      "description": "Not a constant — two values.",
+                      "meta": [
+                        {
+                          "name": "enum-type",
+                          "value": "string"
+                        }
+                      ],
+                      "properties": [
+                        {
+                          "name": "round",
+                          "type": "string",
+                          "description": "",
+                          "meta": []
+                        },
+                        {
+                          "name": "square",
+                          "type": "string",
+                          "description": "",
+                          "meta": []
+                        }
+                      ],
+                      "ofProperty": {
+                        "name": "",
+                        "description": "",
+                        "type": "string"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "name": "parts",
+                  "type": "$$array",
+                  "description": "The parts the widget is made of.",
+                  "meta": [],
+                  "properties": [],
+                  "ofProperty": {
+                    "name": "",
+                    "type": "object",
+                    "properties": [
+                      {
+                        "name": "object",
+                        "type": "$$enum",
+                        "description": "The object type, always `part`.",
+                        "meta": [
+                          {
+                            "name": "required",
+                            "value": "true"
+                          },
+                          {
+                            "name": "enum-type",
+                            "value": "string"
+                          },
+                          {
+                            "name": "const",
+                            "value": "part"
+                          }
+                        ],
+                        "properties": [
+                          {
+                            "name": "part",
+                            "type": "string",
+                            "description": "",
+                            "meta": []
+                          }
+                        ],
+                        "ofProperty": {
+                          "name": "",
+                          "description": "",
+                          "type": "string"
+                        }
+                      },
+                      {
+                        "name": "sku",
+                        "type": "string",
+                        "description": "The part's stock-keeping unit.",
+                        "meta": [
+                          {
+                            "name": "required",
+                            "value": "true"
+                          }
+                        ]
+                      }
+                    ],
+                    "description": "",
+                    "meta": [],
+                    "symbolDef": {
+                      "id": "#/components/schemas/Part",
+                      "canonical": "objects/Part",
+                      "label": "part"
+                    }
+                  },
+                  "symbolDef": {
+                    "id": "#/components/schemas/Part",
+                    "canonical": "objects/Part",
+                    "label": "part"
+                  }
+                },
+                {
+                  "name": "assembly",
+                  "type": "object",
+                  "description": "An assembly of parts.",
+                  "properties": [
+                    {
+                      "name": "id",
+                      "type": "string",
+                      "description": "Unique identifier for the assembly.",
+                      "meta": [
+                        {
+                          "name": "required",
+                          "value": "true"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "object",
+                      "type": "$$enum",
+                      "description": "The object type, always `assembly`.",
+                      "meta": [
+                        {
+                          "name": "required",
+                          "value": "true"
+                        },
+                        {
+                          "name": "enum-type",
+                          "value": "string"
+                        },
+                        {
+                          "name": "const",
+                          "value": "assembly"
+                        }
+                      ],
+                      "properties": [
+                        {
+                          "name": "assembly",
+                          "type": "string",
+                          "description": "",
+                          "meta": []
+                        }
+                      ],
+                      "ofProperty": {
+                        "name": "",
+                        "description": "",
+                        "type": "string"
+                      }
+                    }
+                  ],
+                  "meta": [],
+                  "symbolDef": {
+                    "id": "#/components/schemas/Assembly",
+                    "canonical": "objects/Assembly",
+                    "label": "assembly"
+                  }
+                }
+              ],
+              "description": "A widget.",
+              "meta": [
+                {
+                  "name": "required",
+                  "value": "true"
+                }
+              ],
+              "symbolDef": {
+                "id": "#/components/schemas/Widget",
+                "canonical": "objects/Widget",
+                "label": "widget"
+              }
+            },
+            "symbolDef": {
+              "id": "#/components/schemas/Widget",
+              "canonical": "objects/Widget",
+              "label": "widget"
+            }
+          }
+        ],
+        "meta": [],
+        "symbolDef": {
+          "id": "#/components/schemas/WidgetList",
+          "canonical": "objects/WidgetList",
+          "label": "list"
+        }
+      }
+    ],
+    "examples": {
+      "groups": [
+        {
+          "description": "Example",
+          "examples": [
+            {
+              "codeblock": {
+                "tabs": [
+                  {
+                    "title": "json",
+                    "language": "json",
+                    "code": "{\n  \"object\": \"\",\n  \"data\": [\n    {\n      \"object\": \"\",\n      \"id\": \"\",\n      \"material\": {\n        \"name\": \"\"\n      },\n      \"shape\": {\n        \"object\": \"\"\n      },\n      \"parts\": [\n        {\n          \"object\": \"\",\n          \"sku\": \"\"\n        }\n      ],\n      \"assembly\": null,\n      \"__UNSAFE_refPath\": null\n    }\n  ]\n}"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "type": "rest_component_schema",
+    "context": {
+      "componentSchema": "WidgetList",
+      "group": [
+        "Objects"
+      ]
+    }
+  },
+  {
+    "title": "Material",
+    "description": "What a widget is made of.",
+    "canonical": "objects/Material",
+    "definitions": [
+      {
+        "title": "Material",
+        "properties": [
+          {
+            "name": "name",
+            "type": "string",
+            "description": "The material's name.",
+            "meta": []
+          }
+        ],
+        "meta": [],
+        "symbolDef": {
+          "id": "#/components/schemas/Material",
+          "canonical": "objects/Material",
+          "label": "Material"
+        }
+      }
+    ],
+    "examples": {
+      "groups": [
+        {
+          "description": "Example",
+          "examples": [
+            {
+              "codeblock": {
+                "tabs": [
+                  {
+                    "title": "json",
+                    "language": "json",
+                    "code": "{\n  \"name\": \"\"\n}"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "type": "rest_component_schema",
+    "context": {
+      "componentSchema": "Material",
+      "group": [
+        "Objects"
+      ]
+    }
+  },
+  {
+    "title": "Shape",
+    "description": "The outline of a widget.",
+    "canonical": "objects/Shape",
+    "definitions": [
+      {
+        "title": "Shape",
+        "properties": [
+          {
+            "name": "object",
+            "type": "$$enum",
+            "description": "Not a constant — two values.",
+            "meta": [
+              {
+                "name": "enum-type",
+                "value": "string"
+              }
+            ],
+            "properties": [
+              {
+                "name": "round",
+                "type": "string",
+                "description": "",
+                "meta": []
+              },
+              {
+                "name": "square",
+                "type": "string",
+                "description": "",
+                "meta": []
+              }
+            ],
+            "ofProperty": {
+              "name": "",
+              "description": "",
+              "type": "string"
+            }
+          }
+        ],
+        "meta": [],
+        "symbolDef": {
+          "id": "#/components/schemas/Shape",
+          "canonical": "objects/Shape",
+          "label": "Shape"
+        }
+      }
+    ],
+    "examples": {
+      "groups": [
+        {
+          "description": "Example",
+          "examples": [
+            {
+              "codeblock": {
+                "tabs": [
+                  {
+                    "title": "json",
+                    "language": "json",
+                    "code": "{\n  \"object\": \"\"\n}"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "type": "rest_component_schema",
+    "context": {
+      "componentSchema": "Shape",
+      "group": [
+        "Objects"
+      ]
+    }
+  },
+  {
+    "title": "Part",
+    "description": "",
+    "canonical": "objects/Part",
+    "definitions": [
+      {
+        "title": "Part",
+        "properties": [
+          {
+            "name": "object",
+            "type": "$$enum",
+            "description": "The object type, always `part`.",
+            "meta": [
+              {
+                "name": "required",
+                "value": "true"
+              },
+              {
+                "name": "enum-type",
+                "value": "string"
+              },
+              {
+                "name": "const",
+                "value": "part"
+              }
+            ],
+            "properties": [
+              {
+                "name": "part",
+                "type": "string",
+                "description": "",
+                "meta": []
+              }
+            ],
+            "ofProperty": {
+              "name": "",
+              "description": "",
+              "type": "string"
+            }
+          },
+          {
+            "name": "sku",
+            "type": "string",
+            "description": "The part's stock-keeping unit.",
+            "meta": [
+              {
+                "name": "required",
+                "value": "true"
+              }
+            ]
+          }
+        ],
+        "meta": [],
+        "symbolDef": {
+          "id": "#/components/schemas/Part",
+          "canonical": "objects/Part",
+          "label": "part"
+        }
+      }
+    ],
+    "examples": {
+      "groups": [
+        {
+          "description": "Example",
+          "examples": [
+            {
+              "codeblock": {
+                "tabs": [
+                  {
+                    "title": "json",
+                    "language": "json",
+                    "code": "{\n  \"object\": \"\",\n  \"sku\": \"\"\n}"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "type": "rest_component_schema",
+    "context": {
+      "componentSchema": "Part",
+      "group": [
+        "Objects"
+      ]
+    }
+  },
+  {
+    "title": "AssemblyBase",
+    "description": "",
+    "canonical": "objects/AssemblyBase",
+    "definitions": [
+      {
+        "title": "AssemblyBase",
+        "properties": [
+          {
+            "name": "id",
+            "type": "string",
+            "description": "Unique identifier for the assembly.",
+            "meta": [
+              {
+                "name": "required",
+                "value": "true"
+              }
+            ]
+          }
+        ],
+        "meta": [],
+        "symbolDef": {
+          "id": "#/components/schemas/AssemblyBase",
+          "canonical": "objects/AssemblyBase",
+          "label": "AssemblyBase"
+        }
+      }
+    ],
+    "examples": {
+      "groups": [
+        {
+          "description": "Example",
+          "examples": [
+            {
+              "codeblock": {
+                "tabs": [
+                  {
+                    "title": "json",
+                    "language": "json",
+                    "code": "{\n  \"id\": \"\"\n}"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "type": "rest_component_schema",
+    "context": {
+      "componentSchema": "AssemblyBase",
+      "group": [
+        "Objects"
+      ]
+    }
+  },
+  {
+    "title": "Assembly",
+    "description": "An assembly of parts.",
+    "canonical": "objects/Assembly",
+    "definitions": [
+      {
+        "title": "Assembly",
+        "properties": [
+          {
+            "name": "id",
+            "type": "string",
+            "description": "Unique identifier for the assembly.",
+            "meta": [
+              {
+                "name": "required",
+                "value": "true"
+              }
+            ]
+          },
+          {
+            "name": "object",
+            "type": "$$enum",
+            "description": "The object type, always `assembly`.",
+            "meta": [
+              {
+                "name": "required",
+                "value": "true"
+              },
+              {
+                "name": "enum-type",
+                "value": "string"
+              },
+              {
+                "name": "const",
+                "value": "assembly"
+              }
+            ],
+            "properties": [
+              {
+                "name": "assembly",
+                "type": "string",
+                "description": "",
+                "meta": []
+              }
+            ],
+            "ofProperty": {
+              "name": "",
+              "description": "",
+              "type": "string"
+            }
+          }
+        ],
+        "meta": [],
+        "symbolDef": {
+          "id": "#/components/schemas/Assembly",
+          "canonical": "objects/Assembly",
+          "label": "assembly"
+        }
+      }
+    ],
+    "examples": {
+      "groups": []
+    },
+    "type": "rest_component_schema",
+    "context": {
+      "componentSchema": "Assembly",
+      "group": [
+        "Objects"
+      ]
+    }
+  },
+  {
+    "title": "Slot",
+    "description": "A slot a widget can sit in.",
+    "canonical": "objects/Slot",
+    "definitions": [
+      {
+        "title": "Slot",
+        "properties": [
+          {
+            "name": "object",
+            "type": "$$enum",
+            "description": "The object type, always `slot`.",
+            "meta": [
+              {
+                "name": "required",
+                "value": "true"
+              },
+              {
+                "name": "enum-type",
+                "value": "string"
+              },
+              {
+                "name": "const",
+                "value": "slot"
+              }
+            ],
+            "properties": [
+              {
+                "name": "slot",
+                "type": "string",
+                "description": "",
+                "meta": []
+              }
+            ],
+            "ofProperty": {
+              "name": "",
+              "description": "",
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "type": "string",
+            "description": "",
+            "meta": [
+              {
+                "name": "required",
+                "value": "true"
+              }
+            ]
+          },
+          {
+            "name": "widget",
+            "type": "object",
+            "description": "The widget in the slot, if any.",
+            "properties": [
+              {
+                "name": "object",
+                "type": "$$enum",
+                "description": "The object type, always `widget`.",
+                "meta": [
+                  {
+                    "name": "required",
+                    "value": "true"
+                  },
+                  {
+                    "name": "enum-type",
+                    "value": "string"
+                  },
+                  {
+                    "name": "const",
+                    "value": "widget"
+                  }
+                ],
+                "properties": [
+                  {
+                    "name": "widget",
+                    "type": "string",
+                    "description": "",
+                    "meta": []
+                  }
+                ],
+                "ofProperty": {
+                  "name": "",
+                  "description": "",
+                  "type": "string"
+                }
+              },
+              {
+                "name": "id",
+                "type": "string",
+                "description": "Unique identifier for the widget.",
+                "meta": [
+                  {
+                    "name": "required",
+                    "value": "true"
+                  }
+                ]
+              },
+              {
+                "name": "material",
+                "type": "object",
+                "description": "What a widget is made of.",
+                "meta": [],
+                "symbolDef": {
+                  "id": "#/components/schemas/Material",
+                  "canonical": "objects/Material",
+                  "label": "Material"
+                },
+                "properties": [
+                  {
+                    "name": "name",
+                    "type": "string",
+                    "description": "The material's name.",
+                    "meta": []
+                  }
+                ]
+              },
+              {
+                "name": "shape",
+                "type": "object",
+                "description": "The outline of a widget.",
+                "meta": [],
+                "symbolDef": {
+                  "id": "#/components/schemas/Shape",
+                  "canonical": "objects/Shape",
+                  "label": "Shape"
+                },
+                "properties": [
+                  {
+                    "name": "object",
+                    "type": "$$enum",
+                    "description": "Not a constant — two values.",
+                    "meta": [
+                      {
+                        "name": "enum-type",
+                        "value": "string"
+                      }
+                    ],
+                    "properties": [
+                      {
+                        "name": "round",
+                        "type": "string",
+                        "description": "",
+                        "meta": []
+                      },
+                      {
+                        "name": "square",
+                        "type": "string",
+                        "description": "",
+                        "meta": []
+                      }
+                    ],
+                    "ofProperty": {
+                      "name": "",
+                      "description": "",
+                      "type": "string"
+                    }
+                  }
+                ]
+              },
+              {
+                "name": "parts",
+                "type": "$$array",
+                "description": "The parts the widget is made of.",
+                "meta": [],
+                "properties": [
+                  {
+                    "name": "",
+                    "type": "object",
+                    "description": "",
+                    "meta": [],
+                    "symbolDef": {
+                      "id": "#/components/schemas/Part",
+                      "canonical": "objects/Part",
+                      "label": "part"
+                    },
+                    "properties": [
+                      {
+                        "name": "object",
+                        "type": "$$enum",
+                        "description": "The object type, always `part`.",
+                        "meta": [
+                          {
+                            "name": "required",
+                            "value": "true"
+                          },
+                          {
+                            "name": "enum-type",
+                            "value": "string"
+                          },
+                          {
+                            "name": "const",
+                            "value": "part"
+                          }
+                        ],
+                        "properties": [
+                          {
+                            "name": "part",
+                            "type": "string",
+                            "description": "",
+                            "meta": []
+                          }
+                        ],
+                        "ofProperty": {
+                          "name": "",
+                          "description": "",
+                          "type": "string"
+                        }
+                      },
+                      {
+                        "name": "sku",
+                        "type": "string",
+                        "description": "The part's stock-keeping unit.",
+                        "meta": [
+                          {
+                            "name": "required",
+                            "value": "true"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ],
+                "symbolDef": {
+                  "id": "#/components/schemas/Part",
+                  "canonical": "objects/Part",
+                  "label": "part"
+                }
+              },
+              {
+                "name": "assembly",
+                "type": "object",
+                "description": "An assembly of parts.",
+                "properties": [
+                  {
+                    "name": "id",
+                    "type": "string",
+                    "description": "Unique identifier for the assembly.",
+                    "meta": [
+                      {
+                        "name": "required",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "object",
+                    "type": "$$enum",
+                    "description": "The object type, always `assembly`.",
+                    "meta": [
+                      {
+                        "name": "required",
+                        "value": "true"
+                      },
+                      {
+                        "name": "enum-type",
+                        "value": "string"
+                      },
+                      {
+                        "name": "const",
+                        "value": "assembly"
+                      }
+                    ],
+                    "properties": [
+                      {
+                        "name": "assembly",
+                        "type": "string",
+                        "description": "",
+                        "meta": []
+                      }
+                    ],
+                    "ofProperty": {
+                      "name": "",
+                      "description": "",
+                      "type": "string"
+                    }
+                  }
+                ],
+                "meta": [],
+                "symbolDef": {
+                  "id": "#/components/schemas/Assembly",
+                  "canonical": "objects/Assembly",
+                  "label": "assembly"
+                }
+              }
+            ],
+            "meta": [
+              {
+                "name": "nullable",
+                "value": "true"
+              }
+            ],
+            "symbolDef": {
+              "id": "#/components/schemas/Widget",
+              "canonical": "objects/Widget",
+              "label": "widget"
+            }
+          },
+          {
+            "name": "spare",
+            "type": "$$union",
+            "description": "A spare widget, or nothing.",
+            "properties": [
+              {
+                "name": "spare",
+                "type": "object",
+                "description": "A widget.",
+                "meta": [],
+                "symbolDef": {
+                  "id": "#/components/schemas/Widget",
+                  "canonical": "objects/Widget",
+                  "label": "widget"
+                },
+                "properties": [
+                  {
+                    "name": "object",
+                    "type": "$$enum",
+                    "description": "The object type, always `widget`.",
+                    "meta": [
+                      {
+                        "name": "required",
+                        "value": "true"
+                      },
+                      {
+                        "name": "enum-type",
+                        "value": "string"
+                      },
+                      {
+                        "name": "const",
+                        "value": "widget"
+                      }
+                    ],
+                    "properties": [
+                      {
+                        "name": "widget",
+                        "type": "string",
+                        "description": "",
+                        "meta": []
+                      }
+                    ],
+                    "ofProperty": {
+                      "name": "",
+                      "description": "",
+                      "type": "string"
+                    }
+                  },
+                  {
+                    "name": "id",
+                    "type": "string",
+                    "description": "Unique identifier for the widget.",
+                    "meta": [
+                      {
+                        "name": "required",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "material",
+                    "type": "object",
+                    "description": "What a widget is made of.",
+                    "meta": [],
+                    "symbolDef": {
+                      "id": "#/components/schemas/Material",
+                      "canonical": "objects/Material",
+                      "label": "Material"
+                    },
+                    "properties": [
+                      {
+                        "name": "name",
+                        "type": "string",
+                        "description": "The material's name.",
+                        "meta": []
+                      }
+                    ]
+                  },
+                  {
+                    "name": "shape",
+                    "type": "object",
+                    "description": "The outline of a widget.",
+                    "meta": [],
+                    "symbolDef": {
+                      "id": "#/components/schemas/Shape",
+                      "canonical": "objects/Shape",
+                      "label": "Shape"
+                    },
+                    "properties": [
+                      {
+                        "name": "object",
+                        "type": "$$enum",
+                        "description": "Not a constant — two values.",
+                        "meta": [
+                          {
+                            "name": "enum-type",
+                            "value": "string"
+                          }
+                        ],
+                        "properties": [
+                          {
+                            "name": "round",
+                            "type": "string",
+                            "description": "",
+                            "meta": []
+                          },
+                          {
+                            "name": "square",
+                            "type": "string",
+                            "description": "",
+                            "meta": []
+                          }
+                        ],
+                        "ofProperty": {
+                          "name": "",
+                          "description": "",
+                          "type": "string"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "name": "parts",
+                    "type": "$$array",
+                    "description": "The parts the widget is made of.",
+                    "meta": [],
+                    "properties": [],
+                    "ofProperty": {
+                      "name": "",
+                      "type": "object",
+                      "properties": [
+                        {
+                          "name": "object",
+                          "type": "$$enum",
+                          "description": "The object type, always `part`.",
+                          "meta": [
+                            {
+                              "name": "required",
+                              "value": "true"
+                            },
+                            {
+                              "name": "enum-type",
+                              "value": "string"
+                            },
+                            {
+                              "name": "const",
+                              "value": "part"
+                            }
+                          ],
+                          "properties": [
+                            {
+                              "name": "part",
+                              "type": "string",
+                              "description": "",
+                              "meta": []
+                            }
+                          ],
+                          "ofProperty": {
+                            "name": "",
+                            "description": "",
+                            "type": "string"
+                          }
+                        },
+                        {
+                          "name": "sku",
+                          "type": "string",
+                          "description": "The part's stock-keeping unit.",
+                          "meta": [
+                            {
+                              "name": "required",
+                              "value": "true"
+                            }
+                          ]
+                        }
+                      ],
+                      "description": "",
+                      "meta": [],
+                      "symbolDef": {
+                        "id": "#/components/schemas/Part",
+                        "canonical": "objects/Part",
+                        "label": "part"
+                      }
+                    },
+                    "symbolDef": {
+                      "id": "#/components/schemas/Part",
+                      "canonical": "objects/Part",
+                      "label": "part"
+                    }
+                  },
+                  {
+                    "name": "assembly",
+                    "type": "object",
+                    "description": "An assembly of parts.",
+                    "properties": [
+                      {
+                        "name": "id",
+                        "type": "string",
+                        "description": "Unique identifier for the assembly.",
+                        "meta": [
+                          {
+                            "name": "required",
+                            "value": "true"
+                          }
+                        ]
+                      },
+                      {
+                        "name": "object",
+                        "type": "$$enum",
+                        "description": "The object type, always `assembly`.",
+                        "meta": [
+                          {
+                            "name": "required",
+                            "value": "true"
+                          },
+                          {
+                            "name": "enum-type",
+                            "value": "string"
+                          },
+                          {
+                            "name": "const",
+                            "value": "assembly"
+                          }
+                        ],
+                        "properties": [
+                          {
+                            "name": "assembly",
+                            "type": "string",
+                            "description": "",
+                            "meta": []
+                          }
+                        ],
+                        "ofProperty": {
+                          "name": "",
+                          "description": "",
+                          "type": "string"
+                        }
+                      }
+                    ],
+                    "meta": [],
+                    "symbolDef": {
+                      "id": "#/components/schemas/Assembly",
+                      "canonical": "objects/Assembly",
+                      "label": "assembly"
+                    }
+                  }
+                ]
+              },
+              {
+                "name": "spare",
+                "type": "string",
+                "description": "Nothing.",
+                "meta": [
+                  {
+                    "name": "nullable",
+                    "value": "true"
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "meta": [],
+        "symbolDef": {
+          "id": "#/components/schemas/Slot",
+          "canonical": "objects/Slot",
+          "label": "slot"
+        }
+      }
+    ],
+    "examples": {
+      "groups": [
+        {
+          "description": "Example",
+          "examples": [
+            {
+              "codeblock": {
+                "tabs": [
+                  {
+                    "title": "json",
+                    "language": "json",
+                    "code": "{\n  \"object\": \"\",\n  \"id\": \"\",\n  \"widget\": null,\n  \"spare\": null\n}"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "type": "rest_component_schema",
+    "context": {
+      "componentSchema": "Slot",
+      "group": [
+        "Objects"
+      ]
+    }
+  }
+]

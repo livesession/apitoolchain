@@ -10,11 +10,12 @@
 use serde_json::{json, Map, Value};
 
 use crate::doc::DocCtx;
-use crate::xdocs::{apply_xdocs_sidebar, get_xdocs_route};
-use crate::{oap_schema_to_references, read_spec, OasError};
+use crate::xdocs::{apply_xdocs_sidebar_with_options, get_xdocs_route};
+use crate::{oap_schema_to_references, read_spec, OasError, Options};
 use apitoolchain_uniform::jsrt::node_path_join;
 use apitoolchain_uniform::plugins::plugin_navigation;
 
+#[derive(Debug, Clone, Default)]
 pub struct FusedInput {
     pub source: String,
     /// The sidebar-route-matched urlPrefix (JS computed; "" when none).
@@ -23,6 +24,10 @@ pub struct FusedInput {
     pub options_url_prefix: String,
     /// settings.engine.uniform.store
     pub store: bool,
+    /// The component-schema pages' group name (the converter option
+    /// `objectsGroup`): the flat top-level group and the sub-group under a
+    /// resource group. `None` → [`crate::DEFAULT_OBJECTS_GROUP`].
+    pub objects_group: Option<String>,
 }
 
 pub struct FusedOutput {
@@ -43,10 +48,14 @@ pub struct FusedOutput {
 /// pluginNavigation → per-ref page entries.
 pub fn uniform_oas_pages(input: &FusedInput) -> Result<FusedOutput, OasError> {
     let raw = read_spec(&input.source)?;
+    let options = Options {
+        regions: None,
+        objects_group: input.objects_group.clone(),
+    };
 
     // Full conversion (endpoint examples are a JS post-pass the page flow
     // never needs; component-schema examples are part of conversion).
-    let refs = oap_schema_to_references(&raw, None);
+    let refs = oap_schema_to_references(&raw, Some(options.clone()));
     let mut refs: Vec<Value> = refs
         .iter()
         .map(|r| serde_json::to_value(r).expect("Reference serializes"))
@@ -79,7 +88,7 @@ pub fn uniform_oas_pages(input: &FusedInput) -> Result<FusedOutput, OasError> {
 
     // Plugin order matches `uniform(refs, {plugins: [xdocs, navigation]})`:
     // the x-docs defer may REPLACE the ref list before navigation sees it.
-    apply_xdocs_sidebar(&ctx, &doc, &mut refs);
+    apply_xdocs_sidebar_with_options(&ctx, &doc, &mut refs, &options);
 
     let settings_stub = json!({"engine": {"uniform": {"store": input.store}}});
     let nav = plugin_navigation(&settings_stub, &url_prefix, &refs)

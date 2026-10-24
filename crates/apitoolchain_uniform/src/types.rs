@@ -100,13 +100,19 @@ impl Meta {
     }
 }
 
-/// TS: `SymbolDef` — cross-reference identity; both fields are `string | string[]`.
+/// TS: `SymbolDef` — cross-reference identity; `id` and `canonical` are
+/// `string | string[]`, `label` the display name of the linked symbol.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 pub struct SymbolDef {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub id: Option<StrOrList>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub canonical: Option<StrOrList>,
+    /// What to call the linked symbol where a bare type would be shown — for
+    /// a component schema its constant `object` value (`widget`), else its
+    /// name.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub label: Option<String>,
 }
 
 /// `string | string[]` (untagged).

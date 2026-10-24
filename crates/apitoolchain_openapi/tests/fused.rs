@@ -22,9 +22,7 @@ fn run_case(name: &str) {
     let out = uniform_oas_pages(&FusedInput {
         source: case.join("input.yaml").to_string_lossy().to_string(),
         url_prefix: url_prefix.to_string(),
-        match_route: String::new(),
-        options_url_prefix: String::new(),
-        store: false,
+        ..Default::default()
     })
     .unwrap_or_else(|e| panic!("{name}: fused failed: {e}"));
 
@@ -70,3 +68,62 @@ fused_case!(multiple_responses, "3.multiple-responses");
 fused_case!(xdocs_sidebar, "5.xdocs.sidebar");
 fused_case!(enums, "8.enums");
 fused_case!(xdocs_objects, "5.xdocs.objects");
+
+/// The group names of a sidebar level, nested groups as `(name, pages)`.
+fn group_names(level: &[Value]) -> Vec<String> {
+    level
+        .iter()
+        .filter_map(|p| p.get("group").and_then(|g| g.as_str()).map(String::from))
+        .collect()
+}
+
+fn pages_of<'a>(level: &'a [Value], group: &str) -> &'a [Value] {
+    level
+        .iter()
+        .find(|p| p.get("group").and_then(|g| g.as_str()) == Some(group))
+        .and_then(|p| p.get("pages"))
+        .and_then(|p| p.as_array())
+        .map(|p| p.as_slice())
+        .unwrap_or_else(|| panic!("no group {group}"))
+}
+
+/// The `objectsGroup` option (`FusedInput::objects_group`) renames both the
+/// flat top-level group of the schemas without a resource group and the
+/// sub-group an object page with one is nested under — which comes AFTER the
+/// group's operations.
+#[test]
+fn objects_group_option_renames_the_object_groups() {
+    let fixtures =
+        apitoolchain_parity::fixtures_dir(env!("CARGO_MANIFEST_DIR"), "apitoolchain-openapi");
+    let out = uniform_oas_pages(&FusedInput {
+        source: fixtures
+            .join("5.xdocs.objects")
+            .join("input.yaml")
+            .to_string_lossy()
+            .to_string(),
+        url_prefix: "docs/api".into(),
+        objects_group: Some("Types".into()),
+        ..Default::default()
+    })
+    .expect("fused ok");
+
+    assert_eq!(group_names(&out.sidebar), vec!["widgets", "parts", "Types"]);
+    let widgets = pages_of(&out.sidebar, "widgets");
+    // Three operations first, then the sub-group.
+    assert_eq!(widgets.len(), 4, "{widgets:?}");
+    assert!(widgets[..3].iter().all(|p| p.get("group").is_none()));
+    assert_eq!(widgets[3]["group"], "Types");
+    assert_eq!(widgets[3]["pages"][0]["page"], "docs/api/objects/Widget");
+    assert_eq!(pages_of(&out.sidebar, "parts")[0]["group"], "Types");
+    assert_eq!(
+        pages_of(&out.sidebar, "Types")[0]["page"],
+        "docs/api/objects/PartBase"
+    );
+    assert!(
+        !serde_json::to_string(&out.sidebar)
+            .unwrap()
+            .contains("Objects"),
+        "the default name leaked: {:?}",
+        out.sidebar
+    );
+}

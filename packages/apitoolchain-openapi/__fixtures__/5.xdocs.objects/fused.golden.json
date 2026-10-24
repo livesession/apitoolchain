@@ -17,8 +17,13 @@
           "page": "docs/api/getWidget"
         },
         {
-          "virtual": ".xyd/.cache/.content/docs/api/objects/Widget",
-          "page": "docs/api/objects/Widget"
+          "group": "Objects",
+          "pages": [
+            {
+              "virtual": ".xyd/.cache/.content/docs/api/objects/Widget",
+              "page": "docs/api/objects/Widget"
+            }
+          ]
         }
       ]
     },
@@ -26,8 +31,13 @@
       "group": "parts",
       "pages": [
         {
-          "virtual": ".xyd/.cache/.content/docs/api/objects/Part",
-          "page": "docs/api/objects/Part"
+          "group": "Objects",
+          "pages": [
+            {
+              "virtual": ".xyd/.cache/.content/docs/api/objects/Part",
+              "page": "docs/api/objects/Part"
+            }
+          ]
         }
       ]
     },

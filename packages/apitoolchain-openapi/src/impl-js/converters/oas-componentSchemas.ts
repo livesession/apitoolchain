@@ -12,6 +12,8 @@ import {
 
 import {OasJSONSchema, uniformOasOptions} from "../types";
 import {schemaObjectToUniformDefinitionProperties} from "../oas-core";
+import {componentLink} from "../component-links";
+import {objectsGroupOf} from "../const";
 
 export function schemaComponentsToUniformReferences(
     openapi: OpenAPIV3.Document,
@@ -44,7 +46,9 @@ export function schemaComponentsToUniformReferences(
             rootProperty = respProperties
         }
 
-        const symbolDef = definitionPropertyTypeDef(componentSchema)
+        // The page's own link — `id`, `canonical` and the `label` a renderer
+        // shows for the schema (its constant `object` value, else its name).
+        const symbolDef = componentLink(componentSchema) ?? definitionPropertyTypeDef(componentSchema)
 
         const definition: Definition = {
             title: componentSchemaName,
@@ -66,7 +70,7 @@ export function schemaComponentsToUniformReferences(
             type: ReferenceType.REST_COMPONENT_SCHEMA,
             context: {
                 componentSchema: componentSchemaName,
-                group: ["Objects"]
+                group: [objectsGroupOf(options)]
             } as OpenAPIReferenceContext
         };
 

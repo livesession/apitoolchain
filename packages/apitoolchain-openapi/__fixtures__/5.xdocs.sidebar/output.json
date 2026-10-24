@@ -203,7 +203,12 @@
                 "name": "definitionDescription",
                 "value": ""
               }
-            ]
+            ],
+            "symbolDef": {
+              "id": "#/components/schemas/User",
+              "canonical": "/users/object",
+              "label": "User"
+            }
           }
         ],
         "properties": []
@@ -378,7 +383,12 @@
                 "name": "definitionDescription",
                 "value": ""
               }
-            ]
+            ],
+            "symbolDef": {
+              "id": "#/components/schemas/User",
+              "canonical": "/users/object",
+              "label": "User"
+            }
           },
           {
             "title": "404",
@@ -554,7 +564,11 @@
                 "name": "definitionDescription",
                 "value": ""
               }
-            ]
+            ],
+            "symbolDef": {
+              "id": "#/components/schemas/Post",
+              "label": "Post"
+            }
           }
         ],
         "properties": []
@@ -676,7 +690,11 @@
                 "name": "required",
                 "value": "true"
               }
-            ]
+            ],
+            "symbolDef": {
+              "id": "#/components/schemas/PostInput",
+              "label": "PostInput"
+            }
           }
         ],
         "properties": [],
@@ -766,7 +784,11 @@
                 "name": "definitionDescription",
                 "value": ""
               }
-            ]
+            ],
+            "symbolDef": {
+              "id": "#/components/schemas/Post",
+              "label": "Post"
+            }
           }
         ],
         "properties": []
@@ -852,7 +874,12 @@
             "meta": []
           }
         ],
-        "meta": []
+        "meta": [],
+        "symbolDef": {
+          "id": "#/components/schemas/User",
+          "canonical": "/users/object",
+          "label": "User"
+        }
       }
     ],
     "examples": {

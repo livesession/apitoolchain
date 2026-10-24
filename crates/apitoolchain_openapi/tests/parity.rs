@@ -7,8 +7,9 @@
 //!
 //! Skip-list (covered by tier 2): fixtures whose oracle embeds JS-closure
 //! plugin post-processing — -2.complex.openai (uniformOpenAIMeta),
-//! 5.xdocs.sidebar and 5.xdocs.objects (uniformPluginXDocsSidebar; both are
-//! also covered natively by tests/fused.rs, which runs the ported plugin).
+//! 5.xdocs.sidebar, 5.xdocs.objects and 11.objects-layouts
+//! (uniformPluginXDocsSidebar; all three are also covered natively by
+//! tests/fused.rs, which runs the ported plugin).
 //!
 //! -2.complex.openai additionally carries a KNOWN oracle divergence: the JS
 //! impl deep-copies circular schemas mid-construction (partial snapshots;

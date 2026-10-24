@@ -172,7 +172,7 @@ components:
 | key | what |
 |---|---|
 | `name` | the reference title instead of the schema name |
-| `group` | the resource group the page belongs to — the page is nested under that group's `Objects` sub-group (`context.group = ["widgets", "Objects"]`), which the navigation lists after the group's operations |
+| `group` | the resource group the page belongs to (the one its endpoints sit in). Under the default `objectsLayout: grouped` the page sits in that group's sub-group of the top-level `Objects` group (`context.group = ["Objects", "widgets"]`); under `per-area` it is nested under the group's own `Objects` sub-group, after its operations (`["widgets", "Objects"]`) |
 | `hidden` | drop the page from the generated navigation (envelopes, errors) — a property that links to a hidden schema keeps its `symbolDef.id` and loses the `canonical`, so hide a schema only when no page should link to it |
 | `example` | a JSON example for the page (sidebar mode) |
 
@@ -186,7 +186,27 @@ moves an object page under another path included), and a link to a schema
 without a page (hidden, or not listed by a sidebar) keeps its `id` and `label`
 and drops its `canonical` — a link never lands on a page that does not exist.
 
-With `group`, the generated sidebar of the example above is
+With `group`, the generated sidebar of the example above is — under the
+default layout, `objectsLayout: grouped` —
+
+```json
+[
+  { "group": "widgets", "pages": [ "…/listWidgets", "…/createWidget" ] },
+  { "group": "Objects", "pages": [
+      "…/objects/PartBase",
+      { "group": "widgets", "pages": [ "…/objects/Widget" ] },
+      { "group": "parts",   "pages": [ "…/objects/Part" ] } ] }
+]
+```
+
+— ONE `Objects` group, the last group of the navigation whatever the tag
+order: the pages without a `group` first, then one sub-group per resource
+group in the order the groups appear above it (`widgets` has operations;
+`parts` has none, so it follows, in schema order). The sub-groups are ordinary
+nested sidebar groups: a renderer that starts nested groups collapsed (xyd
+does, unless a group holds the active page) shows a single `Objects` entry
+with a folded `widgets` and `parts` toggle inside. Under `objectsLayout:
+per-area` the object pages join their resource groups instead:
 
 ```json
 [
@@ -197,11 +217,11 @@ With `group`, the generated sidebar of the example above is
 ]
 ```
 
-— schemas without a `group` keep the flat top-level `Objects` group. The
-sub-group is an ordinary nested sidebar group: a renderer that starts nested
-groups collapsed (xyd does, unless a group holds the active page) shows the
-operations and a folded `Objects` entry. An `x-docs.sidebar` entry places its
-pages itself; no sub-group is added there.
+— each group's operations, then a folded `Objects` sub-group; the schemas
+without a `group` keep the top-level `Objects` group, last. In both layouts the
+object pages sort after every operation (even one tagged with the objects
+group's name) and keep the schema order among themselves. An `x-docs.sidebar`
+entry places its pages itself; no sub-group is added there.
 
 ## Options
 
@@ -211,10 +231,12 @@ native addon, camelCase):
 | option | what |
 |---|---|
 | `regions` | convert only these regions: `"METHOD /path"` or `"/components/schemas/Name"` (the per-page conversion) |
-| `objectsGroup` | the name of the component-schema pages' group, default `"Objects"` — both the flat top-level group and the sub-group under a resource group (`x-docs.group`); an empty string means the default |
+| `objectsGroup` | the name of the component-schema pages' group, default `"Objects"` — the top-level objects group and, under `per-area`, the sub-group under a resource group (`x-docs.group`); an empty string means the default |
+| `objectsLayout` | where an object page with a resource group (`x-docs.group`) goes: `"grouped"` (the default) — one top-level objects group, last, holding the pages without a group and then a sub-group per resource group in the order the groups appear above; `"per-area"` — nested under the resource group's own objects sub-group, after its operations. Anything else means the default (the Rust `ObjectsLayout` enum, `Options::objects_layout()`) |
 
-The fused endpoint (`fused::uniform_oas_pages`, `FusedInput::objects_group`)
-takes the same name, since it builds the sidebar.
+The fused endpoint (`fused::uniform_oas_pages`, `FusedInput::objects_group` /
+`FusedInput::objects_layout`) takes the same names, since it builds the
+sidebar.
 
 ## Tests
 

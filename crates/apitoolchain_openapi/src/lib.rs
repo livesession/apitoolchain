@@ -13,7 +13,7 @@ mod paths;
 mod util;
 pub mod xdocs;
 
-use apitoolchain_uniform::Reference;
+use apitoolchain_uniform::{Reference, ReferenceType};
 use serde::Deserialize;
 use serde_json::Value;
 
@@ -27,11 +27,51 @@ pub use oas_doc::{parse_spec, read_spec, DocCtx, OasError};
 
 const SUPPORTED_HTTP_METHODS: &[&str] = &["get", "put", "patch", "post", "delete"];
 
-/// The default name of the group the component-schema pages sit in: the flat
-/// top-level group of the schemas with no resource group, and the sub-group
+/// The default name of the group the component-schema pages sit in: the
+/// top-level objects group, and under the per-area layout the sub-group
 /// nested under a resource group (`x-docs.group`) for the schemas that have
 /// one. Renamed with [`Options::objects_group`].
 pub const DEFAULT_OBJECTS_GROUP: &str = "Objects";
+
+/// Where the object pages (the component schemas) sit in the generated
+/// navigation — [`Options::objects_layout`] (JSON `objectsLayout`).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum ObjectsLayout {
+    /// `"grouped"` (the default): ONE top-level objects group, the last group
+    /// of the navigation — the pages without a resource group first, then one
+    /// sub-group per resource group (`x-docs.group`) in the order the groups
+    /// appear above it (`context.group = [<objects group>, <group>]`; a
+    /// renderer that starts nested groups collapsed shows them folded).
+    #[default]
+    Grouped,
+    /// `"per-area"`: an object page with a resource group is nested under that
+    /// group's own objects sub-group, after its operations
+    /// (`context.group = [<group>, <objects group>]`); the pages without one
+    /// keep the top-level objects group.
+    PerArea,
+}
+
+impl ObjectsLayout {
+    /// The JSON name of the layout.
+    pub fn as_str(self) -> &'static str {
+        match self {
+            ObjectsLayout::Grouped => "grouped",
+            ObjectsLayout::PerArea => "per-area",
+        }
+    }
+
+    /// The layout a JSON name selects — anything but `"per-area"` is the
+    /// default, as in the JS twin.
+    pub fn parse(name: Option<&str>) -> Self {
+        match name {
+            Some("per-area") => ObjectsLayout::PerArea,
+            _ => ObjectsLayout::Grouped,
+        }
+    }
+}
+
+/// The default [`ObjectsLayout`].
+pub const DEFAULT_OBJECTS_LAYOUT: ObjectsLayout = ObjectsLayout::Grouped;
 
 /// Port of `uniformOasOptions`.
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -41,9 +81,14 @@ pub struct Options {
     /// `"/components/schemas/Name"`.
     pub regions: Option<Vec<String>>,
     /// The name of the component-schema pages' group (JSON: `objectsGroup`) —
-    /// both the flat top-level group and the sub-group under a resource group.
-    /// `None` / empty → [`DEFAULT_OBJECTS_GROUP`].
+    /// the top-level objects group and, under the per-area layout, the
+    /// sub-group under a resource group. `None` / empty →
+    /// [`DEFAULT_OBJECTS_GROUP`].
     pub objects_group: Option<String>,
+    /// Where an object page with a resource group goes (JSON: `objectsLayout`,
+    /// `"grouped"` or `"per-area"`); anything else → [`DEFAULT_OBJECTS_LAYOUT`].
+    /// See [`ObjectsLayout`].
+    pub objects_layout: Option<String>,
 }
 
 impl Options {
@@ -53,6 +98,11 @@ impl Options {
             Some(name) if !name.is_empty() => name,
             _ => DEFAULT_OBJECTS_GROUP,
         }
+    }
+
+    /// The effective objects layout.
+    pub fn objects_layout(&self) -> ObjectsLayout {
+        ObjectsLayout::parse(self.objects_layout.as_deref())
     }
 }
 
@@ -256,9 +306,23 @@ fn get_tags(raw: &Value) -> Vec<String> {
     out
 }
 
-/// `sortReferencesByTags` — stable, mirroring the comparator exactly.
+/// `sortReferencesByTags` — stable, mirroring the comparator exactly. The
+/// object pages (the component schemas) come after every operation whatever
+/// the tags — so their group is the last one of the generated navigation,
+/// even when an operation is tagged with the objects group's name — and keep
+/// the schema order among themselves.
 fn sort_references_by_tags(references: &mut [Reference], tags: &[String]) {
     references.sort_by(|prev, next| {
+        let prev_object = prev.reference_type == Some(ReferenceType::RestComponentSchema);
+        let next_object = next.reference_type == Some(ReferenceType::RestComponentSchema);
+        if prev_object != next_object {
+            return if prev_object {
+                std::cmp::Ordering::Greater
+            } else {
+                std::cmp::Ordering::Less
+            };
+        }
+
         let a_tags = group_of(prev);
         let b_tags = group_of(next);
 
@@ -289,4 +353,63 @@ fn group_of(r: &Reference) -> Vec<String> {
                 .collect()
         })
         .unwrap_or_default()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+
+    /// An operation tagged with the objects group's name does not pull the
+    /// object pages up among the operations: they sort last whatever the tags.
+    #[test]
+    fn object_pages_sort_after_every_operation() {
+        let doc = json!({
+            "openapi": "3.0.3",
+            "info": { "title": "Widgets", "version": "1.0.0" },
+            "tags": [{ "name": "Objects" }, { "name": "widgets" }],
+            "paths": {
+                "/objects": { "get": {
+                    "operationId": "listObjects", "summary": "List objects",
+                    "tags": ["Objects"], "responses": { "200": { "description": "ok" } }
+                } },
+                "/widgets": { "get": {
+                    "operationId": "listWidgets", "summary": "List widgets",
+                    "tags": ["widgets"], "responses": { "200": { "description": "ok" } }
+                } }
+            },
+            "components": { "schemas": {
+                "Widget": { "type": "object", "properties": { "id": { "type": "string" } } }
+            } }
+        });
+        let refs = oap_schema_to_references(&doc, None);
+        let canonicals: Vec<&str> = refs.iter().map(|r| r.canonical.as_str()).collect();
+        assert_eq!(
+            canonicals,
+            vec!["listObjects", "listWidgets", "objects/Widget"]
+        );
+    }
+
+    /// `objectsLayout` parses leniently, like the JS twin: `"per-area"` or
+    /// the default.
+    #[test]
+    fn objects_layout_option_parses_leniently() {
+        assert_eq!(Options::default().objects_layout(), ObjectsLayout::Grouped);
+        let per_area = Options {
+            objects_layout: Some("per-area".into()),
+            ..Default::default()
+        };
+        assert_eq!(per_area.objects_layout(), ObjectsLayout::PerArea);
+        let unknown = Options {
+            objects_layout: Some("sideways".into()),
+            ..Default::default()
+        };
+        assert_eq!(unknown.objects_layout(), DEFAULT_OBJECTS_LAYOUT);
+        let json: Options =
+            serde_json::from_str(r#"{"objectsLayout":"per-area","objectsGroup":"Types"}"#).unwrap();
+        assert_eq!(json.objects_layout(), ObjectsLayout::PerArea);
+        assert_eq!(json.objects_group(), "Types");
+        assert_eq!(ObjectsLayout::PerArea.as_str(), "per-area");
+        assert_eq!(ObjectsLayout::parse(Some("grouped")).as_str(), "grouped");
+    }
 }

@@ -3,8 +3,9 @@
 ## Unreleased
 
 Both halves of the converter (the Rust core in `crates/apitoolchain_openapi`
-and the JS impl in `src/impl-js`) change together; the fixtures `9.schema-links`
-and `5.xdocs.objects` pin the new output on both sides.
+and the JS impl in `src/impl-js`) change together; the fixtures `9.schema-links`,
+`5.xdocs.objects` (the per-area objects layout) and `11.objects-layouts` (the
+grouped default) pin the new output on both sides.
 
 ### Added
 
@@ -37,17 +38,42 @@ and `5.xdocs.objects` pin the new output on both sides.
   definition carries the page's own link. An inline composition keeps the
   legacy `{ id: [<member paths>] }`. The x-docs pass relinks these like the
   nested ones (a hidden page's link loses its `canonical`).
-- **Object pages nested under their resource group's `Objects` sub-group.** A
-  component schema with an `x-docs.group` gets `context.group = [<group>,
-  "Objects"]`, so the generated sidebar lists it under a nested `Objects`
-  group AFTER the group's operations (a renderer that starts nested groups
-  collapsed shows it folded). Schemas without a resource group keep the flat
-  top-level `Objects` group; an `x-docs.sidebar` entry is placed where it is
-  listed. An operation's `x-docs.group` is never nested.
+- **Object pages grouped by their resource group — the `objectsLayout`
+  option** (`uniformOasOptions.objectsLayout`, the Rust
+  `Options::objects_layout` / `FusedInput::objects_layout` and the
+  `ObjectsLayout` enum, JSON `objectsLayout`). A component schema's
+  `x-docs.group` names the resource group its page belongs to; the layout
+  says where that page goes in the generated navigation:
+  - `"grouped"` — **the default**: ONE top-level `Objects` group, the last
+    group of the navigation whatever the tag order, holding the pages without
+    a resource group first and then one sub-group per resource group in the
+    order the groups appear above it (`context.group = ["Objects",
+    <group>]`; a group with no operations follows, in schema order). A
+    renderer that starts nested groups collapsed shows a single `Objects`
+    entry with a folded toggle per resource group.
+  - `"per-area"`: the page is nested under its resource group's own `Objects`
+    sub-group, AFTER the group's operations (`context.group = [<group>,
+    "Objects"]`); the schemas without a resource group keep the top-level
+    `Objects` group.
+
+  An `x-docs.sidebar` entry is placed where it is listed; an operation's
+  `x-docs.group` is never nested. Anything but `"per-area"` means the default.
 - **`objectsGroup` option** (`uniformOasOptions.objectsGroup`, the Rust
   `Options::objects_group` / `FusedInput::objects_group`, JSON
-  `objectsGroup`): renames the component-schema pages' group — the flat
-  top-level group and the sub-group alike; default `"Objects"`.
+  `objectsGroup`): renames the component-schema pages' group — the top-level
+  group and the per-area sub-group alike; default `"Objects"`.
+
+### Changed
+
+- **The object pages' default navigation.** Out of the box the component-schema
+  pages no longer form one flat list: the `Objects` group (still the last group
+  of the navigation) lists the schemas without an `x-docs.group` first and then
+  a collapsed sub-group per resource group — `objectsLayout: "grouped"`. The
+  per-area nesting stays available as `objectsLayout: "per-area"`; a document
+  whose schemas carry no `x-docs.group` still gets the flat list.
+- The object pages sort after every operation, whatever the tags — an
+  operation tagged with the objects group's name used to pull them up among
+  the operations; among themselves they keep the schema order.
 
 ### Fixed
 

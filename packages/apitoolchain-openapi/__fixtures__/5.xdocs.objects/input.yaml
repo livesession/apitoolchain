@@ -7,6 +7,8 @@
 # - `Widget.tags` links to the hidden `Tag`: the link keeps its `id` and loses
 #   its `canonical` (no page to land on); `WidgetList.data` links to `Widget`,
 #   whose page exists, so that link stays whole
+# The matrix converts it with `objectsLayout: per-area` — the layout this shape
+# belongs to; 11.objects-layouts pins the default, `grouped`.
 openapi: 3.0.3
 info:
   title: Widgets API

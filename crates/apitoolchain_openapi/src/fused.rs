@@ -25,9 +25,13 @@ pub struct FusedInput {
     /// settings.engine.uniform.store
     pub store: bool,
     /// The component-schema pages' group name (the converter option
-    /// `objectsGroup`): the flat top-level group and the sub-group under a
-    /// resource group. `None` → [`crate::DEFAULT_OBJECTS_GROUP`].
+    /// `objectsGroup`): the top-level objects group and, under the per-area
+    /// layout, the sub-group under a resource group. `None` →
+    /// [`crate::DEFAULT_OBJECTS_GROUP`].
     pub objects_group: Option<String>,
+    /// The objects layout (the converter option `objectsLayout`: `"grouped"`
+    /// or `"per-area"`). `None` → [`crate::DEFAULT_OBJECTS_LAYOUT`].
+    pub objects_layout: Option<String>,
 }
 
 pub struct FusedOutput {
@@ -51,6 +55,7 @@ pub fn uniform_oas_pages(input: &FusedInput) -> Result<FusedOutput, OasError> {
     let options = Options {
         regions: None,
         objects_group: input.objects_group.clone(),
+        objects_layout: input.objects_layout.clone(),
     };
 
     // Full conversion (endpoint examples are a JS post-pass the page flow

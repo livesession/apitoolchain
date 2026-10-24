@@ -14,6 +14,8 @@
 import path from "node:path";
 import fs from "node:fs";
 
+import type { uniformOasOptions } from "../src/impl-js/types";
+
 if (process.env.XYD_NATIVE !== "0") {
     console.error("run with XYD_NATIVE=0 — goldens must come from the JS impls");
     process.exit(1);
@@ -34,12 +36,24 @@ const uniform = uniformMod.default;
 const FIXTURES = path.join(import.meta.dirname, "..", "__fixtures__");
 const URL_PREFIX = "docs/api"; // the fixed test prefix the Rust test mirrors
 
-const cases = ["1.basic", "2.more", "3.multiple-responses", "5.xdocs.sidebar", "5.xdocs.objects", "8.enums"];
+// A case's `options` are the converter options the Rust test passes through
+// `FusedInput` for it (tests/fused.rs). 5.xdocs.objects pins the per-area
+// objects layout explicitly — the default is `grouped`, which 11.objects-layouts
+// pins.
+const cases: { name: string; options?: uniformOasOptions }[] = [
+    { name: "1.basic" },
+    { name: "2.more" },
+    { name: "3.multiple-responses" },
+    { name: "5.xdocs.sidebar" },
+    { name: "5.xdocs.objects", options: { objectsLayout: "per-area" } },
+    { name: "8.enums" },
+    { name: "11.objects-layouts" },
+];
 
-for (const name of cases) {
+for (const { name, options } of cases) {
     const input = path.join(FIXTURES, name, "input.yaml");
     const doc = await deferencedOpenAPI(input);
-    const refs = oapSchemaToReferences(doc);
+    const refs = oapSchemaToReferences(doc, options);
 
     // uniformResolver plugin order for openapi: [xdocs, navigation].
     const res = uniform(refs, {

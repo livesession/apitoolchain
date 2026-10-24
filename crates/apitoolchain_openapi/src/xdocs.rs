@@ -260,7 +260,11 @@ fn schema_page_links(ctx: &DocCtx, doc: &Value) -> HashMap<String, PageLink> {
                 .unwrap_or(false);
             links.insert(
                 name.clone(),
-                if hidden { PageLink::Drop } else { PageLink::Keep },
+                if hidden {
+                    PageLink::Drop
+                } else {
+                    PageLink::Keep
+                },
             );
         }
         return links;
@@ -583,9 +587,7 @@ fn sidebar_page_canonical(
     if page_path.map(|p| !p.is_empty()).unwrap_or(false) {
         return Some(join_paths(&[parent_path, page_path]));
     }
-    parent_path
-        .filter(|p| !p.is_empty())
-        .map(|p| p.to_string())
+    parent_path.filter(|p| !p.is_empty()).map(|p| p.to_string())
 }
 
 /// Port of pluginSidebar's `joinPaths`: strip outer slashes per part, prefix

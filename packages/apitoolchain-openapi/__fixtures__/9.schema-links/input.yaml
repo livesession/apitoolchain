@@ -5,6 +5,9 @@
 # - `definition` / `NewWidget.definition` / `parts` / `steps` / the `widgetId`
 #   parameter link to their component schema (`symbolDef`)
 # - `status` / `mode` are multi-value enums → unchanged shape, no `const`
+# - `shade` is a typed wrapper (`type: string`) around the same enum → the same enum row
+# - `assembly` is `allOf: [<inline object>, $ref <composition>]` → one row with every
+#   member's rows merged by name (label, id, sku), whatever the member order
 openapi: 3.0.3
 info:
   title: Widgets API
@@ -98,6 +101,20 @@ components:
           type: string
           enum: [active, archived]
           description: Whether the widget is in use.
+        shade:
+          type: string
+          description: The shade of the widget.
+          allOf:
+            - $ref: '#/components/schemas/Color'
+        assembly:
+          description: How the widget is assembled.
+          allOf:
+            - type: object
+              properties:
+                label:
+                  type: string
+                  description: A label for the assembly.
+            - $ref: '#/components/schemas/Assembly'
     NewWidget:
       type: object
       required: [definition]
@@ -147,3 +164,19 @@ components:
         sku:
           type: string
           description: The part's stock-keeping unit.
+    AssemblyBase:
+      type: object
+      required: [id]
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the assembly.
+    Assembly:
+      description: An assembly of parts.
+      allOf:
+        - $ref: '#/components/schemas/AssemblyBase'
+        - type: object
+          properties:
+            sku:
+              type: string
+              description: The assembly's stock-keeping unit.

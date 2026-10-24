@@ -80,12 +80,15 @@ const tests: {
 ]
 
 // Fixtures whose oracles carry the docs-metadata output (the `const` meta,
-// `symbolDef`s on nested properties, the allOf-scalar fold): a published
+// `symbolDef`s on nested properties, the allOf fold): a published
 // @xyd-js/native built from a core that predates it cannot produce them, so
 // under the NATIVE path they run only once the addon has caught up. The gate is
 // a feature probe, not a version pin — it lifts by itself the moment a native
-// core that emits `const` resolves; until then these cases are exercised on the
-// JS impl (XYD_NATIVE=0) and the Rust core by `cargo test` (tests/parity.rs).
+// core that produces this core's 9.schema-links rows resolves (every feature
+// at once: the `const` meta, a nested link, the scalar fold, the merged rows
+// of a composed member — an addon carrying only some of them stays gated);
+// until then these cases are exercised on the JS impl (XYD_NATIVE=0) and the
+// Rust core by `cargo test` (tests/parity.rs).
 const DOCS_METADATA_FIXTURES = new Set(["-3.random", "8.enums", "9.schema-links", "5.xdocs.objects"])
 const nativeHasDocsMetadata = (() => {
     if (typeof native?.oapSchemaToReferencesFromFile !== "function") {
@@ -93,8 +96,13 @@ const nativeHasDocsMetadata = (() => {
     }
     try {
         const probe = path.join(__dirname, "..", "__fixtures__", "9.schema-links", "input.yaml")
-        const out: string = native.oapSchemaToReferencesFromFile(probe)
-        return out.includes('"name":"const"')
+        const refs: any[] = JSON.parse(native.oapSchemaToReferencesFromFile(probe))
+        const rows: any[] = refs.find(r => r.canonical === "objects/Widget")?.definitions?.[0]?.properties ?? []
+        const row = (name: string) => rows.find(p => p.name === name)
+        return !!row("object")?.meta?.some((m: any) => m.name === "const")
+            && row("definition")?.symbolDef?.canonical === "objects/WidgetDefinition"
+            && row("id")?.type === "string"
+            && row("assembly")?.properties?.map((p: any) => p.name).join(",") === "label,id,sku"
     } catch {
         return false
     }

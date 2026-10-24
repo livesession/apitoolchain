@@ -2,8 +2,11 @@
 # - `Widget` carries `x-docs: { name, group }` → "The widget object" in the
 #   `widgets` group, after that tag's endpoints
 # - `Part` is an `allOf` composition whose member carries the x-docs
-# - `WidgetList` / `Error` are `hidden` → no page; so is the `health` operation
-# - `PartBase` / `Tag` have no x-docs → the defaults (`<Name>` under "Objects")
+# - `WidgetList` / `Error` / `Tag` are `hidden` → no page; so is the `health` operation
+# - `PartBase` has no x-docs → the defaults (`<Name>` under "Objects")
+# - `Widget.tags` links to the hidden `Tag`: the link keeps its `id` and loses
+#   its `canonical` (no page to land on); `WidgetList.data` links to `Widget`,
+#   whose page exists, so that link stays whole
 openapi: 3.0.3
 info:
   title: Widgets API
@@ -146,6 +149,8 @@ components:
           type: string
           description: Unique identifier for the part.
     Tag:
+      x-docs:
+        hidden: true
       type: object
       properties:
         name:

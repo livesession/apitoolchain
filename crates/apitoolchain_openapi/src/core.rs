@@ -385,15 +385,7 @@ pub fn schema_object_to_property(
                         None,
                     ) {
                         let list = merged.properties.get_or_insert_with(Vec::new);
-                        if let Some(idx) = list
-                            .iter()
-                            .position(|p| p.name.as_deref() == Some(prop_name.as_str()))
-                        {
-                            let existing = list[idx].clone();
-                            list[idx] = spread_merge(&existing, &property);
-                        } else {
-                            list.push(property);
-                        }
+                        merge_or_push(list, prop_name, property);
                     }
                 }
             } else if let Some(property) =
@@ -624,14 +616,23 @@ fn js_ref_path(ctx: &ConvCtx, schema: &Value) -> String {
     stamp.to_string()
 }
 
-/// `allOf: [<a scalar, enum or otherwise typed member>]` — the member is
-/// folded onto the merged row: its type (when the wrapper declares none),
-/// its description (when the wrapper has none), its meta (the wrapper's win
-/// by name), and an enum's value children + base type. Before this, such a
-/// member was pushed as a NAMELESS CHILD, so a described `id: allOf: [$ref
-/// Uuid]` rendered as a parent with one empty-named `string` row.
+/// An `allOf` member that is not an of-type (a scalar, an enum, an object or
+/// a composition without a `properties` key of its own) is folded onto the
+/// merged row instead of being pushed as a NAMELESS CHILD (before this, a
+/// described `id: allOf: [$ref Uuid]` rendered as a parent with one
+/// empty-named `string` row):
+/// - type: a `$$enum` member decides the row's type whatever the wrapper
+///   declares (its `type: string` is the enum's base type, kept in
+///   `enum-type` and `ofProperty`); otherwise the wrapper's declared type
+///   wins, else the member's;
+/// - description: the wrapper's, else the member's;
+/// - meta: merged by name, the wrapper's winning;
+/// - rows: an enum's value rows or an object's property rows, merged by name
+///   into the rows the wrapper (or an earlier member) already has — a
+///   composed member keeps every row whatever the member order;
+/// - ofProperty: the first one seen.
 fn fold_member(merged: &mut DefinitionProperty, member: DefinitionProperty, wrapper_typed: bool) {
-    if !wrapper_typed {
+    if member.property_type == property_type::ENUM || !wrapper_typed {
         merged.property_type = member.property_type;
     }
     if merged.description.as_deref().unwrap_or("").is_empty() {
@@ -643,14 +644,20 @@ fn fold_member(merged: &mut DefinitionProperty, member: DefinitionProperty, wrap
             meta.push(m);
         }
     }
-    let has_children = merged
-        .properties
-        .as_ref()
-        .map(|p| !p.is_empty())
-        .unwrap_or(false);
-    if !has_children {
-        if let Some(children) = member.properties.filter(|p| !p.is_empty()) {
-            merged.properties = Some(children);
+    if let Some(rows) = member.properties.filter(|p| !p.is_empty()) {
+        let has_rows = merged
+            .properties
+            .as_ref()
+            .map(|p| !p.is_empty())
+            .unwrap_or(false);
+        if !has_rows {
+            merged.properties = Some(rows);
+        } else {
+            let list = merged.properties.get_or_insert_with(Vec::new);
+            for row in rows {
+                let name = row.name.clone().unwrap_or_default();
+                merge_or_push(list, &name, row);
+            }
         }
     }
     if merged.of_property.is_none() {
@@ -847,7 +854,8 @@ mod tests {
                 "properties": {
                     "id": { "allOf": [{ "$ref": "#/components/schemas/WidgetId" }], "description": "The widget's id." },
                     "color": { "allOf": [{ "$ref": "#/components/schemas/Color" }], "example": "green" },
-                    "other": { "allOf": [{ "$ref": "#/components/schemas/WidgetId" }] }
+                    "other": { "allOf": [{ "$ref": "#/components/schemas/WidgetId" }] },
+                    "shade": { "type": "string", "allOf": [{ "$ref": "#/components/schemas/Color" }] }
                 }
             }
         }));
@@ -872,6 +880,88 @@ mod tests {
         assert_eq!(
             row(&rows, "other").description.as_deref(),
             Some("A widget id.")
+        );
+
+        // A typed wrapper (`type: string`) around an enum component is still
+        // an enum row: the marker wins over the declared base type.
+        let shade = row(&rows, "shade");
+        assert_eq!(shade.property_type, "$$enum");
+        assert_eq!(shade.properties.as_ref().unwrap().len(), 2);
+        assert_eq!(meta_value(shade, "enum-type"), Some(&json!("string")));
+        assert_eq!(shade.of_property.as_ref().unwrap().property_type, "string");
+        assert_eq!(canonical_of(shade), Some("objects/Color"));
+    }
+
+    /// A composed member (a component that is itself an `allOf`, so it has no
+    /// `properties` key of its own) contributes its rows whatever its position
+    /// among the members: merged by name into the rows already there, never
+    /// dropped and never a nameless child group.
+    #[test]
+    fn allof_composed_member_rows_merge_whatever_the_order() {
+        let rows = widget_rows(json!({
+            "Base": { "type": "object", "properties": { "id": { "type": "string" } } },
+            "Composed": {
+                "allOf": [
+                    { "$ref": "#/components/schemas/Base" },
+                    { "type": "object", "properties": { "sku": { "type": "string" } } }
+                ]
+            },
+            "Widget": {
+                "type": "object",
+                "properties": {
+                    "inline_first": {
+                        "allOf": [
+                            { "type": "object", "properties": { "name": { "type": "string" } } },
+                            { "$ref": "#/components/schemas/Composed" }
+                        ]
+                    },
+                    "composed_first": {
+                        "allOf": [
+                            { "$ref": "#/components/schemas/Composed" },
+                            { "type": "object", "properties": { "name": { "type": "string", "description": "overrides" } } }
+                        ]
+                    },
+                    "overlap": {
+                        "allOf": [
+                            { "type": "object", "properties": { "id": { "type": "string", "description": "the wrapper's id" } } },
+                            { "$ref": "#/components/schemas/Composed" }
+                        ]
+                    }
+                }
+            }
+        }));
+
+        let names = |p: &DefinitionProperty| -> Vec<String> {
+            p.properties
+                .as_ref()
+                .unwrap()
+                .iter()
+                .map(|c| c.name.clone().unwrap_or_default())
+                .collect()
+        };
+
+        let inline_first = row(&rows, "inline_first");
+        assert_eq!(inline_first.property_type, "object");
+        assert_eq!(names(inline_first), vec!["name", "id", "sku"]);
+
+        let composed_first = row(&rows, "composed_first");
+        assert_eq!(names(composed_first), vec!["id", "sku", "name"]);
+        assert_eq!(
+            row(composed_first.properties.as_ref().unwrap(), "name")
+                .description
+                .as_deref(),
+            Some("overrides")
+        );
+
+        // A row both sides declare is merged by name: one `id`, the later
+        // member's shape over the earlier one's, the description kept.
+        let overlap = row(&rows, "overlap");
+        assert_eq!(names(overlap), vec!["id", "sku"]);
+        assert_eq!(
+            row(overlap.properties.as_ref().unwrap(), "id")
+                .description
+                .as_deref(),
+            Some("the wrapper's id")
         );
     }
 

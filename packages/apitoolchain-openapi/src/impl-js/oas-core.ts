@@ -361,20 +361,8 @@ export function schemaObjectToUniformDefinitionProperty(
                     );
 
                     if (property && mergedProperty.properties) {
-                        // Check if property already exists and merge if needed
-                        const existingPropertyIndex = mergedProperty.properties.findIndex(p => p.name === propName);
-                        if (existingPropertyIndex >= 0) {
-                            // Merge properties if they exist in multiple schemas
-                            const existingProperty = mergedProperty.properties[existingPropertyIndex];
-                            mergedProperty.properties[existingPropertyIndex] = {
-                                ...existingProperty,
-                                ...property,
-                                description: property.description || existingProperty.description || "",
-                                meta: [...(existingProperty.meta || []), ...(property.meta || [])],
-                            };
-                        } else {
-                            mergedProperty.properties.push(property);
-                        }
+                        // A row declared by more than one member is merged.
+                        mergeOrPush(mergedProperty.properties, property)
                     }
                 }
             } else {
@@ -633,14 +621,41 @@ export function schemaObjectToUniformDefinitionPropertyMeta(objProp: OpenAPIV3.S
     return meta
 }
 
-// `allOf: [<a scalar, enum or otherwise typed member>]` — the member is folded
-// onto the merged row: its type (when the wrapper declares none), its
-// description (when the wrapper has none), its meta (the wrapper's win by
-// name), and an enum's value children + base type. Before this, such a member
-// was pushed as a NAMELESS CHILD, so a described `id: allOf: [$ref Uuid]`
-// rendered as a parent with one empty-named `string` row.
+// The allOf rows merge: a row that exists already is spread-merged with the
+// newcomer (`{...existing, ...property}`; the newcomer's description when it
+// has one; both metas), otherwise the newcomer is pushed.
+function mergeOrPush(rows: DefinitionProperty[], property: DefinitionProperty) {
+    const existingIndex = rows.findIndex(p => p.name === property.name)
+    if (existingIndex >= 0) {
+        const existing = rows[existingIndex]
+        rows[existingIndex] = {
+            ...existing,
+            ...property,
+            description: property.description || existing.description || "",
+            meta: [...(existing.meta || []), ...(property.meta || [])],
+        }
+    } else {
+        rows.push(property)
+    }
+}
+
+// An `allOf` member that is not an of-type (a scalar, an enum, an object or a
+// composition without a `properties` key of its own) is folded onto the merged
+// row instead of being pushed as a NAMELESS CHILD (before this, a described
+// `id: allOf: [$ref Uuid]` rendered as a parent with one empty-named `string`
+// row):
+// - type: a `$$enum` member decides the row's type whatever the wrapper
+//   declares (its `type: string` is the enum's base type, kept in `enum-type`
+//   and `ofProperty`); otherwise the wrapper's declared type wins, else the
+//   member's;
+// - description: the wrapper's, else the member's;
+// - meta: merged by name, the wrapper's winning;
+// - rows: an enum's value rows or an object's property rows, merged by name
+//   into the rows the wrapper (or an earlier member) already has — a composed
+//   member keeps every row whatever the member order;
+// - ofProperty: the first one seen.
 function foldMember(merged: DefinitionProperty, member: DefinitionProperty, wrapperTyped: boolean) {
-    if (!wrapperTyped) {
+    if (member.type === DEFINED_DEFINITION_PROPERTY_TYPE.ENUM || !wrapperTyped) {
         merged.type = member.type
     }
     if (!merged.description) {
@@ -654,8 +669,14 @@ function foldMember(merged: DefinitionProperty, member: DefinitionProperty, wrap
             merged.meta.push(m)
         }
     }
-    if (!merged.properties?.length && member.properties?.length) {
-        merged.properties = member.properties
+    if (member.properties?.length) {
+        if (!merged.properties?.length) {
+            merged.properties = member.properties
+        } else {
+            for (const row of member.properties) {
+                mergeOrPush(merged.properties, row)
+            }
+        }
     }
     if (!merged.ofProperty && member.ofProperty) {
         merged.ofProperty = member.ofProperty

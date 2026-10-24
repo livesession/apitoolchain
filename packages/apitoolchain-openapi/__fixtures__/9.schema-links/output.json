@@ -61,7 +61,7 @@
                   {
                     "title": "application/json",
                     "language": "json",
-                    "code": "{\n  \"object\": \"widget\",\n  \"id\": \"0d4f1e2a-6b2c-4f33-9d7e-1a2b3c4d5e6f\",\n  \"kind\": \"standard\",\n  \"color\": \"red\",\n  \"definition\": {\n    \"steps\": [\n      {\n        \"name\": \"string\",\n        \"count\": 1\n      }\n    ],\n    \"mode\": \"strict\"\n  },\n  \"parts\": [\n    {\n      \"object\": \"part\",\n      \"sku\": \"string\"\n    }\n  ],\n  \"created_at\": \"2019-08-24T14:15:22Z\",\n  \"status\": \"active\"\n}"
+                    "code": "{\n  \"object\": \"widget\",\n  \"id\": \"0d4f1e2a-6b2c-4f33-9d7e-1a2b3c4d5e6f\",\n  \"kind\": \"standard\",\n  \"color\": \"red\",\n  \"definition\": {\n    \"steps\": [\n      {\n        \"name\": \"string\",\n        \"count\": 1\n      }\n    ],\n    \"mode\": \"strict\"\n  },\n  \"parts\": [\n    {\n      \"object\": \"part\",\n      \"sku\": \"string\"\n    }\n  ],\n  \"created_at\": \"2019-08-24T14:15:22Z\",\n  \"status\": \"active\",\n  \"shade\": \"red\",\n  \"assembly\": {\n    \"label\": \"string\",\n    \"id\": \"string\",\n    \"sku\": \"string\"\n  }\n}"
                   }
                 ]
               }
@@ -614,6 +614,81 @@
                   "description": "",
                   "type": "string"
                 }
+              },
+              {
+                "name": "shade",
+                "type": "$$enum",
+                "description": "The shade of the widget.",
+                "properties": [
+                  {
+                    "name": "red",
+                    "type": "string",
+                    "description": "",
+                    "meta": []
+                  },
+                  {
+                    "name": "green",
+                    "type": "string",
+                    "description": "",
+                    "meta": []
+                  },
+                  {
+                    "name": "blue",
+                    "type": "string",
+                    "description": "",
+                    "meta": []
+                  }
+                ],
+                "meta": [
+                  {
+                    "name": "enum-type",
+                    "value": "string"
+                  }
+                ],
+                "ofProperty": {
+                  "name": "",
+                  "description": "",
+                  "type": "string"
+                },
+                "symbolDef": {
+                  "id": "#/components/schemas/Color",
+                  "canonical": "objects/Color"
+                }
+              },
+              {
+                "name": "assembly",
+                "type": "object",
+                "description": "How the widget is assembled.",
+                "properties": [
+                  {
+                    "name": "label",
+                    "type": "string",
+                    "description": "A label for the assembly.",
+                    "meta": []
+                  },
+                  {
+                    "name": "id",
+                    "type": "string",
+                    "description": "Unique identifier for the assembly.",
+                    "meta": [
+                      {
+                        "name": "required",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "sku",
+                    "type": "string",
+                    "description": "The assembly's stock-keeping unit.",
+                    "meta": []
+                  }
+                ],
+                "meta": [],
+                "symbolDef": {
+                  "id": "#/components/schemas/Assembly",
+                  "canonical": "objects/Assembly"
+                }
               }
             ],
             "meta": [
@@ -698,7 +773,7 @@
                   {
                     "title": "application/json",
                     "language": "json",
-                    "code": "{\n  \"object\": \"widget\",\n  \"id\": \"0d4f1e2a-6b2c-4f33-9d7e-1a2b3c4d5e6f\",\n  \"kind\": \"standard\",\n  \"color\": \"red\",\n  \"definition\": {\n    \"steps\": [\n      {\n        \"name\": \"string\",\n        \"count\": 1\n      }\n    ],\n    \"mode\": \"strict\"\n  },\n  \"parts\": [\n    {\n      \"object\": \"part\",\n      \"sku\": \"string\"\n    }\n  ],\n  \"created_at\": \"2019-08-24T14:15:22Z\",\n  \"status\": \"active\"\n}"
+                    "code": "{\n  \"object\": \"widget\",\n  \"id\": \"0d4f1e2a-6b2c-4f33-9d7e-1a2b3c4d5e6f\",\n  \"kind\": \"standard\",\n  \"color\": \"red\",\n  \"definition\": {\n    \"steps\": [\n      {\n        \"name\": \"string\",\n        \"count\": 1\n      }\n    ],\n    \"mode\": \"strict\"\n  },\n  \"parts\": [\n    {\n      \"object\": \"part\",\n      \"sku\": \"string\"\n    }\n  ],\n  \"created_at\": \"2019-08-24T14:15:22Z\",\n  \"status\": \"active\",\n  \"shade\": \"red\",\n  \"assembly\": {\n    \"label\": \"string\",\n    \"id\": \"string\",\n    \"sku\": \"string\"\n  }\n}"
                   }
                 ]
               }
@@ -1073,6 +1148,81 @@
                   "name": "",
                   "description": "",
                   "type": "string"
+                }
+              },
+              {
+                "name": "shade",
+                "type": "$$enum",
+                "description": "The shade of the widget.",
+                "properties": [
+                  {
+                    "name": "red",
+                    "type": "string",
+                    "description": "",
+                    "meta": []
+                  },
+                  {
+                    "name": "green",
+                    "type": "string",
+                    "description": "",
+                    "meta": []
+                  },
+                  {
+                    "name": "blue",
+                    "type": "string",
+                    "description": "",
+                    "meta": []
+                  }
+                ],
+                "meta": [
+                  {
+                    "name": "enum-type",
+                    "value": "string"
+                  }
+                ],
+                "ofProperty": {
+                  "name": "",
+                  "description": "",
+                  "type": "string"
+                },
+                "symbolDef": {
+                  "id": "#/components/schemas/Color",
+                  "canonical": "objects/Color"
+                }
+              },
+              {
+                "name": "assembly",
+                "type": "object",
+                "description": "How the widget is assembled.",
+                "properties": [
+                  {
+                    "name": "label",
+                    "type": "string",
+                    "description": "A label for the assembly.",
+                    "meta": []
+                  },
+                  {
+                    "name": "id",
+                    "type": "string",
+                    "description": "Unique identifier for the assembly.",
+                    "meta": [
+                      {
+                        "name": "required",
+                        "value": "true"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "sku",
+                    "type": "string",
+                    "description": "The assembly's stock-keeping unit.",
+                    "meta": []
+                  }
+                ],
+                "meta": [],
+                "symbolDef": {
+                  "id": "#/components/schemas/Assembly",
+                  "canonical": "objects/Assembly"
                 }
               }
             ],
@@ -1497,6 +1647,81 @@
               "description": "",
               "type": "string"
             }
+          },
+          {
+            "name": "shade",
+            "type": "$$enum",
+            "description": "The shade of the widget.",
+            "properties": [
+              {
+                "name": "red",
+                "type": "string",
+                "description": "",
+                "meta": []
+              },
+              {
+                "name": "green",
+                "type": "string",
+                "description": "",
+                "meta": []
+              },
+              {
+                "name": "blue",
+                "type": "string",
+                "description": "",
+                "meta": []
+              }
+            ],
+            "meta": [
+              {
+                "name": "enum-type",
+                "value": "string"
+              }
+            ],
+            "ofProperty": {
+              "name": "",
+              "description": "",
+              "type": "string"
+            },
+            "symbolDef": {
+              "id": "#/components/schemas/Color",
+              "canonical": "objects/Color"
+            }
+          },
+          {
+            "name": "assembly",
+            "type": "object",
+            "description": "How the widget is assembled.",
+            "properties": [
+              {
+                "name": "label",
+                "type": "string",
+                "description": "A label for the assembly.",
+                "meta": []
+              },
+              {
+                "name": "id",
+                "type": "string",
+                "description": "Unique identifier for the assembly.",
+                "meta": [
+                  {
+                    "name": "required",
+                    "value": "true"
+                  }
+                ]
+              },
+              {
+                "name": "sku",
+                "type": "string",
+                "description": "The assembly's stock-keeping unit.",
+                "meta": []
+              }
+            ],
+            "meta": [],
+            "symbolDef": {
+              "id": "#/components/schemas/Assembly",
+              "canonical": "objects/Assembly"
+            }
           }
         ],
         "meta": []
@@ -1513,7 +1738,7 @@
                   {
                     "title": "json",
                     "language": "json",
-                    "code": "{\n  \"object\": \"\",\n  \"id\": null,\n  \"kind\": \"\",\n  \"color\": null,\n  \"definition\": {\n    \"steps\": [\n      {\n        \"name\": \"\",\n        \"count\": 0\n      }\n    ],\n    \"mode\": \"\"\n  },\n  \"parts\": [\n    {\n      \"object\": \"\",\n      \"sku\": \"\"\n    }\n  ],\n  \"created_at\": \"\",\n  \"status\": \"\",\n  \"__UNSAFE_refPath\": null\n}"
+                    "code": "{\n  \"object\": \"\",\n  \"id\": null,\n  \"kind\": \"\",\n  \"color\": null,\n  \"definition\": {\n    \"steps\": [\n      {\n        \"name\": \"\",\n        \"count\": 0\n      }\n    ],\n    \"mode\": \"\"\n  },\n  \"parts\": [\n    {\n      \"object\": \"\",\n      \"sku\": \"\"\n    }\n  ],\n  \"created_at\": \"\",\n  \"status\": \"\",\n  \"shade\": \"\",\n  \"assembly\": null,\n  \"__UNSAFE_refPath\": null\n}"
                   }
                 ]
               }
@@ -2012,6 +2237,100 @@
     "type": "rest_component_schema",
     "context": {
       "componentSchema": "Part",
+      "group": [
+        "Objects"
+      ]
+    }
+  },
+  {
+    "title": "AssemblyBase",
+    "description": "",
+    "canonical": "objects/AssemblyBase",
+    "definitions": [
+      {
+        "title": "AssemblyBase",
+        "properties": [
+          {
+            "name": "id",
+            "type": "string",
+            "description": "Unique identifier for the assembly.",
+            "meta": [
+              {
+                "name": "required",
+                "value": "true"
+              }
+            ]
+          }
+        ],
+        "meta": []
+      }
+    ],
+    "examples": {
+      "groups": [
+        {
+          "description": "Example",
+          "examples": [
+            {
+              "codeblock": {
+                "tabs": [
+                  {
+                    "title": "json",
+                    "language": "json",
+                    "code": "{\n  \"id\": \"\"\n}"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "type": "rest_component_schema",
+    "context": {
+      "componentSchema": "AssemblyBase",
+      "group": [
+        "Objects"
+      ]
+    }
+  },
+  {
+    "title": "Assembly",
+    "description": "An assembly of parts.",
+    "canonical": "objects/Assembly",
+    "definitions": [
+      {
+        "title": "Assembly",
+        "properties": [
+          {
+            "name": "id",
+            "type": "string",
+            "description": "Unique identifier for the assembly.",
+            "meta": [
+              {
+                "name": "required",
+                "value": "true"
+              }
+            ]
+          },
+          {
+            "name": "sku",
+            "type": "string",
+            "description": "The assembly's stock-keeping unit.",
+            "meta": []
+          }
+        ],
+        "meta": [],
+        "symbolDef": {
+          "id": []
+        }
+      }
+    ],
+    "examples": {
+      "groups": []
+    },
+    "type": "rest_component_schema",
+    "context": {
+      "componentSchema": "Assembly",
       "group": [
         "Objects"
       ]

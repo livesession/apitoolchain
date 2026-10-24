@@ -27,10 +27,22 @@ and `5.xdocs.objects` pin the new output on both sides.
 
 ### Fixed
 
-- `allOf: [{ $ref: <scalar> }]` + `description` is a scalar row with the
-  member's type and meta (an enum member folds its values in) instead of a
-  parent with one nameless child — the bogus "show properties" toggle on every
-  described id and timestamp.
+- An `allOf` member that is not an of-type is folded onto the row instead of
+  being pushed as a parent's one nameless child (the bogus "show properties"
+  toggle on every described id and timestamp): a scalar's type and meta, an
+  enum's values (the `$$enum` marker wins over a wrapper's declared base type,
+  so `type: string` + `allOf: [$ref Color]` is an enum row), and the rows of an
+  object or of a composition merged by name with the rows the other members
+  declare — whatever the member order, nothing is dropped.
+- Nested schema links follow their page. After the x-docs pass, a property's
+  `symbolDef.canonical` is the canonical of the linked schema's own reference
+  (a sidebar that moves an object page under another path included), and a
+  link to a schema without a page (`x-docs.hidden`, or not listed by an
+  `x-docs.sidebar`) keeps its `id` and drops its `canonical`.
+- In sidebar mode a listed object page reads its `x-docs` from the same place
+  as the generated navigation (the schema's own first, then the first `allOf`
+  member's); a listed composition without any `x-docs` keeps its page and its
+  default title instead of being dropped with a warning.
 - The Rust core keyed its circular-reference snapshots by a stamp that the
   shared deref crawl writes differently from the JS dereferencer (a component
   stamped with its last member's path, an `allOf` wrapper stamped with its
@@ -46,7 +58,8 @@ and `5.xdocs.objects` pin the new output on both sides.
   entries, the folded rows).
 - The fixture matrix skips, under the native path only, the fixtures a
   published `@xyd-js/native` built from an older core cannot produce. The gate
-  is a feature probe (does the addon emit `const`?), so it lifts by itself once
-  an addon with this core resolves.
+  is a feature probe (does the addon produce this core's `9.schema-links` rows:
+  the `const` meta, a nested link, the scalar fold, a composed member's merged
+  rows?), so it lifts by itself once an addon with this core resolves.
 - `scripts/build-fused-goldens.ts` takes `pluginNavigation` from the addon:
   its JS impl was reaped and the script could no longer run.

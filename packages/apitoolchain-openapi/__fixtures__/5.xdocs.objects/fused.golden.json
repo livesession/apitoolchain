@@ -37,10 +37,6 @@
         {
           "virtual": ".xyd/.cache/.content/docs/api/objects/PartBase",
           "page": "docs/api/objects/PartBase"
-        },
-        {
-          "virtual": ".xyd/.cache/.content/docs/api/objects/Tag",
-          "page": "docs/api/objects/Tag"
         }
       ]
     }
@@ -63,9 +59,6 @@
     },
     "docs/api/objects/PartBase": {
       "title": "PartBase"
-    },
-    "docs/api/objects/Tag": {
-      "title": "Tag"
     }
   },
   "pages": [
@@ -92,10 +85,6 @@
     {
       "pagePath": "docs/api/objects/PartBase",
       "region": "/components/schemas/PartBase"
-    },
-    {
-      "pagePath": "docs/api/objects/Tag",
-      "region": "/components/schemas/Tag"
     }
   ]
 }

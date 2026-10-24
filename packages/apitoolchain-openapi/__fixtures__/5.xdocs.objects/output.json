@@ -190,13 +190,11 @@
                         "description": "",
                         "meta": [],
                         "symbolDef": {
-                          "id": "#/components/schemas/Tag",
-                          "canonical": "objects/Tag"
+                          "id": "#/components/schemas/Tag"
                         }
                       },
                       "symbolDef": {
-                        "id": "#/components/schemas/Tag",
-                        "canonical": "objects/Tag"
+                        "id": "#/components/schemas/Tag"
                       }
                     }
                   ],
@@ -393,13 +391,11 @@
                   "description": "",
                   "meta": [],
                   "symbolDef": {
-                    "id": "#/components/schemas/Tag",
-                    "canonical": "objects/Tag"
+                    "id": "#/components/schemas/Tag"
                   }
                 },
                 "symbolDef": {
-                  "id": "#/components/schemas/Tag",
-                  "canonical": "objects/Tag"
+                  "id": "#/components/schemas/Tag"
                 }
               }
             ],
@@ -495,13 +491,11 @@
                   "description": "",
                   "meta": [],
                   "symbolDef": {
-                    "id": "#/components/schemas/Tag",
-                    "canonical": "objects/Tag"
+                    "id": "#/components/schemas/Tag"
                   }
                 },
                 "symbolDef": {
-                  "id": "#/components/schemas/Tag",
-                  "canonical": "objects/Tag"
+                  "id": "#/components/schemas/Tag"
                 }
               }
             ],
@@ -728,13 +722,11 @@
                   "description": "",
                   "meta": [],
                   "symbolDef": {
-                    "id": "#/components/schemas/Tag",
-                    "canonical": "objects/Tag"
+                    "id": "#/components/schemas/Tag"
                   }
                 },
                 "symbolDef": {
-                  "id": "#/components/schemas/Tag",
-                  "canonical": "objects/Tag"
+                  "id": "#/components/schemas/Tag"
                 }
               }
             ],
@@ -829,13 +821,11 @@
               "description": "",
               "meta": [],
               "symbolDef": {
-                "id": "#/components/schemas/Tag",
-                "canonical": "objects/Tag"
+                "id": "#/components/schemas/Tag"
               }
             },
             "symbolDef": {
-              "id": "#/components/schemas/Tag",
-              "canonical": "objects/Tag"
+              "id": "#/components/schemas/Tag"
             }
           }
         ],
@@ -964,52 +954,6 @@
     "type": "rest_component_schema",
     "context": {
       "componentSchema": "PartBase",
-      "group": [
-        "Objects"
-      ]
-    }
-  },
-  {
-    "title": "Tag",
-    "description": "",
-    "canonical": "objects/Tag",
-    "definitions": [
-      {
-        "title": "Tag",
-        "properties": [
-          {
-            "name": "name",
-            "type": "string",
-            "description": "",
-            "meta": []
-          }
-        ],
-        "meta": []
-      }
-    ],
-    "examples": {
-      "groups": [
-        {
-          "description": "Example",
-          "examples": [
-            {
-              "codeblock": {
-                "tabs": [
-                  {
-                    "title": "json",
-                    "language": "json",
-                    "code": "{\n  \"name\": \"\"\n}"
-                  }
-                ]
-              }
-            }
-          ]
-        }
-      ]
-    },
-    "type": "rest_component_schema",
-    "context": {
-      "componentSchema": "Tag",
       "group": [
         "Objects"
       ]

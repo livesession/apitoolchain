@@ -136,14 +136,17 @@ components:
 |---|---|
 | `name` | the reference title instead of the schema name |
 | `group` | the sidebar group instead of `Objects` — what puts an object page beside its resource's endpoints |
-| `hidden` | drop the page from the generated navigation (envelopes, errors, ids) |
+| `hidden` | drop the page from the generated navigation (envelopes, errors) — a property that links to a hidden schema keeps its `symbolDef.id` and loses the `canonical`, so hide a schema only when no page should link to it |
 | `example` | a JSON example for the page (sidebar mode) |
 
 The keys are read on the schema itself, else on the first `allOf` member that
-carries them. `hidden` applies to the *generated* navigation: an
+carries them — in both modes. `hidden` applies to the *generated* navigation: an
 `x-docs.sidebar` is a complete enumeration and still shows a page it lists.
-Schema links keep pointing at the default `objects/<Name>` page; a sidebar that
-moves an object page under another path is not followed yet.
+Schema links follow the page: once the navigation is final, a nested
+`symbolDef.canonical` is the canonical of the schema's own reference (a sidebar
+that moves an object page under another path included), and a link to a schema
+without a page (hidden, or not listed by a sidebar) keeps its `id` and drops its
+`canonical` — a link never lands on a page that does not exist.
 
 ## Tests
 

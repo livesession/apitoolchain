@@ -2,6 +2,7 @@ import {OpenAPIV3} from "openapi-types";
 
 import {
     CodeBlockTab,
+    DefinitionProperty,
     Example,
     ExampleGroup,
     Reference,
@@ -78,6 +79,9 @@ export function uniformPluginXDocsSidebar({
                 references.length = 0
                 references.push(...kept)
             }
+            if (Array.isArray(references)) {
+                relinkSchemaLinks(references)
+            }
             return {}
         }
 
@@ -128,6 +132,7 @@ export function uniformPluginXDocsSidebar({
         if (Array.isArray(references)) {
             references.length = 0
             references.push(...output)
+            relinkSchemaLinks(references)
         } else {
             references = output[0] || references
         }
@@ -193,33 +198,12 @@ export function uniformPluginXDocsSidebar({
                     return
                 }
 
-                let componentMeta: ComponentMeta | undefined
-                if (component.allOf) {
-                    let found = false
-                    for (const item of component.allOf) {
-                        const docsMeta = (item as any)["x-docs"] as ComponentMeta | undefined
-
-                        if (docsMeta && found) {
-                            console.warn(`Multiple x-docs found in allOf for component schema: ${page.key} in group ${groupPath.join('/')}`)
-                        }
-
-                        if (docsMeta) {
-                            found = true
-                            componentMeta = docsMeta
-                            break
-                        }
-                    }
-
-                    if (!found) {
-                        console.warn(`No x-docs found in allOf for component schema: ${page.key} in group ${groupPath.join('/')}`)
-                        return
-                    }
-                } else {
-                    const docsMeta = (component as any)["x-docs"] as ComponentMeta | undefined
-                    if (docsMeta) {
-                        componentMeta = docsMeta
-                    }
-                }
+                // The same lookup as the generated navigation (on the schema
+                // itself, else on the first `allOf` member that carries one),
+                // so a listed page reads its `name` from the same place in
+                // both modes. A page without any `x-docs` keeps its defaults
+                // — the sidebar lists it, so it exists.
+                const componentMeta: ComponentMeta | undefined = componentXDocs(component)
 
                 uniformRef = componentRef
                 if (!componentMeta) {
@@ -376,6 +360,56 @@ function applyDocsMeta(ref: Reference, meta: XDocsMeta): boolean {
     }
 
     return !!meta.hidden
+}
+
+const COMPONENT_SCHEMA_PREFIX = "#/components/schemas/"
+
+/** Nested schema links, once the reference list is final. A property's
+ *  `symbolDef` whose `id` is a component schema (`#/components/schemas/<Name>`)
+ *  takes the `canonical` of that schema's surviving reference — so a sidebar
+ *  that moves an object page under another path is followed — and loses its
+ *  `canonical` when the schema has no page any more (`x-docs.hidden`, or not
+ *  listed by an `x-docs.sidebar`): a link must never land on a page that does
+ *  not exist. The `id` stays either way. */
+function relinkSchemaLinks(references: Reference[]) {
+    const canonicalBySchema = new Map<string, string>()
+    for (const ref of references) {
+        const name = (ref.context as OpenAPIReferenceContext | undefined)?.componentSchema
+        if (name && ref.canonical && !canonicalBySchema.has(name)) {
+            canonicalBySchema.set(name, ref.canonical)
+        }
+    }
+
+    const seen = new Set<DefinitionProperty>()
+    const visit = (property: DefinitionProperty | undefined) => {
+        if (!property || typeof property !== "object" || seen.has(property)) {
+            return
+        }
+        seen.add(property)
+        const symbolDef = property.symbolDef
+        const id = symbolDef?.id
+        if (symbolDef && typeof id === "string" && id.startsWith(COMPONENT_SCHEMA_PREFIX)) {
+            const target = canonicalBySchema.get(id.slice(COMPONENT_SCHEMA_PREFIX.length))
+            if (target) {
+                symbolDef.canonical = target
+            } else {
+                delete symbolDef.canonical
+            }
+        }
+        property.properties?.forEach(visit)
+        visit(property.ofProperty)
+    }
+
+    for (const ref of references) {
+        for (const definition of ref.definitions || []) {
+            definition.properties?.forEach(visit)
+            visit(definition.rootProperty)
+            for (const variant of definition.variants || []) {
+                variant.properties?.forEach(visit)
+                visit(variant.rootProperty)
+            }
+        }
+    }
 }
 
 /** A component schema's `x-docs`: on the schema itself, else on the first

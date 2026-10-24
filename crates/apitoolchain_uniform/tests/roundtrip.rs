@@ -81,7 +81,7 @@ fn gql_oracles_roundtrip() {
 
 #[test]
 fn openapi_oracles_roundtrip() {
-    roundtrip_all("apitoolchain-openapi", 13);
+    roundtrip_all("apitoolchain-openapi", 14);
 }
 
 #[test]

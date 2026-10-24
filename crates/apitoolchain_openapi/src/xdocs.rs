@@ -11,7 +11,7 @@ use std::collections::HashMap;
 use serde_json::{json, Map, Value};
 
 use crate::doc::DocCtx;
-use crate::Options;
+use crate::{ObjectsLayout, Options};
 use apitoolchain_uniform::jsrt::truthy;
 
 const COMPONENT_SCHEMA_PREFIX: &str = "#/components/schemas/";
@@ -33,8 +33,9 @@ pub fn apply_xdocs_sidebar(ctx: &DocCtx, doc: &Value, refs: &mut Vec<Value>) {
 /// Apply the plugin to `refs` in place: the per-ref x-docs meta pass, then
 /// (when `x-docs.sidebar` exists) the sidebar-driven ref-list rebuild —
 /// otherwise the generated navigation minus the `x-docs.hidden` refs.
-/// `options.objects_group()` names the sub-group an object page with a
-/// resource group (`x-docs.group`) is nested under.
+/// `options.objects_group()` names the object pages' group and
+/// `options.objects_layout()` says where an object page with a resource group
+/// (`x-docs.group`) goes (see [`ObjectsLayout`]).
 pub fn apply_xdocs_sidebar_with_options(
     ctx: &DocCtx,
     doc: &Value,
@@ -42,6 +43,7 @@ pub fn apply_xdocs_sidebar_with_options(
     options: &Options,
 ) {
     let objects_group = options.objects_group();
+    let objects_layout = options.objects_layout();
     // ---- per-ref pass (pluginXDocsSidebarInner) -------------------------
     // ref index maps mirror refByOperationId / refByComponentSchema
     // (last-write-wins on duplicate keys, like JS object assignment).
@@ -76,7 +78,7 @@ pub fn apply_xdocs_sidebar_with_options(
             // group, `hidden`). The sidebar pass re-reads `name` for the
             // object pages it lists.
             if let Some(meta) = component_xdocs(ctx, doc, cs) {
-                if apply_docs_meta(r, meta, Some(objects_group)) {
+                if apply_docs_meta(r, meta, Some((objects_group, objects_layout))) {
                     hidden.push(i);
                 }
             }
@@ -149,7 +151,8 @@ pub fn apply_xdocs_sidebar_with_options(
         .and_then(|x| x.get("sidebar"))
         .and_then(|s| s.as_array());
     let Some(sidebar) = sidebar else {
-        // No sidebar: the generated navigation, minus the hidden refs.
+        // No sidebar: the generated navigation, minus the hidden refs — and,
+        // under the grouped objects layout, the objects group's own order.
         if !hidden.is_empty() {
             let mut i = 0;
             refs.retain(|_| {
@@ -157,6 +160,9 @@ pub fn apply_xdocs_sidebar_with_options(
                 i += 1;
                 keep
             });
+        }
+        if objects_layout == ObjectsLayout::Grouped {
+            order_objects_group(refs);
         }
         relink_from_final_list(refs);
         return;
@@ -399,25 +405,77 @@ fn relink_property(property: Option<&mut Value>, page_link: &dyn Fn(&str) -> Pag
 
 /// The common `x-docs` keys of an operation or a component schema: `name` →
 /// the reference title, `group` → its sidebar group. A component schema's
-/// `group` is a RESOURCE group (the one its endpoints sit in), so its page is
-/// nested under `sub_group` inside it — `[group, "Objects"]` — after the
-/// operations, which the navigation lists before any sub-group; an operation
-/// (`sub_group: None`) goes straight into `[group]`. Returns whether the ref
-/// is `hidden`.
-fn apply_docs_meta(r: &mut Value, meta: &Value, sub_group: Option<&str>) -> bool {
+/// `group` is a RESOURCE group (the one its endpoints sit in), and
+/// `object_page` — its objects group name and the layout — says where its
+/// page goes: under the grouped layout into that group's sub-group of the
+/// top-level objects group — `["Objects", group]` — under per-area into the
+/// objects sub-group of the resource group — `[group, "Objects"]` — after the
+/// operations, which the navigation lists before any sub-group. An operation
+/// (`object_page: None`) goes straight into `[group]`. Returns whether the
+/// ref is `hidden`.
+fn apply_docs_meta(
+    r: &mut Value,
+    meta: &Value,
+    object_page: Option<(&str, ObjectsLayout)>,
+) -> bool {
     if let Some(name) = meta.get("name").filter(|n| truthy(Some(n))) {
         r["title"] = name.clone();
     }
     if let Some(group) = meta.get("group").filter(|g| truthy(Some(g))) {
         // JS: `if (ref.context) ref.context.group = [meta.group]`
         if r.get("context").map(|c| truthy(Some(c))).unwrap_or(false) {
-            r["context"]["group"] = match sub_group {
-                Some(sub) => json!([group, sub]),
+            r["context"]["group"] = match object_page {
+                Some((objects_group, ObjectsLayout::PerArea)) => json!([group, objects_group]),
+                Some((objects_group, ObjectsLayout::Grouped)) => json!([objects_group, group]),
                 None => json!([group]),
             };
         }
     }
     truthy(meta.get("hidden"))
+}
+
+/// The grouped layout's order inside the objects group (no sidebar): the
+/// pages without a resource group first, then the pages of each resource
+/// group in the order the groups appear in the navigation above them (the
+/// operations' top-level groups, first seen first), the groups with no
+/// operations after those in schema order. The navigation lists a group's
+/// direct pages before its sub-groups and the groups by first appearance, so
+/// this order is the sidebar's. Every object page already sits after every
+/// operation (the converter sorts them last); the sort is stable.
+fn order_objects_group(refs: &mut [Value]) {
+    fn is_object_page(r: &Value) -> bool {
+        r.get("context")
+            .and_then(|c| c.get("componentSchema"))
+            .is_some()
+    }
+    fn group_at(r: &Value, i: usize) -> Option<&str> {
+        r.get("context")?.get("group")?.as_array()?.get(i)?.as_str()
+    }
+    let mut area_rank: Vec<String> = Vec::new();
+    for r in refs.iter() {
+        if is_object_page(r) {
+            continue;
+        }
+        if let Some(top) = group_at(r, 0) {
+            if !area_rank.iter().any(|a| a == top) {
+                area_rank.push(top.to_string());
+            }
+        }
+    }
+    refs.sort_by_key(|r| {
+        if !is_object_page(r) {
+            return 0;
+        }
+        match group_at(r, 1) {
+            None => 1,
+            Some(area) => {
+                2 + area_rank
+                    .iter()
+                    .position(|a| a == area)
+                    .unwrap_or(area_rank.len())
+            }
+        }
+    });
 }
 
 /// A component schema's `x-docs`: on the schema itself, else on the first
@@ -852,14 +910,114 @@ mod tests {
             .unwrap_or_default()
     }
 
+    /// Convert with `options`, then the x-docs pass with the same options.
+    fn refs_after_xdocs_with(doc: &Value, options: &crate::Options) -> Vec<Value> {
+        let refs = oap_schema_to_references(doc, Some(options.clone()));
+        let mut refs: Vec<Value> = refs
+            .iter()
+            .map(|r| serde_json::to_value(r).expect("Reference serializes"))
+            .collect();
+        let (processed, stamps) = DocCtx::preprocess(doc);
+        let ctx = DocCtx::with_merged_stamps(&processed, &stamps);
+        apply_xdocs_sidebar_with_options(&ctx, &processed, &mut refs, options);
+        refs
+    }
+
+    fn canonicals(refs: &[Value]) -> Vec<String> {
+        refs.iter()
+            .map(|r| r["canonical"].as_str().unwrap_or("").to_string())
+            .collect()
+    }
+
     /// Outside sidebar mode a component schema's `x-docs.name` / `.group`
-    /// retitle and regroup its page — under the "Objects" sub-group of that
-    /// resource group, which the navigation lists after the group's
-    /// operations; `hidden` drops it; the rest keep the defaults (`<Name>`
-    /// under the flat top-level "Objects").
+    /// retitle and regroup its page: under the default layout (`grouped`)
+    /// every object page sits in ONE top-level "Objects" group after the
+    /// operations — the pages without a resource group first, then one
+    /// sub-group per resource group in the order the groups appear above
+    /// (`widgets` has operations, `parts` has none, so it follows); `hidden`
+    /// drops it.
     #[test]
     fn component_xdocs_outside_sidebar_mode() {
         let refs = refs_after_xdocs(&widgets_doc(None));
+        assert_eq!(
+            titles(&refs),
+            vec![
+                "List widgets",
+                "PartBase",
+                "The widget object",
+                "The part object"
+            ]
+        );
+        assert_eq!(
+            group_of(&refs, "The widget object"),
+            vec!["Objects", "widgets"]
+        );
+        assert_eq!(group_of(&refs, "The part object"), vec!["Objects", "parts"]);
+        assert_eq!(group_of(&refs, "PartBase"), vec!["Objects"]);
+        // An operation's `x-docs.group` is never nested.
+        assert_eq!(group_of(&refs, "List widgets"), vec!["widgets"]);
+        // The canonical is untouched — the page keeps its default URL.
+        let widget = refs
+            .iter()
+            .find(|r| r["title"] == "The widget object")
+            .unwrap();
+        assert_eq!(widget["canonical"], "objects/Widget");
+    }
+
+    /// The `objectsGroup` option renames both the top-level objects group and
+    /// the per-area sub-group; an empty name means the default.
+    #[test]
+    fn objects_group_option_renames_the_flat_group_and_the_sub_group() {
+        let doc = widgets_doc(None);
+        let options = crate::Options {
+            objects_group: Some("Types".into()),
+            ..Default::default()
+        };
+        let refs = oap_schema_to_references(&doc, Some(options.clone()));
+        let refs: Vec<Value> = refs
+            .iter()
+            .map(|r| serde_json::to_value(r).expect("Reference serializes"))
+            .collect();
+        assert_eq!(group_of(&refs, "Widget"), vec!["Types"]);
+        let refs = refs_after_xdocs_with(&doc, &options);
+        assert_eq!(
+            group_of(&refs, "The widget object"),
+            vec!["Types", "widgets"]
+        );
+        assert_eq!(group_of(&refs, "The part object"), vec!["Types", "parts"]);
+        assert_eq!(group_of(&refs, "PartBase"), vec!["Types"]);
+
+        let per_area = crate::Options {
+            objects_group: Some("Types".into()),
+            objects_layout: Some("per-area".into()),
+            ..Default::default()
+        };
+        let refs = refs_after_xdocs_with(&doc, &per_area);
+        assert_eq!(
+            group_of(&refs, "The widget object"),
+            vec!["widgets", "Types"]
+        );
+        assert_eq!(group_of(&refs, "PartBase"), vec!["Types"]);
+
+        let empty = crate::Options {
+            objects_group: Some(String::new()),
+            ..Default::default()
+        };
+        assert_eq!(empty.objects_group(), crate::DEFAULT_OBJECTS_GROUP);
+    }
+
+    /// `objectsLayout: per-area` nests an object page under its resource
+    /// group's "Objects" sub-group (after the group's operations, which the
+    /// navigation lists before any sub-group); the object pages keep the
+    /// schema order. An unknown layout name means the default.
+    #[test]
+    fn per_area_layout_nests_the_object_pages_inside_their_groups() {
+        let doc = widgets_doc(None);
+        let per_area = crate::Options {
+            objects_layout: Some("per-area".into()),
+            ..Default::default()
+        };
+        let refs = refs_after_xdocs_with(&doc, &per_area);
         assert_eq!(
             titles(&refs),
             vec![
@@ -875,46 +1033,76 @@ mod tests {
         );
         assert_eq!(group_of(&refs, "The part object"), vec!["parts", "Objects"]);
         assert_eq!(group_of(&refs, "PartBase"), vec!["Objects"]);
-        // An operation's `x-docs.group` is never nested.
         assert_eq!(group_of(&refs, "List widgets"), vec!["widgets"]);
-        // The canonical is untouched — the page keeps its default URL.
-        let widget = refs
-            .iter()
-            .find(|r| r["title"] == "The widget object")
-            .unwrap();
-        assert_eq!(widget["canonical"], "objects/Widget");
-    }
 
-    /// The `objectsGroup` option renames both the flat top-level group and
-    /// the sub-group; an empty name means the default.
-    #[test]
-    fn objects_group_option_renames_the_flat_group_and_the_sub_group() {
-        let doc = widgets_doc(None);
-        let options = crate::Options {
-            regions: None,
-            objects_group: Some("Types".into()),
+        let unknown = crate::Options {
+            objects_layout: Some("sideways".into()),
+            ..Default::default()
         };
-        let refs = oap_schema_to_references(&doc, Some(options.clone()));
-        let mut refs: Vec<Value> = refs
-            .iter()
-            .map(|r| serde_json::to_value(r).expect("Reference serializes"))
-            .collect();
-        assert_eq!(group_of(&refs, "Widget"), vec!["Types"]);
-        let (processed, stamps) = DocCtx::preprocess(&doc);
-        let ctx = DocCtx::with_merged_stamps(&processed, &stamps);
-        apply_xdocs_sidebar_with_options(&ctx, &processed, &mut refs, &options);
+        let refs = refs_after_xdocs_with(&doc, &unknown);
         assert_eq!(
             group_of(&refs, "The widget object"),
-            vec!["widgets", "Types"]
+            vec!["Objects", "widgets"]
         );
-        assert_eq!(group_of(&refs, "The part object"), vec!["parts", "Types"]);
-        assert_eq!(group_of(&refs, "PartBase"), vec!["Types"]);
+    }
 
-        let empty = crate::Options {
-            regions: None,
-            objects_group: Some(String::new()),
-        };
-        assert_eq!(empty.objects_group(), crate::DEFAULT_OBJECTS_GROUP);
+    /// The grouped layout's ordering rule on the 11.objects-layouts fixture:
+    /// the operations in tag order (declared `parts`, `widgets`; the
+    /// undeclared `assemblies`; the untagged `getStatus`), then EVERY object
+    /// page — the two without a resource group first (schema order), then the
+    /// groups in the order they appear above (`parts`, `widgets`,
+    /// `assemblies`), then `fasteners`, a group with no operations.
+    #[test]
+    fn grouped_layout_orders_the_objects_group_by_the_groups_above() {
+        let input =
+            apitoolchain_parity::fixtures_dir(env!("CARGO_MANIFEST_DIR"), "apitoolchain-openapi")
+                .join("11.objects-layouts")
+                .join("input.yaml");
+        let doc = crate::read_spec(input.to_str().unwrap()).expect("fixture parses");
+        let refs = refs_after_xdocs(&doc);
+        assert_eq!(
+            canonicals(&refs),
+            vec![
+                "listParts",
+                "listWidgets",
+                "listAudit",
+                "createAssembly",
+                "getStatus",
+                "objects/Status",
+                "objects/Address",
+                "objects/Part",
+                "objects/Widget",
+                "objects/Assembly",
+                "objects/Fastener",
+            ]
+        );
+        let groups: Vec<Vec<String>> = refs
+            .iter()
+            .map(|r| {
+                r["context"]["group"]
+                    .as_array()
+                    .unwrap()
+                    .iter()
+                    .map(|v| v.as_str().unwrap().to_string())
+                    .collect()
+            })
+            .collect();
+        assert_eq!(
+            groups,
+            vec![
+                vec!["parts"],
+                vec!["widgets"],
+                vec!["audit"],
+                vec!["assemblies"],
+                vec![""],
+                vec!["Objects"],
+                vec!["Objects"],
+                vec!["Objects", "parts"],
+                vec!["Objects", "widgets"],
+                vec!["Objects", "assemblies"],
+                vec!["Objects", "fasteners"],
+            ]
+        );
     }
 
     /// A sidebar entry's group path is the sidebar's: no sub-group is added

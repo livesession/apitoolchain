@@ -1,0 +1,180 @@
+{
+  "urlPrefix": "docs/api",
+  "sidebar": [
+    {
+      "group": "parts",
+      "pages": [
+        {
+          "virtual": ".xyd/.cache/.content/docs/api/listParts",
+          "page": "docs/api/listParts"
+        }
+      ]
+    },
+    {
+      "group": "widgets",
+      "pages": [
+        {
+          "virtual": ".xyd/.cache/.content/docs/api/listWidgets",
+          "page": "docs/api/listWidgets"
+        }
+      ]
+    },
+    {
+      "group": "audit",
+      "pages": [
+        {
+          "virtual": ".xyd/.cache/.content/docs/api/listAudit",
+          "page": "docs/api/listAudit"
+        }
+      ]
+    },
+    {
+      "group": "assemblies",
+      "pages": [
+        {
+          "virtual": ".xyd/.cache/.content/docs/api/createAssembly",
+          "page": "docs/api/createAssembly"
+        }
+      ]
+    },
+    {
+      "group": "",
+      "pages": [
+        {
+          "virtual": ".xyd/.cache/.content/docs/api/getStatus",
+          "page": "docs/api/getStatus"
+        }
+      ]
+    },
+    {
+      "group": "Objects",
+      "pages": [
+        {
+          "virtual": ".xyd/.cache/.content/docs/api/objects/Status",
+          "page": "docs/api/objects/Status"
+        },
+        {
+          "virtual": ".xyd/.cache/.content/docs/api/objects/Address",
+          "page": "docs/api/objects/Address"
+        },
+        {
+          "group": "parts",
+          "pages": [
+            {
+              "virtual": ".xyd/.cache/.content/docs/api/objects/Part",
+              "page": "docs/api/objects/Part"
+            }
+          ]
+        },
+        {
+          "group": "widgets",
+          "pages": [
+            {
+              "virtual": ".xyd/.cache/.content/docs/api/objects/Widget",
+              "page": "docs/api/objects/Widget"
+            }
+          ]
+        },
+        {
+          "group": "assemblies",
+          "pages": [
+            {
+              "virtual": ".xyd/.cache/.content/docs/api/objects/Assembly",
+              "page": "docs/api/objects/Assembly"
+            }
+          ]
+        },
+        {
+          "group": "fasteners",
+          "pages": [
+            {
+              "virtual": ".xyd/.cache/.content/docs/api/objects/Fastener",
+              "page": "docs/api/objects/Fastener"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "pageFrontMatter": {
+    "docs/api/listParts": {
+      "title": "List parts"
+    },
+    "docs/api/listWidgets": {
+      "title": "List widgets"
+    },
+    "docs/api/listAudit": {
+      "title": "List audit entries"
+    },
+    "docs/api/createAssembly": {
+      "title": "Create assembly"
+    },
+    "docs/api/getStatus": {
+      "title": "Service status"
+    },
+    "docs/api/objects/Status": {
+      "title": "Status"
+    },
+    "docs/api/objects/Address": {
+      "title": "Address"
+    },
+    "docs/api/objects/Part": {
+      "title": "The part object"
+    },
+    "docs/api/objects/Widget": {
+      "title": "The widget object"
+    },
+    "docs/api/objects/Assembly": {
+      "title": "The assembly object"
+    },
+    "docs/api/objects/Fastener": {
+      "title": "The fastener object"
+    }
+  },
+  "pages": [
+    {
+      "pagePath": "docs/api/listParts",
+      "region": "GET /parts"
+    },
+    {
+      "pagePath": "docs/api/listWidgets",
+      "region": "GET /widgets"
+    },
+    {
+      "pagePath": "docs/api/listAudit",
+      "region": "GET /audit"
+    },
+    {
+      "pagePath": "docs/api/createAssembly",
+      "region": "POST /assemblies"
+    },
+    {
+      "pagePath": "docs/api/getStatus",
+      "region": "GET /status"
+    },
+    {
+      "pagePath": "docs/api/objects/Status",
+      "region": "/components/schemas/Status"
+    },
+    {
+      "pagePath": "docs/api/objects/Address",
+      "region": "/components/schemas/Address"
+    },
+    {
+      "pagePath": "docs/api/objects/Part",
+      "region": "/components/schemas/Part"
+    },
+    {
+      "pagePath": "docs/api/objects/Widget",
+      "region": "/components/schemas/Widget"
+    },
+    {
+      "pagePath": "docs/api/objects/Assembly",
+      "region": "/components/schemas/Assembly"
+    },
+    {
+      "pagePath": "docs/api/objects/Fastener",
+      "region": "/components/schemas/Fastener"
+    }
+  ]
+}

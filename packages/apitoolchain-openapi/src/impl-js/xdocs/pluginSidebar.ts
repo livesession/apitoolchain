@@ -12,8 +12,8 @@ import {
 } from "@xyd-js/uniform";
 
 import {XDocs, XDocsSidebar, XDocsPage, XDocsMeta, XDocsSchemaMeta} from "./types";
-import {objectsGroupOf} from "../const";
-import type {uniformOasOptions} from "../types";
+import {DEFAULT_OBJECTS_LAYOUT, objectsGroupOf, objectsLayoutOf} from "../const";
+import type {ObjectsLayout, uniformOasOptions} from "../types";
 
 interface NavigationGroup {
     id: string
@@ -58,13 +58,15 @@ export function uniformPluginXDocsSidebar({
     const hiddenRefs = new Set<Reference>()
     // The converter options travel on the reference list (`__internal_options`,
     // set by the converter and by the native shim alike): `objectsGroup` names
-    // the sub-group an object page with a resource group is nested under.
+    // the object pages' group, `objectsLayout` says where an object page with
+    // a resource group goes (see `uniformOasOptions`).
     // @ts-ignore
     const options: uniformOasOptions | undefined = typeof references.__internal_options === "function"
         // @ts-ignore
         ? references.__internal_options()
         : undefined
     const objectsGroup = objectsGroupOf(options)
+    const objectsLayout = objectsLayoutOf(options)
 
     defer(() => {
         if (!schema) {
@@ -92,13 +94,15 @@ export function uniformPluginXDocsSidebar({
         const xDocs = schema["x-docs"]
 
         if (!xDocs?.sidebar) {
-            // No sidebar: the generated navigation, minus the hidden refs.
-            if (hiddenRefs.size && Array.isArray(references)) {
-                const kept = references.filter(ref => !hiddenRefs.has(ref))
+            // No sidebar: the generated navigation, minus the hidden refs — and,
+            // under the grouped objects layout, the objects group's own order.
+            if (Array.isArray(references)) {
+                let kept = hiddenRefs.size ? references.filter(ref => !hiddenRefs.has(ref)) : [...references]
+                if (objectsLayout === "grouped") {
+                    kept = orderObjectsGroup(kept)
+                }
                 references.length = 0
                 references.push(...kept)
-            }
-            if (Array.isArray(references)) {
                 relinkSchemaLinks(references, pageLinksOf(references))
             }
             return {}
@@ -290,7 +294,7 @@ export function uniformPluginXDocsSidebar({
             // group, `hidden`). The sidebar pass re-reads `name` for the object
             // pages it lists.
             const meta = componentXDocs(selector("[component]") as OpenAPIV3.SchemaObject | undefined)
-            if (meta && applyDocsMeta(ref, meta, objectsGroup)) {
+            if (meta && applyDocsMeta(ref, meta, objectsGroup, objectsLayout)) {
                 hiddenRefs.add(ref)
             }
         }
@@ -357,23 +361,69 @@ export function uniformPluginXDocsSidebar({
 
 /** The common `x-docs` keys of an operation or a component schema: `name` →
  *  the reference title, `group` → its sidebar group. A component schema's
- *  `group` is a RESOURCE group (the one its endpoints sit in), so its page is
- *  nested under `subGroup` inside it — `[group, "Objects"]` — after the
- *  operations, which the navigation lists before any sub-group; an operation
- *  (`subGroup` undefined) goes straight into `[group]`. Returns whether the ref
- *  is `hidden`. */
-function applyDocsMeta(ref: Reference, meta: XDocsMeta, subGroup: string | undefined): boolean {
+ *  `group` is a RESOURCE group (the one its endpoints sit in), and
+ *  `objectsGroup` + `layout` say where its page goes: under the `grouped`
+ *  layout into that group's sub-group of the top-level objects group —
+ *  `["Objects", group]` — under `per-area` into the objects sub-group of the
+ *  resource group — `[group, "Objects"]` — after the operations, which the
+ *  navigation lists before any sub-group. An operation (`objectsGroup`
+ *  undefined) goes straight into `[group]`. Returns whether the ref is
+ *  `hidden`. */
+function applyDocsMeta(
+    ref: Reference,
+    meta: XDocsMeta,
+    objectsGroup: string | undefined,
+    layout: ObjectsLayout = DEFAULT_OBJECTS_LAYOUT
+): boolean {
     if (meta.name) {
         ref.title = meta.name
     }
 
     if (meta.group) {
         if (ref.context) {
-            ref.context.group = subGroup ? [meta.group, subGroup] : [meta.group]
+            ref.context.group = !objectsGroup
+                ? [meta.group]
+                : layout === "per-area"
+                    ? [meta.group, objectsGroup]
+                    : [objectsGroup, meta.group]
         }
     }
 
     return !!meta.hidden
+}
+
+/** The grouped layout's order inside the objects group (no sidebar): the
+ *  pages without a resource group first, then the pages of each resource
+ *  group in the order the groups appear in the navigation above them (the
+ *  operations' top-level groups, first seen first), the groups with no
+ *  operations after those in schema order. The navigation lists a group's
+ *  direct pages before its sub-groups and the groups by first appearance, so
+ *  this order is the sidebar's. Every object page already sits after every
+ *  operation (the converter sorts them last); the sort is stable. */
+function orderObjectsGroup(references: Reference[]): Reference[] {
+    const isObjectPage = (ref: Reference) => !!(ref.context as OpenAPIReferenceContext | undefined)?.componentSchema
+    const groupOf = (ref: Reference): string[] => {
+        const group = ref.context?.group
+        return Array.isArray(group) ? group : []
+    }
+    const areaRank = new Map<string, number>()
+    for (const ref of references) {
+        const top = groupOf(ref)[0]
+        if (!isObjectPage(ref) && typeof top === "string" && !areaRank.has(top)) {
+            areaRank.set(top, areaRank.size)
+        }
+    }
+    const rank = (ref: Reference): number => {
+        if (!isObjectPage(ref)) {
+            return 0
+        }
+        const area = groupOf(ref)[1]
+        return area === undefined ? 1 : 2 + (areaRank.get(area) ?? areaRank.size)
+    }
+    return references
+        .map((ref, index) => ({ref, index, rank: rank(ref)}))
+        .sort((a, b) => a.rank - b.rank || a.index - b.index)
+        .map(entry => entry.ref)
 }
 
 const COMPONENT_SCHEMA_PREFIX = "#/components/schemas/"

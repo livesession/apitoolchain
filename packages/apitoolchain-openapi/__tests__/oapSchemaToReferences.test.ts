@@ -72,14 +72,22 @@ const tests: {
     },
     {
         name: "5.xdocs.objects",
-        description: "x-docs name/group/hidden on component schemas, outside sidebar mode",
+        description: "x-docs name/group/hidden on component schemas, outside sidebar mode (the per-area objects layout)",
         plugins: [
             uniformPluginXDocsSidebar
-        ]
+        ],
+        options: {objectsLayout: "per-area"}
     },
     {
         name: "10.schema-labels",
         description: "schema link labels: the constant `object` value, else the schema name; the request/response roots",
+    },
+    {
+        name: "11.objects-layouts",
+        description: "the grouped objects layout (the default): one Objects group last, the resource groups as sub-groups in the groups' order",
+        plugins: [
+            uniformPluginXDocsSidebar
+        ]
     }
 ]
 

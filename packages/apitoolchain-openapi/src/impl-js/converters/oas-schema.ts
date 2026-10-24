@@ -4,6 +4,7 @@ import { OpenAPIV3 } from "openapi-types";
 import Oas from "oas";
 
 import type { Reference, OpenAPIReferenceContext, ReferenceContext } from "@xyd-js/uniform";
+import { ReferenceType } from "@xyd-js/uniform";
 
 import { SUPPORTED_HTTP_METHODS } from "../const";
 import { oapPathToReference } from "./oas-paths";
@@ -145,6 +146,16 @@ export function oapSchemaToReferences(
 
 function sortReferencesByTags(references: Reference[], tags: string[]) {
     return references.sort((prev, next) => {
+        // The object pages (the component schemas) come after every operation,
+        // whatever the tags — so their group is the last one of the generated
+        // navigation, even when an operation is tagged with the objects
+        // group's name. The sort is stable: they keep the schema order.
+        const prevObject = prev.type === ReferenceType.REST_COMPONENT_SCHEMA
+        const nextObject = next.type === ReferenceType.REST_COMPONENT_SCHEMA
+        if (prevObject !== nextObject) {
+            return prevObject ? 1 : -1
+        }
+
         const aTags = prev.context?.group || []
         const bTags = next.context?.group || []
 

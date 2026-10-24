@@ -166,22 +166,24 @@ describe("docs metadata (JS impl)", () => {
         const doc = await deferencedOpenAPI(fixture("5.xdocs.objects"));
         const refs = uniform(oapSchemaToReferences(doc!), {plugins: [uniformPluginXDocsSidebar]}).references;
 
+        // The default objects layout (`grouped`): every object page in ONE
+        // top-level "Objects" group after the operations — the page without a
+        // resource group first, then one sub-group per resource group in the
+        // order the groups appear above (`widgets` has operations, `parts`
+        // has none, so it follows).
         expect(refs.map(r => r.title)).toEqual([
             "List widgets",
             "Create a widget",
             "Retrieve widget",
+            "PartBase",
             "The widget object",
             "The part object",
-            "PartBase",
         ]);
-        // An object page with a resource group is nested under that group's
-        // "Objects" sub-group (the navigation lists it after the group's
-        // operations); one without keeps the flat top-level "Objects".
         const widget = byCanonical(refs, "objects/Widget");
         expect(widget.title).toBe("The widget object");
-        expect(widget.context?.group).toEqual(["widgets", "Objects"]);
+        expect(widget.context?.group).toEqual(["Objects", "widgets"]);
         const part = byCanonical(refs, "objects/Part");
-        expect(part.context?.group).toEqual(["parts", "Objects"]);
+        expect(part.context?.group).toEqual(["Objects", "parts"]);
         expect(byCanonical(refs, "objects/PartBase").context?.group).toEqual(["Objects"]);
         // An operation's own `x-docs.group` is never nested.
         expect(byCanonical(refs, "listWidgets").context?.group).toEqual(["widgets"]);
@@ -222,16 +224,96 @@ describe("docs metadata (JS impl)", () => {
         expect(root).toEqual({id: "#/components/schemas/WidgetList", label: "list"});
     });
 
-    it("the objectsGroup option names the flat group and the sub-group", async () => {
+    it("the objectsGroup option names the top-level group and the sub-group", async () => {
         const doc = await deferencedOpenAPI(fixture("5.xdocs.objects"));
         const refs = uniform(oapSchemaToReferences(doc!, {objectsGroup: "Types"}), {plugins: [uniformPluginXDocsSidebar]}).references;
-        expect(byCanonical(refs, "objects/Widget").context?.group).toEqual(["widgets", "Types"]);
-        expect(byCanonical(refs, "objects/Part").context?.group).toEqual(["parts", "Types"]);
+        expect(byCanonical(refs, "objects/Widget").context?.group).toEqual(["Types", "widgets"]);
+        expect(byCanonical(refs, "objects/Part").context?.group).toEqual(["Types", "parts"]);
         expect(byCanonical(refs, "objects/PartBase").context?.group).toEqual(["Types"]);
         expect(byCanonical(refs, "listWidgets").context?.group).toEqual(["widgets"]);
+        // Under the per-area layout the renamed group is the sub-group.
+        const perArea = uniform(oapSchemaToReferences(doc!, {objectsGroup: "Types", objectsLayout: "per-area"}), {plugins: [uniformPluginXDocsSidebar]}).references;
+        expect(byCanonical(perArea, "objects/Widget").context?.group).toEqual(["widgets", "Types"]);
+        expect(byCanonical(perArea, "objects/PartBase").context?.group).toEqual(["Types"]);
         // An empty name means the default.
         const plain = uniform(oapSchemaToReferences(doc!, {objectsGroup: ""}), {plugins: [uniformPluginXDocsSidebar]}).references;
-        expect(byCanonical(plain, "objects/Widget").context?.group).toEqual(["widgets", "Objects"]);
+        expect(byCanonical(plain, "objects/Widget").context?.group).toEqual(["Objects", "widgets"]);
+    });
+
+    it("objectsLayout: per-area nests an object page under its resource group's Objects sub-group", async () => {
+        const doc = await deferencedOpenAPI(fixture("5.xdocs.objects"));
+        const refs = uniform(oapSchemaToReferences(doc!, {objectsLayout: "per-area"}), {plugins: [uniformPluginXDocsSidebar]}).references;
+        // The object pages keep the schema order; the navigation lists each
+        // sub-group after its group's operations.
+        expect(refs.map(r => r.title)).toEqual([
+            "List widgets",
+            "Create a widget",
+            "Retrieve widget",
+            "The widget object",
+            "The part object",
+            "PartBase",
+        ]);
+        expect(byCanonical(refs, "objects/Widget").context?.group).toEqual(["widgets", "Objects"]);
+        expect(byCanonical(refs, "objects/Part").context?.group).toEqual(["parts", "Objects"]);
+        expect(byCanonical(refs, "objects/PartBase").context?.group).toEqual(["Objects"]);
+        expect(byCanonical(refs, "listWidgets").context?.group).toEqual(["widgets"]);
+        // An unknown layout name means the default.
+        const fallback = uniform(oapSchemaToReferences(doc!, {objectsLayout: "sideways" as any}), {plugins: [uniformPluginXDocsSidebar]}).references;
+        expect(byCanonical(fallback, "objects/Widget").context?.group).toEqual(["Objects", "widgets"]);
+    });
+
+    it("grouped layout: the Objects group is last, its pages ordered by the groups above", async () => {
+        const doc = await deferencedOpenAPI(fixture("11.objects-layouts"));
+        const refs = uniform(oapSchemaToReferences(doc!), {plugins: [uniformPluginXDocsSidebar]}).references;
+        // Operations in tag order (declared `parts`, `widgets`; the undeclared
+        // `assemblies`; the untagged `getStatus`), then EVERY object page: the
+        // two without a resource group first (schema order), then the groups
+        // in the order they appear above — `parts`, `widgets`, `assemblies` —
+        // then `fasteners`, which has no operations.
+        expect(refs.map(r => r.canonical)).toEqual([
+            "listParts",
+            "listWidgets",
+            "listAudit",
+            "createAssembly",
+            "getStatus",
+            "objects/Status",
+            "objects/Address",
+            "objects/Part",
+            "objects/Widget",
+            "objects/Assembly",
+            "objects/Fastener",
+        ]);
+        expect(refs.map(r => r.context?.group)).toEqual([
+            ["parts"],
+            ["widgets"],
+            ["audit"],
+            ["assemblies"],
+            [""],
+            ["Objects"],
+            ["Objects"],
+            ["Objects", "parts"],
+            ["Objects", "widgets"],
+            ["Objects", "assemblies"],
+            ["Objects", "fasteners"],
+        ]);
+        // The hidden schemas have no page.
+        expect(refs.some(r => r.canonical === "objects/WidgetList")).toBe(false);
+        expect(refs.some(r => r.canonical === "objects/Error")).toBe(false);
+    });
+
+    it("object pages sort after every operation, even one tagged with the objects group's name", () => {
+        const doc: any = {
+            openapi: "3.0.3",
+            info: {title: "Widgets", version: "1.0.0"},
+            tags: [{name: "Objects"}, {name: "widgets"}],
+            paths: {
+                "/objects": {get: {operationId: "listObjects", summary: "List objects", tags: ["Objects"], responses: {"200": {description: "ok"}}}},
+                "/widgets": {get: {operationId: "listWidgets", summary: "List widgets", tags: ["widgets"], responses: {"200": {description: "ok"}}}},
+            },
+            components: {schemas: {Widget: {type: "object", properties: {id: {type: "string"}}}}},
+        };
+        const refs = oapSchemaToReferences(doc);
+        expect(refs.map(r => r.canonical)).toEqual(["listObjects", "listWidgets", "objects/Widget"]);
     });
 
     it("schema links carry the schema's label: its constant `object` value, else its name", async () => {

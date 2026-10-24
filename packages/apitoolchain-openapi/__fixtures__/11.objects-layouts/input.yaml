@@ -1,0 +1,198 @@
+# The objects layouts (`objectsLayout`), outside sidebar mode. The default,
+# `grouped`, puts every object page under ONE top-level "Objects" group, the
+# LAST group of the navigation: the pages without a resource group first, then
+# one sub-group per resource group (`x-docs.group`) in the order the groups
+# appear above it (a renderer that starts nested groups collapsed shows them
+# folded). The input is arranged so the oracle pins the ordering rule rather
+# than an accident of the input:
+# - the tags are declared in the order `parts`, `widgets` (not alphabetical);
+#   `assemblies` is an undeclared tag, so its group follows the declared ones
+# - `getStatus` has no tag at all (the nameless group) and `listAudit` is moved
+#   to an `audit` group by its own `x-docs.group` — "Objects" still comes after
+#   both
+# - the schemas are declared in neither order (`Status`, `Assembly`, `Widget`,
+#   `WidgetList`, `Part`, `Address`, `Fastener`): under "Objects" the pages
+#   without a group (`Status`, `Address`) come first, then the `parts`,
+#   `widgets`, `assemblies` sub-groups in the groups' order above, then
+#   `fasteners`, a group with no operations
+# - `WidgetList` and `Error` are hidden (no page)
+# `objectsLayout: per-area` is pinned by 5.xdocs.objects and the unit tests.
+openapi: 3.0.3
+info:
+  title: Assembly API
+  version: 1.0.0
+servers:
+  - url: https://api.example.com/v1
+tags:
+  - name: parts
+  - name: widgets
+paths:
+  /widgets:
+    get:
+      operationId: listWidgets
+      summary: List widgets
+      tags: [widgets]
+      responses:
+        '200':
+          description: A page of widgets.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WidgetList'
+  /parts:
+    get:
+      operationId: listParts
+      summary: List parts
+      tags: [parts]
+      responses:
+        '200':
+          description: The parts.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Part'
+  /assemblies:
+    post:
+      operationId: createAssembly
+      summary: Create assembly
+      tags: [assemblies]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Assembly'
+      responses:
+        '201':
+          description: The assembly that was created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Assembly'
+        '400':
+          description: The request was invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /status:
+    get:
+      operationId: getStatus
+      summary: Service status
+      responses:
+        '200':
+          description: The service status.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Status'
+  /audit:
+    get:
+      operationId: listAudit
+      summary: List audit entries
+      tags: [widgets]
+      x-docs:
+        group: audit
+      responses:
+        '200':
+          description: The audit entries.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    at:
+                      type: string
+                      format: date-time
+                    action:
+                      type: string
+components:
+  schemas:
+    Status:
+      type: object
+      required: [ok]
+      properties:
+        ok:
+          type: boolean
+    Assembly:
+      x-docs:
+        name: The assembly object
+        group: assemblies
+      type: object
+      required: [object, id]
+      properties:
+        object:
+          type: string
+          enum: [assembly]
+        id:
+          type: string
+        shipTo:
+          $ref: '#/components/schemas/Address'
+        parts:
+          type: array
+          items:
+            $ref: '#/components/schemas/Part'
+    Widget:
+      x-docs:
+        name: The widget object
+        group: widgets
+      type: object
+      required: [object, id]
+      properties:
+        object:
+          type: string
+          enum: [widget]
+        id:
+          type: string
+    WidgetList:
+      x-docs:
+        hidden: true
+      type: object
+      properties:
+        object:
+          type: string
+          enum: [list]
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Widget'
+    Part:
+      x-docs:
+        name: The part object
+        group: parts
+      type: object
+      required: [sku]
+      properties:
+        sku:
+          type: string
+        fastener:
+          $ref: '#/components/schemas/Fastener'
+    Address:
+      type: object
+      properties:
+        line1:
+          type: string
+        country:
+          type: string
+    Fastener:
+      x-docs:
+        name: The fastener object
+        group: fasteners
+      type: object
+      properties:
+        kind:
+          type: string
+          enum: [screw, bolt, rivet]
+    Error:
+      x-docs:
+        hidden: true
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string

@@ -275,6 +275,76 @@ describe("docs metadata (JS impl)", () => {
         expect(tags.ofProperty?.symbolDef).toEqual({id: "#/components/schemas/Tag"});
     });
 
+    it("regions mode (one page at a time): the links follow the document, not the one-page list", async () => {
+        // A generated page converts ONE region, then runs the plugin: the
+        // sidebar pass is not its business, but its links still have to land
+        // on pages that exist — hidden schemas have none.
+        const doc = await deferencedOpenAPI(fixture("5.xdocs.objects"));
+        const page = (region: string) =>
+            uniform(oapSchemaToReferences(doc!, {regions: [region]}), {plugins: [uniformPluginXDocsSidebar]}).references;
+
+        const widget = page("/components/schemas/Widget");
+        expect(widget.map(r => r.canonical)).toEqual(["objects/Widget"]);
+        const tags = row(widget[0].definitions[0].properties, "tags");
+        expect(tags.symbolDef).toEqual({id: "#/components/schemas/Tag"});
+        expect(tags.ofProperty?.symbolDef).toEqual({id: "#/components/schemas/Tag"});
+
+        const list = page("GET /widgets");
+        expect(list.map(r => r.canonical)).toEqual(["listWidgets"]);
+        const data = row(list[0].definitions[0].variants![0].properties, "data");
+        expect(data.symbolDef?.canonical).toBe("objects/Widget");
+        expect(data.ofProperty?.symbolDef?.canonical).toBe("objects/Widget");
+
+        const create = page("POST /widgets");
+        const body = create[0].definitions.find(d => d.title === "Request body")!.variants![0].properties;
+        expect(row(body, "tags").symbolDef).toEqual({id: "#/components/schemas/Tag"});
+    });
+
+    it("regions mode under an x-docs.sidebar: the links follow the listed page", () => {
+        const Tag: any = {type: "object", properties: {name: {type: "string"}}};
+        const Widget: any = {
+            "x-docs": {name: "The widget object"},
+            type: "object",
+            properties: {id: {type: "string"}, tags: {type: "array", items: Tag}},
+        };
+        const WidgetList: any = {type: "object", properties: {data: {type: "array", items: Widget}}};
+        const doc: any = {
+            openapi: "3.0.3",
+            info: {title: "Widgets", version: "1.0.0"},
+            paths: {
+                "/widgets": {
+                    get: {
+                        operationId: "listWidgets", summary: "List widgets",
+                        responses: {"200": {description: "ok", content: {"application/json": {schema: WidgetList}}}},
+                    },
+                },
+            },
+            components: {schemas: {Widget, WidgetList, Tag}},
+            "x-docs": {
+                sidebar: [{
+                    group: "Reference",
+                    pages: [
+                        {type: "endpoint", key: "listWidgets"},
+                        {type: "object", key: "Widget", path: "the-widget"},
+                    ],
+                }],
+            },
+        };
+        // The whole-document pass says where the page went.
+        const whole = uniform(oapSchemaToReferences(doc), {plugins: [uniformPluginXDocsSidebar]}).references;
+        const widgetCanonical = whole[1].canonical;
+        expect(widgetCanonical).not.toBe("objects/Widget");
+
+        const page = (region: string) =>
+            uniform(oapSchemaToReferences(doc, {regions: [region]}), {plugins: [uniformPluginXDocsSidebar]}).references;
+        const data = row(page("GET /widgets")[0].definitions[0].variants![0].properties, "data");
+        expect(data.symbolDef?.canonical).toBe(widgetCanonical);
+        expect(data.ofProperty?.symbolDef?.canonical).toBe(widgetCanonical);
+        // Tag is not listed: no page, so no canonical.
+        const tags = row(page("/components/schemas/Widget")[0].definitions[0].properties, "tags");
+        expect(tags.symbolDef).toEqual({id: "#/components/schemas/Tag"});
+    });
+
     it("an x-docs.sidebar that lists a hidden page still shows it", () => {
         const doc: any = {
             openapi: "3.0.3",

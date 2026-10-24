@@ -143,7 +143,7 @@ pub fn apply_xdocs_sidebar(ctx: &DocCtx, doc: &Value, refs: &mut Vec<Value>) {
                 keep
             });
         }
-        relink_schema_links(refs);
+        relink_from_final_list(refs);
         return;
     };
     let xdocs = xdocs.unwrap_or(&Value::Null);
@@ -181,17 +181,37 @@ pub fn apply_xdocs_sidebar(ctx: &DocCtx, doc: &Value, refs: &mut Vec<Value>) {
 
     // `references.length = 0; references.push(...output)`
     *refs = output;
-    relink_schema_links(refs);
+    relink_from_final_list(refs);
 }
 
-/// Nested schema links, once the reference list is final. A property's
-/// `symbolDef` whose `id` is a component schema (`#/components/schemas/<Name>`)
-/// takes the `canonical` of that schema's surviving reference — so a sidebar
-/// that moves an object page under another path is followed — and loses its
-/// `canonical` when the schema has no page any more (`x-docs.hidden`, or not
-/// listed by an `x-docs.sidebar`): a link must never land on a page that does
-/// not exist. The `id` stays either way.
-fn relink_schema_links(refs: &mut [Value]) {
+/// The regions-mode counterpart of [`apply_xdocs_sidebar`]: a page's own
+/// references (one region), whose nested links still have to land on pages
+/// that exist — read from the document, since a one-page reference list
+/// cannot say which pages the navigation keeps. The JS plugin runs this pass
+/// on every generated page; the twin keeps the Rust side able to do the same.
+pub fn apply_xdocs_links(ctx: &DocCtx, doc: &Value, refs: &mut [Value]) {
+    let links = schema_page_links(ctx, doc);
+    relink_schema_links(refs, &|name| {
+        links.get(name).cloned().unwrap_or(PageLink::Keep)
+    });
+}
+
+/// What a nested link to a component schema becomes: the canonical of the
+/// schema's page, no `canonical` at all when the schema has no page, or the
+/// converter's link left as it is.
+#[derive(Debug, Clone, PartialEq)]
+enum PageLink {
+    Set(String),
+    Drop,
+    Keep,
+}
+
+/// The page links once the reference list is FINAL (whole-document mode): a
+/// schema's surviving reference gives its canonical — so a sidebar that moves
+/// an object page under another path is followed — and a schema without one
+/// has no page any more (`x-docs.hidden`, or not listed by an
+/// `x-docs.sidebar`).
+fn relink_from_final_list(refs: &mut [Value]) {
     let mut canonical_by_schema: HashMap<String, String> = HashMap::new();
     for r in refs.iter() {
         let name = r
@@ -208,36 +228,123 @@ fn relink_schema_links(refs: &mut [Value]) {
                 .or_insert_with(|| canonical.to_string());
         }
     }
+    relink_schema_links(refs, &|name| match canonical_by_schema.get(name) {
+        Some(canonical) => PageLink::Set(canonical.clone()),
+        None => PageLink::Drop,
+    });
+}
 
+/// The page links read from the DOCUMENT (regions mode, where the reference
+/// list is one page long and cannot say which pages exist): without an
+/// `x-docs.sidebar` a schema has a page unless it is `x-docs.hidden`; with
+/// one, only the schemas it lists have a page, where the entry puts it. The
+/// same rules the whole-document pass applies through the surviving
+/// references.
+fn schema_page_links(ctx: &DocCtx, doc: &Value) -> HashMap<String, PageLink> {
+    let mut links: HashMap<String, PageLink> = HashMap::new();
+    let Some(schemas) = doc
+        .get("components")
+        .and_then(|c| c.get("schemas"))
+        .and_then(|s| s.as_object())
+    else {
+        return links;
+    };
+    let xdocs = doc.get("x-docs");
+    let sidebar = xdocs
+        .and_then(|x| x.get("sidebar"))
+        .and_then(|s| s.as_array());
+    let Some(sidebar) = sidebar else {
+        for name in schemas.keys() {
+            let hidden = component_xdocs(ctx, doc, name)
+                .map(|meta| truthy(meta.get("hidden")))
+                .unwrap_or(false);
+            links.insert(
+                name.clone(),
+                if hidden { PageLink::Drop } else { PageLink::Keep },
+            );
+        }
+        return links;
+    };
+
+    for name in schemas.keys() {
+        links.insert(name.clone(), PageLink::Drop);
+    }
+    let inherit = xdocs
+        .and_then(|x| x.get("sidebarPathStrategy"))
+        .and_then(|v| v.as_str())
+        == Some("inherit");
+
+    fn walk(
+        pages: &[Value],
+        parent_path: Option<&str>,
+        inherit: bool,
+        schemas: &Map<String, Value>,
+        links: &mut HashMap<String, PageLink>,
+    ) {
+        for page in pages {
+            if let Some(nested) = page.get("pages").and_then(|p| p.as_array()) {
+                let pp = page.get("path").and_then(|p| p.as_str());
+                walk(nested, pp, inherit, schemas, links);
+            } else if page.get("type").and_then(|t| t.as_str()) == Some("object") {
+                let Some(key) = page.get("key").and_then(|k| k.as_str()) else {
+                    continue;
+                };
+                if !schemas.contains_key(key) {
+                    continue;
+                }
+                // A component-schema reference has no `context.path` of its
+                // own (that is an operation's), so `inherit` reads the group's.
+                let link = match sidebar_page_canonical(inherit, page, parent_path, "") {
+                    Some(canonical) => PageLink::Set(canonical),
+                    None => PageLink::Keep,
+                };
+                links.insert(key.to_string(), link);
+            }
+        }
+    }
+    for group in sidebar {
+        if let Some(pages) = group.get("pages").and_then(|p| p.as_array()) {
+            walk(pages, None, inherit, schemas, &mut links);
+        }
+    }
+    links
+}
+
+/// Nested schema links. A property's `symbolDef` whose `id` is a component
+/// schema (`#/components/schemas/<Name>`) takes that schema's page link: the
+/// page's canonical, or no `canonical` at all when the schema has no page — a
+/// link must never land on a page that does not exist. The `id` stays either
+/// way.
+fn relink_schema_links(refs: &mut [Value], page_link: &dyn Fn(&str) -> PageLink) {
     for r in refs.iter_mut() {
         let Some(definitions) = r.get_mut("definitions").and_then(|d| d.as_array_mut()) else {
             continue;
         };
         for definition in definitions {
-            relink_rows(definition.get_mut("properties"), &canonical_by_schema);
-            relink_property(definition.get_mut("rootProperty"), &canonical_by_schema);
+            relink_rows(definition.get_mut("properties"), page_link);
+            relink_property(definition.get_mut("rootProperty"), page_link);
             if let Some(variants) = definition
                 .get_mut("variants")
                 .and_then(|v| v.as_array_mut())
             {
                 for variant in variants {
-                    relink_rows(variant.get_mut("properties"), &canonical_by_schema);
-                    relink_property(variant.get_mut("rootProperty"), &canonical_by_schema);
+                    relink_rows(variant.get_mut("properties"), page_link);
+                    relink_property(variant.get_mut("rootProperty"), page_link);
                 }
             }
         }
     }
 }
 
-fn relink_rows(rows: Option<&mut Value>, canonical_by_schema: &HashMap<String, String>) {
+fn relink_rows(rows: Option<&mut Value>, page_link: &dyn Fn(&str) -> PageLink) {
     if let Some(rows) = rows.and_then(|r| r.as_array_mut()) {
         for row in rows {
-            relink_property(Some(row), canonical_by_schema);
+            relink_property(Some(row), page_link);
         }
     }
 }
 
-fn relink_property(property: Option<&mut Value>, canonical_by_schema: &HashMap<String, String>) {
+fn relink_property(property: Option<&mut Value>, page_link: &dyn Fn(&str) -> PageLink) {
     let Some(property) = property.filter(|p| p.is_object()) else {
         return;
     };
@@ -251,18 +358,19 @@ fn relink_property(property: Option<&mut Value>, canonical_by_schema: &HashMap<S
             .and_then(|i| i.strip_prefix(COMPONENT_SCHEMA_PREFIX))
             .map(|s| s.to_string());
         if let Some(schema) = schema {
-            match canonical_by_schema.get(&schema) {
-                Some(target) => {
-                    symbol_def.insert("canonical".to_string(), Value::String(target.clone()));
+            match page_link(&schema) {
+                PageLink::Set(target) => {
+                    symbol_def.insert("canonical".to_string(), Value::String(target));
                 }
-                None => {
+                PageLink::Drop => {
                     symbol_def.remove("canonical");
                 }
+                PageLink::Keep => {}
             }
         }
     }
-    relink_rows(property.get_mut("properties"), canonical_by_schema);
-    relink_property(property.get_mut("ofProperty"), canonical_by_schema);
+    relink_rows(property.get_mut("properties"), page_link);
+    relink_property(property.get_mut("ofProperty"), page_link);
 }
 
 /// The common `x-docs` keys of an operation or a component schema: `name` →
@@ -428,22 +536,14 @@ fn process_page(
     };
 
     // canonical rewriting
-    let page_path = page.get("path").and_then(|p| p.as_str());
-    if inherit {
-        let ctx_path = uniform_ref
-            .get("context")
-            .and_then(|c| c.get("path"))
-            .and_then(|p| p.as_str())
-            .unwrap_or("");
-        let first_part = parent_path.filter(|p| !p.is_empty()).unwrap_or(ctx_path);
-        let canonical = join_paths(&[Some(first_part), page_path]);
-        if !canonical.is_empty() {
-            uniform_ref["canonical"] = Value::String(canonical);
-        }
-    } else if page_path.map(|p| !p.is_empty()).unwrap_or(false) {
-        uniform_ref["canonical"] = Value::String(join_paths(&[parent_path, page_path]));
-    } else if let Some(pp) = parent_path.filter(|p| !p.is_empty()) {
-        uniform_ref["canonical"] = Value::String(pp.to_string());
+    let own_path = uniform_ref
+        .get("context")
+        .and_then(|c| c.get("path"))
+        .and_then(|p| p.as_str())
+        .unwrap_or("")
+        .to_string();
+    if let Some(canonical) = sidebar_page_canonical(inherit, page, parent_path, &own_path) {
+        uniform_ref["canonical"] = Value::String(canonical);
     }
 
     if !uniform_ref
@@ -461,6 +561,31 @@ fn process_page(
     );
 
     output.push(uniform_ref);
+}
+
+/// The canonical an `x-docs.sidebar` entry gives its page — the entry's
+/// `path` under the enclosing group's `path`; under
+/// `sidebarPathStrategy: inherit` the page's own path (an operation's) comes
+/// first — or `None` when the entry leaves the page where the converter put
+/// it.
+fn sidebar_page_canonical(
+    inherit: bool,
+    page: &Value,
+    parent_path: Option<&str>,
+    own_path: &str,
+) -> Option<String> {
+    let page_path = page.get("path").and_then(|p| p.as_str());
+    if inherit {
+        let first_part = parent_path.filter(|p| !p.is_empty()).unwrap_or(own_path);
+        let canonical = join_paths(&[Some(first_part), page_path]);
+        return (!canonical.is_empty()).then_some(canonical);
+    }
+    if page_path.map(|p| !p.is_empty()).unwrap_or(false) {
+        return Some(join_paths(&[parent_path, page_path]));
+    }
+    parent_path
+        .filter(|p| !p.is_empty())
+        .map(|p| p.to_string())
 }
 
 /// Port of pluginSidebar's `joinPaths`: strip outer slashes per part, prefix
@@ -552,6 +677,23 @@ mod tests {
         let (processed, stamps) = DocCtx::preprocess(doc);
         let ctx = DocCtx::with_merged_stamps(&processed, &stamps);
         apply_xdocs_sidebar(&ctx, &processed, &mut refs);
+        refs
+    }
+
+    /// Convert ONE region the way a generated page does, then the
+    /// regions-mode pass (the links only).
+    fn region_after_xdocs(doc: &Value, region: &str) -> Vec<Value> {
+        let options = crate::Options {
+            regions: Some(vec![region.to_string()]),
+        };
+        let refs = oap_schema_to_references(doc, Some(options));
+        let mut refs: Vec<Value> = refs
+            .iter()
+            .map(|r| serde_json::to_value(r).expect("Reference serializes"))
+            .collect();
+        let (processed, stamps) = DocCtx::preprocess(doc);
+        let ctx = DocCtx::with_merged_stamps(&processed, &stamps);
+        apply_xdocs_links(&ctx, &processed, &mut refs);
         refs
     }
 
@@ -801,6 +943,79 @@ mod tests {
         );
 
         let widget_links = links_of(&refs, &widget_canonical);
+        assert!(
+            widget_links
+                .iter()
+                .filter(|(id, _)| id == "#/components/schemas/Tag")
+                .all(|(_, canonical)| canonical.is_none()),
+            "a link to an unlisted page kept its canonical: {widget_links:?}"
+        );
+    }
+
+    /// Regions mode (one page at a time): the links follow the document, not
+    /// the one-page reference list — a link to a hidden schema loses its
+    /// canonical, a link to a page that exists keeps it.
+    #[test]
+    fn regions_mode_links_follow_the_document() {
+        let doc = widgets_doc(None);
+
+        let refs = region_after_xdocs(&doc, "/components/schemas/Widget");
+        assert_eq!(refs.len(), 1, "{:?}", titles(&refs));
+        let widget_links = links_of(&refs, "objects/Widget");
+        let tag_links: Vec<_> = widget_links
+            .iter()
+            .filter(|(id, _)| id == "#/components/schemas/Tag")
+            .collect();
+        assert_eq!(tag_links.len(), 2, "{widget_links:?}");
+        assert!(
+            tag_links.iter().all(|(_, canonical)| canonical.is_none()),
+            "a link to a hidden page kept its canonical: {widget_links:?}"
+        );
+
+        let refs = region_after_xdocs(&doc, "GET /widgets");
+        assert_eq!(refs.len(), 1, "{:?}", titles(&refs));
+        let list_links = links_of(&refs, "listWidgets");
+        assert!(
+            list_links.contains(&(
+                "#/components/schemas/Widget".to_string(),
+                Some("objects/Widget".to_string())
+            )),
+            "{list_links:?}"
+        );
+    }
+
+    /// Regions mode under an `x-docs.sidebar`: a link follows the listed
+    /// page's canonical exactly as the whole-document pass computes it, and a
+    /// link to an unlisted schema loses its canonical.
+    #[test]
+    fn regions_mode_links_follow_the_sidebar() {
+        let sidebar = json!([{
+            "group": "Reference",
+            "pages": [
+                { "type": "endpoint", "key": "listWidgets" },
+                { "type": "object", "key": "Widget", "path": "the-widget" }
+            ]
+        }]);
+        let doc = widgets_doc(Some(sidebar));
+        let whole = refs_after_xdocs(&doc);
+        let widget_canonical = whole[1]["canonical"].as_str().unwrap().to_string();
+        assert_ne!(widget_canonical, "objects/Widget");
+
+        let refs = region_after_xdocs(&doc, "GET /widgets");
+        let list_links = links_of(&refs, "listWidgets");
+        assert!(
+            list_links.contains(&(
+                "#/components/schemas/Widget".to_string(),
+                Some(widget_canonical.clone())
+            )),
+            "the link did not follow the page: {list_links:?}"
+        );
+
+        // The page itself keeps the converter's canonical in regions mode (the
+        // sidebar pass renames pages, this one only relinks); its rows follow
+        // the document.
+        let refs = region_after_xdocs(&doc, "/components/schemas/Widget");
+        let widget_links = links_of(&refs, "objects/Widget");
         assert!(
             widget_links
                 .iter()

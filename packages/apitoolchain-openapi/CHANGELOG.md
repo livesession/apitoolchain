@@ -39,6 +39,14 @@ and `5.xdocs.objects` pin the new output on both sides.
   (a sidebar that moves an object page under another path included), and a
   link to a schema without a page (`x-docs.hidden`, or not listed by an
   `x-docs.sidebar`) keeps its `id` and drops its `canonical`.
+- The same in regions mode. A page generated from one region (the per-page
+  conversion) carries a one-page reference list, which cannot say which pages
+  the navigation keeps; the sidebar plugin now reads the page links from the
+  document instead — a schema has a page unless it is `x-docs.hidden`, or,
+  under an `x-docs.sidebar`, only where an entry lists it — so a property
+  typed by a hidden or unlisted schema is plain text on every page and a link
+  follows the listed page's path. The Rust twin exposes the pass as
+  `xdocs::apply_xdocs_links`.
 - In sidebar mode a listed object page reads its `x-docs` from the same place
   as the generated navigation (the schema's own first, then the first `allOf`
   member's); a listed composition without any `x-docs` keeps its page and its

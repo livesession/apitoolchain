@@ -55,21 +55,28 @@ export function uniformPluginXDocsSidebar({
     const hiddenRefs = new Set<Reference>()
 
     defer(() => {
+        if (!schema) {
+            return {}
+        }
+
         // @ts-ignore
         if (typeof references.__internal_options === "function") {
             // @ts-ignore
             const options = references.__internal_options()
 
             if (options?.regions?.length) {
+                // A page's own rows: the per-page conversion covers one region,
+                // so the navigation is not this pass's business — but the links
+                // on the page still have to land on pages that exist, and a
+                // one-page reference list cannot say which do. The document can.
+                if (Array.isArray(references)) {
+                    relinkSchemaLinks(references, schemaPageLinks(schema))
+                }
                 return {}
             }
         }
 
         const output: Reference[] = []
-        if (!schema) {
-            return {}
-        }
-
         const xDocs = schema["x-docs"]
 
         if (!xDocs?.sidebar) {
@@ -80,7 +87,7 @@ export function uniformPluginXDocsSidebar({
                 references.push(...kept)
             }
             if (Array.isArray(references)) {
-                relinkSchemaLinks(references)
+                relinkSchemaLinks(references, pageLinksOf(references))
             }
             return {}
         }
@@ -132,7 +139,7 @@ export function uniformPluginXDocsSidebar({
         if (Array.isArray(references)) {
             references.length = 0
             references.push(...output)
-            relinkSchemaLinks(references)
+            relinkSchemaLinks(references, pageLinksOf(references))
         } else {
             references = output[0] || references
         }
@@ -231,23 +238,14 @@ export function uniformPluginXDocsSidebar({
             return
         }
 
-        if (xDocs.sidebarPathStrategy === "inherit") {
-            const ctx = uniformRef.context as OpenAPIReferenceContext | undefined
-            let firstPart = ""
-            if (parentPath) {
-                firstPart = parentPath
-            } else {
-                firstPart = ctx?.path || ""
-            }
-
-            const canonical = joinPaths(firstPart || "", page.path)
-            if (canonical) {
-                uniformRef.canonical = canonical
-            }
-        } else if (page.path) {
-            uniformRef.canonical = joinPaths(parentPath, page.path)
-        } else if (parentPath) {
-            uniformRef.canonical = parentPath
+        const canonical = sidebarPageCanonical(
+            xDocs,
+            page,
+            parentPath,
+            (uniformRef.context as OpenAPIReferenceContext | undefined)?.path
+        )
+        if (canonical !== undefined) {
+            uniformRef.canonical = canonical
         }
 
         if (!uniformRef.context) {
@@ -364,14 +362,40 @@ function applyDocsMeta(ref: Reference, meta: XDocsMeta): boolean {
 
 const COMPONENT_SCHEMA_PREFIX = "#/components/schemas/"
 
-/** Nested schema links, once the reference list is final. A property's
- *  `symbolDef` whose `id` is a component schema (`#/components/schemas/<Name>`)
- *  takes the `canonical` of that schema's surviving reference — so a sidebar
- *  that moves an object page under another path is followed — and loses its
- *  `canonical` when the schema has no page any more (`x-docs.hidden`, or not
- *  listed by an `x-docs.sidebar`): a link must never land on a page that does
- *  not exist. The `id` stays either way. */
-function relinkSchemaLinks(references: Reference[]) {
+/** The canonical an `x-docs.sidebar` entry gives its page — the entry's
+ *  `path` under the enclosing group's `path`; under
+ *  `sidebarPathStrategy: inherit` the page's own path (an operation's) comes
+ *  first — or `undefined` when the entry leaves the page where the converter
+ *  put it. */
+function sidebarPageCanonical(
+    xDocs: XDocs,
+    page: XDocsPage,
+    parentPath: string | undefined,
+    ownPath: string | undefined
+): string | undefined {
+    if (xDocs.sidebarPathStrategy === "inherit") {
+        return joinPaths(parentPath || ownPath || "", page.path) || undefined
+    }
+    if (page.path) {
+        return joinPaths(parentPath, page.path)
+    }
+    if (parentPath) {
+        return parentPath
+    }
+    return undefined
+}
+
+/** What a nested link to a component schema becomes: the canonical of the
+ *  schema's page, `null` when the schema has no page, `undefined` to leave the
+ *  converter's link as it is. */
+type PageLink = string | null | undefined
+
+/** The page links once the reference list is FINAL (whole-document mode): a
+ *  schema's surviving reference gives its canonical — so a sidebar that moves
+ *  an object page under another path is followed — and a schema without one
+ *  has no page any more (`x-docs.hidden`, or not listed by an
+ *  `x-docs.sidebar`). */
+function pageLinksOf(references: Reference[]): (name: string) => PageLink {
     const canonicalBySchema = new Map<string, string>()
     for (const ref of references) {
         const name = (ref.context as OpenAPIReferenceContext | undefined)?.componentSchema
@@ -379,7 +403,52 @@ function relinkSchemaLinks(references: Reference[]) {
             canonicalBySchema.set(name, ref.canonical)
         }
     }
+    return name => canonicalBySchema.get(name) ?? null
+}
 
+/** The page links read from the DOCUMENT (regions mode, where the reference
+ *  list is one page long and cannot say which pages exist): without an
+ *  `x-docs.sidebar` a schema has a page unless it is `x-docs.hidden`; with one,
+ *  only the schemas it lists have a page, where the entry puts it. The same
+ *  rules the whole-document pass applies through the surviving references. */
+function schemaPageLinks(schema: ExtensionSchema): (name: string) => PageLink {
+    const schemas = (schema.components?.schemas || {}) as Record<string, OpenAPIV3.SchemaObject>
+    const xDocs = schema["x-docs"]
+    const links = new Map<string, PageLink>()
+
+    if (!xDocs?.sidebar) {
+        for (const name of Object.keys(schemas)) {
+            links.set(name, componentXDocs(schemas[name])?.hidden ? null : undefined)
+        }
+        return name => links.get(name)
+    }
+
+    for (const name of Object.keys(schemas)) {
+        links.set(name, null)
+    }
+    const walk = (pages: (XDocsSidebar | XDocsPage)[], parentPath?: string) => {
+        for (const page of pages) {
+            if ('pages' in page && Array.isArray(page.pages)) {
+                walk(page.pages, page.path)
+            } else if ('type' in page && 'key' in page && page.type === "object" && page.key in schemas) {
+                links.set(page.key, sidebarPageCanonical(xDocs, page, parentPath, undefined))
+            }
+        }
+    }
+    for (const group of xDocs.sidebar) {
+        if (group && Array.isArray(group.pages)) {
+            walk(group.pages)
+        }
+    }
+    return name => links.get(name)
+}
+
+/** Nested schema links. A property's `symbolDef` whose `id` is a component
+ *  schema (`#/components/schemas/<Name>`) takes that schema's page link: the
+ *  page's canonical, or no `canonical` at all when the schema has no page — a
+ *  link must never land on a page that does not exist. The `id` stays either
+ *  way. */
+function relinkSchemaLinks(references: Reference[], pageLink: (name: string) => PageLink) {
     const seen = new Set<DefinitionProperty>()
     const visit = (property: DefinitionProperty | undefined) => {
         if (!property || typeof property !== "object" || seen.has(property)) {
@@ -389,10 +458,10 @@ function relinkSchemaLinks(references: Reference[]) {
         const symbolDef = property.symbolDef
         const id = symbolDef?.id
         if (symbolDef && typeof id === "string" && id.startsWith(COMPONENT_SCHEMA_PREFIX)) {
-            const target = canonicalBySchema.get(id.slice(COMPONENT_SCHEMA_PREFIX.length))
-            if (target) {
+            const target = pageLink(id.slice(COMPONENT_SCHEMA_PREFIX.length))
+            if (typeof target === "string") {
                 symbolDef.canonical = target
-            } else {
+            } else if (target === null) {
                 delete symbolDef.canonical
             }
         }

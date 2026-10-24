@@ -147,10 +147,7 @@ pub fn apply_xdocs_sidebar_with_options(
 
     // ---- defer pass: the sidebar-driven rebuild -------------------------
     let xdocs = doc.get("x-docs");
-    let sidebar = xdocs
-        .and_then(|x| x.get("sidebar"))
-        .and_then(|s| s.as_array());
-    let Some(sidebar) = sidebar else {
+    let Some(sidebar) = xdocs_sidebar(doc) else {
         // No sidebar: the generated navigation, minus the hidden refs — and,
         // under the grouped objects layout, the objects group's own order.
         if !hidden.is_empty() {
@@ -401,6 +398,18 @@ fn relink_property(property: Option<&mut Value>, page_link: &dyn Fn(&str) -> Pag
     relink_symbol_def(property.get_mut("symbolDef"), page_link);
     relink_rows(property.get_mut("properties"), page_link);
     relink_property(property.get_mut("ofProperty"), page_link);
+}
+
+/// The document's `x-docs.sidebar` — sidebar mode — when it has one.
+fn xdocs_sidebar(doc: &Value) -> Option<&Vec<Value>> {
+    doc.get("x-docs")?.get("sidebar")?.as_array()
+}
+
+/// Whether the document is in sidebar mode (an `x-docs.sidebar`): the
+/// navigation is the author's then, not the generated one — the condition the
+/// defer pass above switches on, for the passes that run after it.
+pub fn has_xdocs_sidebar(doc: &Value) -> bool {
+    xdocs_sidebar(doc).is_some()
 }
 
 /// The common `x-docs` keys of an operation or a component schema: `name` →

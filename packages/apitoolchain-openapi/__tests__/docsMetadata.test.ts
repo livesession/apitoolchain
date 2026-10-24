@@ -6,7 +6,14 @@ import uniform, {DefinitionProperty, Reference} from "@xyd-js/uniform";
 
 // The JS impl directly — these pin the JS twin's behaviour whatever addon is
 // installed (the fixture matrix covers the dispatching entry point).
-import {deferencedOpenAPI, oapSchemaToReferences, uniformPluginXDocsSidebar} from "../src/impl-js";
+import {
+    collapseObjectsGroup,
+    deferencedOpenAPI,
+    oapSchemaToReferences,
+    objectsCollapsedOf,
+    uniformPluginXDocsSidebar,
+    type NavigationGroupEntry,
+} from "../src/impl-js";
 
 function fixture(name: string) {
     return path.join(__dirname, "..", "__fixtures__", name, "input.yaml");
@@ -543,5 +550,116 @@ describe("docs metadata (JS impl)", () => {
         const refs = uniform(oapSchemaToReferences(doc), {plugins: [uniformPluginXDocsSidebar]}).references;
         expect(refs.map(r => r.title)).toEqual(["Health", "The widget object"]);
         expect(refs.map(r => r.context?.group)).toEqual([["Reference"], ["Reference"]]);
+    });
+});
+
+describe("the Objects group's collapsed flag (JS impl)", () => {
+    const URL_PREFIX = "docs/api";
+
+    /** The generated navigation in pluginNavigation's emitted shape — one
+     *  group node per `context.group` path, a `{virtual, page}` leaf per page
+     *  (the page path itself in store mode). pluginNavigation itself runs
+     *  natively only; the fused goldens pin the real output. */
+    function navigationOf(refs: Reference[], store = false): NavigationGroupEntry[] {
+        const root: NavigationGroupEntry[] = [];
+        for (const ref of refs) {
+            const group = Array.isArray(ref.context?.group) ? (ref.context!.group as string[]) : [];
+            if (!group.length) continue;
+            let level = root;
+            let node: NavigationGroupEntry | undefined;
+            for (const name of group) {
+                node = level.find(e => e.group === name);
+                if (!node) {
+                    node = {group: name, pages: []};
+                    level.push(node);
+                }
+                level = node.pages as NavigationGroupEntry[];
+            }
+            const page = path.join(URL_PREFIX, ref.canonical);
+            node!.pages!.push(store ? page : {virtual: path.join(".xyd/.cache/.content", page), page});
+        }
+        return root;
+    }
+
+    const flagsIn = (sidebar: unknown) => (JSON.stringify(sidebar).match(/"collapsed"/g) ?? []).length;
+
+    async function sidebarFor(options?: any, mutate?: (doc: any) => void, store = false) {
+        const doc = await deferencedOpenAPI(fixture("5.xdocs.objects"));
+        mutate?.(doc);
+        const refs = uniform(oapSchemaToReferences(doc!, options), {plugins: [uniformPluginXDocsSidebar]}).references;
+        const nav = navigationOf(refs, store);
+        const before = JSON.stringify(nav);
+        const sidebar = collapseObjectsGroup(nav, doc as any, refs, URL_PREFIX, options);
+        expect(JSON.stringify(nav)).toBe(before); // the input is not mutated
+        return sidebar;
+    }
+
+    it("the top-level Objects group carries `collapsed: true`, and nothing else does", async () => {
+        const sidebar = await sidebarFor();
+        expect(sidebar.map(e => e.group)).toEqual(["widgets", "Objects"]);
+        const objects = sidebar[1];
+        expect(objects.collapsed).toBe(true);
+        expect(Object.keys(objects)).toEqual(["group", "collapsed", "pages"]);
+        // Not the operation group above it, not the area sub-groups inside it.
+        expect("collapsed" in sidebar[0]).toBe(false);
+        const subGroups = (objects.pages as NavigationGroupEntry[]).filter(p => "group" in p);
+        expect(subGroups.map(g => g.group)).toEqual(["widgets", "parts"]);
+        expect(subGroups.every(g => !("collapsed" in g))).toBe(true);
+        expect(flagsIn(sidebar)).toBe(1);
+    });
+
+    it("an operation in the objects group keeps it open — an operation group never carries the flag", async () => {
+        const sidebar = await sidebarFor(undefined, doc => {
+            doc.tags = [...(doc.tags ?? []), {name: "Objects"}];
+            doc.paths["/objects"] = {
+                get: {operationId: "listObjects", summary: "List objects", tags: ["Objects"], responses: {"200": {description: "ok"}}},
+            };
+        });
+        const objects = sidebar.find(e => e.group === "Objects")!;
+        expect((objects.pages as any[]).some(p => p.page === "docs/api/listObjects")).toBe(true);
+        expect(flagsIn(sidebar)).toBe(0);
+    });
+
+    it("objectsCollapsed: false leaves the group open; the renamed group carries the flag", async () => {
+        const open = await sidebarFor({objectsCollapsed: false});
+        expect(flagsIn(open)).toBe(0);
+        const byDefault = await sidebarFor();
+        const {collapsed: _flag, ...objectsOpen} = byDefault[1];
+        expect(open).toEqual([byDefault[0], objectsOpen]);
+        expect(await sidebarFor({objectsCollapsed: true})).toEqual(byDefault);
+        const renamed = await sidebarFor({objectsGroup: "Types"});
+        expect(renamed.find(e => e.group === "Types")?.collapsed).toBe(true);
+        expect(flagsIn(renamed)).toBe(1);
+        // The option's default.
+        expect(objectsCollapsedOf(undefined)).toBe(true);
+        expect(objectsCollapsedOf({})).toBe(true);
+        expect(objectsCollapsedOf({objectsCollapsed: true})).toBe(true);
+        expect(objectsCollapsedOf({objectsCollapsed: false})).toBe(false);
+    });
+
+    it("per-area and sidebar mode are untouched", async () => {
+        const perArea = await sidebarFor({objectsLayout: "per-area"});
+        expect(perArea.some(e => e.group === "Objects")).toBe(true);
+        expect(flagsIn(perArea)).toBe(0);
+        // Even a sidebar group named like the objects group that lists object
+        // pages only: the author's navigation is never folded by this pass.
+        const withSidebar = await sidebarFor(undefined, doc => {
+            doc["x-docs"] = {
+                sidebar: [
+                    {group: "widgets", pages: [{type: "endpoint", key: "listWidgets"}]},
+                    {group: "Objects", pages: [{type: "object", key: "Widget"}, {type: "object", key: "Part"}]},
+                ],
+            };
+        });
+        expect(withSidebar.some(e => e.group === "Objects")).toBe(true);
+        expect(flagsIn(withSidebar)).toBe(0);
+    });
+
+    it("store mode lists the pages as plain paths; they are recognised too", async () => {
+        const sidebar = await sidebarFor(undefined, undefined, true);
+        const objects = sidebar.find(e => e.group === "Objects")!;
+        expect(objects.pages![0]).toBe("docs/api/objects/PartBase");
+        expect(objects.collapsed).toBe(true);
+        expect(flagsIn(sidebar)).toBe(1);
     });
 });

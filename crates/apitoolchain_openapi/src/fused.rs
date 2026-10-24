@@ -1,7 +1,8 @@
 //! The fused uniform endpoint (S6+ W3 tail): ONE call takes an OpenAPI spec
 //! source and returns everything plugin-docs' `uniformResolver` needs to emit
-//! virtual pages + sidebar — conversion, the x-docs sidebar plugin, and
-//! pluginNavigation all run natively; references never materialize in JS and
+//! virtual pages + sidebar — conversion, the x-docs sidebar plugin,
+//! pluginNavigation and the navigation's finishing pass (the objects group's
+//! `collapsed` flag) all run natively; references never materialize in JS and
 //! the endpoint code-sample post-pass (irrelevant to pages) never runs at
 //! boot. The JS side keeps: the urlPrefix sidebar-route match (input),
 //! compose-file merging, gray-matter frontmatter stringify + fs writes
@@ -10,6 +11,7 @@
 use serde_json::{json, Map, Value};
 
 use crate::doc::DocCtx;
+use crate::navigation::collapse_objects_group;
 use crate::xdocs::{apply_xdocs_sidebar_with_options, get_xdocs_route};
 use crate::{oap_schema_to_references, read_spec, OasError, Options};
 use apitoolchain_uniform::jsrt::node_path_join;
@@ -32,6 +34,10 @@ pub struct FusedInput {
     /// The objects layout (the converter option `objectsLayout`: `"grouped"`
     /// or `"per-area"`). `None` → [`crate::DEFAULT_OBJECTS_LAYOUT`].
     pub objects_layout: Option<String>,
+    /// Whether the generated navigation's top-level objects group is flagged
+    /// `collapsed: true` (the converter option `objectsCollapsed`). `None` →
+    /// [`crate::DEFAULT_OBJECTS_COLLAPSED`].
+    pub objects_collapsed: Option<bool>,
 }
 
 pub struct FusedOutput {
@@ -56,6 +62,7 @@ pub fn uniform_oas_pages(input: &FusedInput) -> Result<FusedOutput, OasError> {
         regions: None,
         objects_group: input.objects_group.clone(),
         objects_layout: input.objects_layout.clone(),
+        objects_collapsed: input.objects_collapsed,
     };
 
     // Full conversion (endpoint examples are a JS post-pass the page flow
@@ -96,8 +103,13 @@ pub fn uniform_oas_pages(input: &FusedInput) -> Result<FusedOutput, OasError> {
     apply_xdocs_sidebar_with_options(&ctx, &doc, &mut refs, &options);
 
     let settings_stub = json!({"engine": {"uniform": {"store": input.store}}});
-    let nav = plugin_navigation(&settings_stub, &url_prefix, &refs)
+    let mut nav = plugin_navigation(&settings_stub, &url_prefix, &refs)
         .map_err(|e| OasError(format!("pluginNavigation: {e}")))?;
+
+    // The finishing pass over the generated navigation: the top-level objects
+    // group's `collapsed` flag (a no-op under per-area, in sidebar mode, or
+    // with `objectsCollapsed: false`).
+    collapse_objects_group(&mut nav.sidebar, &doc, &refs, &url_prefix, &options);
 
     // Per-ref page entries — pagePath mirrors `path.join(urlPrefix,
     // ref.canonical)`; region mirrors the resolver's openapi switch.

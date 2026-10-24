@@ -35,3 +35,13 @@ export const DEFAULT_OBJECTS_LAYOUT: ObjectsLayout = "grouped"
 export function objectsLayoutOf(options: { objectsLayout?: string } | undefined): ObjectsLayout {
     return options?.objectsLayout === "per-area" ? "per-area" : DEFAULT_OBJECTS_LAYOUT
 }
+
+/** The default `uniformOasOptions.objectsCollapsed`: the generated navigation's
+ *  top-level objects group is flagged `collapsed: true`. */
+export const DEFAULT_OBJECTS_COLLAPSED = true
+
+/** Whether the top-level objects group is flagged collapsed — only an explicit
+ *  `false` turns it off. */
+export function objectsCollapsedOf(options: { objectsCollapsed?: boolean } | undefined): boolean {
+    return options?.objectsCollapsed === false ? false : DEFAULT_OBJECTS_COLLAPSED
+}

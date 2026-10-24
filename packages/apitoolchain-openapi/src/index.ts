@@ -29,6 +29,8 @@ export * from "./impl-js/utils";
 export * from "./impl-js/xdocs/types";
 export { getXDocs } from "./impl-js/xdocs";
 export { uniformPluginXDocsSidebar } from "./impl-js/xdocs/pluginSidebar";
+export { collapseObjectsGroup, COLLAPSED_KEY } from "./impl-js/xdocs/collapseObjectsGroup";
+export type { NavigationGroupEntry } from "./impl-js/xdocs/collapseObjectsGroup";
 export { oapExamples } from "./impl-js/converters/oas-examples";
 export type { uniformOasOptions, ObjectsLayout, SelectorMethod, OasJSONSchema } from "./impl-js/types";
 

@@ -40,6 +40,7 @@
     },
     {
       "group": "Objects",
+      "collapsed": true,
       "pages": [
         {
           "virtual": ".xyd/.cache/.content/docs/api/objects/User",

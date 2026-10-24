@@ -27,6 +27,13 @@ export interface uniformOasOptions {
      *    keep the top-level objects group.
      *  Anything else means the default. */
     objectsLayout?: ObjectsLayout
+
+    /** Whether the generated navigation's top-level objects group (the
+     *  `grouped` layout's last group) is flagged `collapsed: true`, so a
+     *  renderer draws a toggle on its header and starts it folded. Default
+     *  `true`; `false` leaves the group open. Never flagged under `per-area`
+     *  or with an `x-docs.sidebar`. See `collapseObjectsGroup`. */
+    objectsCollapsed?: boolean
 }
 
 export interface SelectorMethod {

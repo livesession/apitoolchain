@@ -9,6 +9,7 @@ mod components;
 pub mod core;
 pub mod fused;
 mod links;
+pub mod navigation;
 mod paths;
 mod util;
 pub mod xdocs;
@@ -41,7 +42,10 @@ pub enum ObjectsLayout {
     /// of the navigation — the pages without a resource group first, then one
     /// sub-group per resource group (`x-docs.group`) in the order the groups
     /// appear above it (`context.group = [<objects group>, <group>]`; a
-    /// renderer that starts nested groups collapsed shows them folded).
+    /// renderer that starts nested groups collapsed shows them folded). The
+    /// top-level group itself is flagged `collapsed: true` in the generated
+    /// navigation unless [`Options::objects_collapsed`] turns that off — see
+    /// [`navigation::collapse_objects_group`].
     #[default]
     Grouped,
     /// `"per-area"`: an object page with a resource group is nested under that
@@ -73,6 +77,11 @@ impl ObjectsLayout {
 /// The default [`ObjectsLayout`].
 pub const DEFAULT_OBJECTS_LAYOUT: ObjectsLayout = ObjectsLayout::Grouped;
 
+/// The default of [`Options::objects_collapsed`]: under the grouped layout
+/// the top-level objects group of the generated navigation is flagged
+/// `collapsed: true`.
+pub const DEFAULT_OBJECTS_COLLAPSED: bool = true;
+
 /// Port of `uniformOasOptions`.
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
@@ -89,6 +98,13 @@ pub struct Options {
     /// `"grouped"` or `"per-area"`); anything else → [`DEFAULT_OBJECTS_LAYOUT`].
     /// See [`ObjectsLayout`].
     pub objects_layout: Option<String>,
+    /// Whether the generated navigation's top-level objects group (the
+    /// grouped layout's last group) is flagged `collapsed: true`, so a
+    /// renderer draws a toggle on its header and starts it folded (JSON:
+    /// `objectsCollapsed`). `None` → [`DEFAULT_OBJECTS_COLLAPSED`] (`true`);
+    /// `false` leaves the group open. Per-area and sidebar mode never flag.
+    /// See [`navigation::collapse_objects_group`].
+    pub objects_collapsed: Option<bool>,
 }
 
 impl Options {
@@ -103,6 +119,12 @@ impl Options {
     /// The effective objects layout.
     pub fn objects_layout(&self) -> ObjectsLayout {
         ObjectsLayout::parse(self.objects_layout.as_deref())
+    }
+
+    /// Whether the top-level objects group is flagged collapsed (the
+    /// `objectsCollapsed` option; unset → [`DEFAULT_OBJECTS_COLLAPSED`]).
+    pub fn objects_collapsed(&self) -> bool {
+        self.objects_collapsed.unwrap_or(DEFAULT_OBJECTS_COLLAPSED)
     }
 }
 
@@ -411,5 +433,27 @@ mod tests {
         assert_eq!(json.objects_group(), "Types");
         assert_eq!(ObjectsLayout::PerArea.as_str(), "per-area");
         assert_eq!(ObjectsLayout::parse(Some("grouped")).as_str(), "grouped");
+    }
+
+    /// `objectsCollapsed` defaults to `true`; only an explicit `false` turns
+    /// the flag off — like the JS twin's `objectsCollapsedOf`.
+    #[test]
+    fn objects_collapsed_option_defaults_to_true() {
+        assert_eq!(
+            Options::default().objects_collapsed(),
+            DEFAULT_OBJECTS_COLLAPSED
+        );
+        assert!(Options::default().objects_collapsed());
+        let off = Options {
+            objects_collapsed: Some(false),
+            ..Default::default()
+        };
+        assert!(!off.objects_collapsed());
+        let json: Options = serde_json::from_str(r#"{"objectsCollapsed":false}"#).unwrap();
+        assert!(!json.objects_collapsed());
+        let json: Options = serde_json::from_str(r#"{"objectsCollapsed":true}"#).unwrap();
+        assert!(json.objects_collapsed());
+        let json: Options = serde_json::from_str(r#"{"objectsLayout":"per-area"}"#).unwrap();
+        assert!(json.objects_collapsed());
     }
 }

@@ -1,7 +1,8 @@
 // Golden generator for the FUSED uniform endpoint (S6+ W3 tail).
 // Replicates the slice of plugin-docs' uniformResolver that the Rust
 // `apitoolchain_openapi::fused::uniform_oas_pages` fuses: JS conversion →
-// x-docs sidebar plugin → pluginNavigation → per-ref {pagePath, region}.
+// x-docs sidebar plugin → pluginNavigation → the navigation's finishing pass
+// (the objects group's `collapsed` flag) → per-ref {pagePath, region}.
 // Regen is explicit only (oracle-freeze rule):
 //   XYD_NATIVE=0 bun scripts/build-fused-goldens.ts
 // XYD_NATIVE=0 is REQUIRED for the halves that still have a JS impl: the
@@ -24,7 +25,7 @@ if (process.env.XYD_NATIVE !== "0") {
 // JS impls: the openapi shim's loader sees XYD_NATIVE=0 → the frozen converter
 // and the JS x-docs plugin. (It imports @xyd-js/uniform's DIST, a separate
 // module instance from the src imported below.)
-const { deferencedOpenAPI, oapSchemaToReferences, uniformPluginXDocsSidebar } = await import("../src/index.ts");
+const { deferencedOpenAPI, oapSchemaToReferences, uniformPluginXDocsSidebar, collapseObjectsGroup } = await import("../src/index.ts");
 // Native: pluginNavigation's only implementation. The uniform package's loader
 // (`src/native.ts`) is first imported by `src/index.ts` and evaluates once, so
 // the flag is lifted before that import — it then affects this half alone.
@@ -76,9 +77,13 @@ for (const { name, options } of cases) {
         return { pagePath: byCanonical, region };
     });
 
+    // The finishing pass over the generated navigation (the JS twin of the
+    // Rust `navigation::collapse_objects_group`, run by the fused endpoint).
+    const sidebar = collapseObjectsGroup(res.out.sidebar, doc, res.references, URL_PREFIX, options);
+
     const golden = {
         urlPrefix: URL_PREFIX,
-        sidebar: res.out.sidebar,
+        sidebar,
         pageFrontMatter: res.out.pageFrontMatter,
         pages,
     };

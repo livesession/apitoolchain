@@ -5,7 +5,8 @@
 Both halves of the converter (the Rust core in `crates/apitoolchain_openapi`
 and the JS impl in `src/impl-js`) change together; the fixtures `9.schema-links`,
 `5.xdocs.objects` (the per-area objects layout) and `11.objects-layouts` (the
-grouped default) pin the new output on both sides.
+grouped default) pin the new output on both sides, and the fused goldens of
+every grouped-layout case pin the `collapsed` flag.
 
 ### Added
 
@@ -62,6 +63,22 @@ grouped default) pin the new output on both sides.
   `Options::objects_group` / `FusedInput::objects_group`, JSON
   `objectsGroup`): renames the component-schema pages' group — the top-level
   group and the per-area sub-group alike; default `"Objects"`.
+- **The Objects group collapsible, collapsed by default — the
+  `objectsCollapsed` option** (`uniformOasOptions.objectsCollapsed`, the Rust
+  `Options::objects_collapsed` / `FusedInput::objects_collapsed`, JSON
+  `objectsCollapsed`; default `true`). Under the grouped layout the generated
+  navigation's TOP-LEVEL objects group entry carries `"collapsed": true` —
+  `{ "group": "Objects", "collapsed": true, "pages": [...] }` — so a renderer
+  can draw a toggle on the group header and start the group folded, like the
+  area sub-groups inside it. The flag sits on that one entry only: never on an
+  operation group or a sub-group, never under `per-area` or with an
+  `x-docs.sidebar`, and only when the group holds object pages alone — an
+  operation tagged with the objects group's name shares the group and keeps it
+  open. `objectsCollapsed: false` leaves the group open. The flag is set by the
+  navigation's finishing pass, run by the fused endpoint after
+  pluginNavigation (the Rust `navigation::collapse_objects_group`; the JS twin
+  `collapseObjectsGroup(sidebar, doc, references, urlPrefix, options)`, also
+  exported, builds the fused goldens).
 
 ### Changed
 
@@ -74,6 +91,10 @@ grouped default) pin the new output on both sides.
 - The object pages sort after every operation, whatever the tags — an
   operation tagged with the objects group's name used to pull them up among
   the operations; among themselves they keep the schema order.
+- **The `Objects` group starts collapsed.** The generated navigation's
+  top-level objects group entry carries `"collapsed": true` out of the box
+  (`objectsCollapsed`, above); the fused goldens of the grouped-layout cases
+  carry the key. A renderer that ignores the key shows the group as before.
 
 ### Fixed
 

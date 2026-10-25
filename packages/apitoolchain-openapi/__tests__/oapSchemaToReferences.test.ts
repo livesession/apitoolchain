@@ -88,6 +88,14 @@ const tests: {
         plugins: [
             uniformPluginXDocsSidebar
         ]
+    },
+    {
+        name: "12.page-paths",
+        description: "explicit page paths (x-docs.path) and the title-derived canonicals (operationPaths: title); the links follow",
+        plugins: [
+            uniformPluginXDocsSidebar
+        ],
+        options: {operationPaths: "title"}
     }
 ]
 

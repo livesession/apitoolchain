@@ -40,7 +40,8 @@ const URL_PREFIX = "docs/api"; // the fixed test prefix the Rust test mirrors
 // A case's `options` are the converter options the Rust test passes through
 // `FusedInput` for it (tests/fused.rs). 5.xdocs.objects pins the per-area
 // objects layout explicitly — the default is `grouped`, which 11.objects-layouts
-// pins.
+// pins; 12.page-paths pins the title-derived page paths (the default,
+// `operation-id`, is what every other case runs under).
 const cases: { name: string; options?: uniformOasOptions }[] = [
     { name: "1.basic" },
     { name: "2.more" },
@@ -49,6 +50,7 @@ const cases: { name: string; options?: uniformOasOptions }[] = [
     { name: "5.xdocs.objects", options: { objectsLayout: "per-area" } },
     { name: "8.enums" },
     { name: "11.objects-layouts" },
+    { name: "12.page-paths", options: { operationPaths: "title" } },
 ];
 
 for (const { name, options } of cases) {

@@ -193,7 +193,7 @@ mod tests {
             .collect();
         let (processed, stamps) = DocCtx::preprocess(doc);
         let ctx = DocCtx::with_merged_stamps(&processed, &stamps);
-        apply_xdocs_sidebar_with_options(&ctx, &processed, &mut refs, options);
+        apply_xdocs_sidebar_with_options(&ctx, &processed, &mut refs, options).expect("x-docs");
         let settings = json!({ "engine": { "uniform": { "store": store } } });
         let mut sidebar = plugin_navigation(&settings, URL_PREFIX, &refs)
             .expect("navigation")

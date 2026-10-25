@@ -1,0 +1,262 @@
+# Page paths outside sidebar mode: the explicit `x-docs.path` and the canonicals
+# `operationPaths: title` derives. The matrix converts it with
+# `operationPaths: "title"` (the default, `operation-id`, leaves every canonical
+# as the other fixtures pin it):
+# - `x-docs.path` names a page's path outright: `deleteWidget` → `widgets/remove`
+#   (instead of the derived `widgets/delete`), `Assembly` → `assemblies/object`
+#   (instead of `assemblies/assembly`); the sidebar grouping is untouched
+# - every other operation derives `<group>/[<sub-resource>/]<verb>` from its
+#   group and a verb-first summary: "Create widget" → `widgets/create`, "List
+#   widgets" → `widgets/list`, "Retrieve widget" → `widgets/retrieve`, "List
+#   widget parts" → `widgets/parts/list` (the group's noun dropped), "Retrieve
+#   part snapshot" → `widgets/part-snapshot/retrieve`, "Lists assemblies" →
+#   `assemblies/list` (a third-person verb)
+# - a summary that is not verb-first ("Widget archival") and an operation without
+#   a group ("Retrieve health", untagged) keep the operationId
+# - a component page with a group → `<group>/<label>`, the label its constant
+#   `object` value verbatim (`widgets/widget`, `widgets/widget_part`), else its
+#   kebab-cased name (`widgets/part-snapshot`); without a group → `objects/color`
+# - every link follows the final paths: `Widget.parts` → `widgets/widget_part`,
+#   `Widget.color` → `objects/color`, `Assembly.widgets` and the response roots →
+#   `widgets/widget`, `listAssemblies` → `assemblies/object`; `WidgetList` is
+#   hidden (no page, no canonical on the links to it)
+openapi: 3.0.3
+info:
+  title: Widgets API
+  version: 1.0.0
+servers:
+  - url: https://api.example.com/v1
+tags:
+  - name: widgets
+  - name: assemblies
+paths:
+  /widgets:
+    get:
+      operationId: listWidgets
+      summary: List widgets
+      tags: [widgets]
+      responses:
+        '200':
+          description: A page of widgets.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WidgetList'
+    post:
+      operationId: createWidget
+      summary: Create widget
+      tags: [widgets]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Widget'
+      responses:
+        '201':
+          description: The widget that was created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Widget'
+  /widgets/{widgetId}:
+    get:
+      operationId: getWidget
+      summary: Retrieve widget
+      tags: [widgets]
+      parameters:
+        - name: widgetId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The widget.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Widget'
+    delete:
+      operationId: deleteWidget
+      summary: Delete widget
+      tags: [widgets]
+      x-docs:
+        path: widgets/remove
+      parameters:
+        - name: widgetId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: The widget was deleted.
+  /widgets/{widgetId}/parts:
+    get:
+      operationId: listWidgetParts
+      summary: List widget parts
+      tags: [widgets]
+      parameters:
+        - name: widgetId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The parts of the widget.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/WidgetPart'
+  /widgets/{widgetId}/parts/{partId}/snapshot:
+    get:
+      operationId: getPartSnapshot
+      summary: Retrieve part snapshot
+      tags: [widgets]
+      parameters:
+        - name: widgetId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: partId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The latest snapshot of the part.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PartSnapshot'
+  /widgets/{widgetId}/archive:
+    post:
+      operationId: archiveWidget
+      summary: Widget archival
+      tags: [widgets]
+      parameters:
+        - name: widgetId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The archived widget.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Widget'
+  /assemblies:
+    get:
+      operationId: listAssemblies
+      summary: Lists assemblies
+      tags: [assemblies]
+      responses:
+        '200':
+          description: Every assembly.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Assembly'
+  /health:
+    get:
+      operationId: health
+      summary: Retrieve health
+      responses:
+        '200':
+          description: The service is up.
+components:
+  schemas:
+    Widget:
+      x-docs:
+        name: The widget object
+        group: widgets
+      type: object
+      description: A widget.
+      required: [object, id]
+      properties:
+        object:
+          type: string
+          enum: [widget]
+          description: The object type, always `widget`.
+        id:
+          type: string
+          description: Unique identifier for the widget.
+        color:
+          $ref: '#/components/schemas/Color'
+        parts:
+          type: array
+          description: The parts the widget is made of.
+          items:
+            $ref: '#/components/schemas/WidgetPart'
+    WidgetPart:
+      x-docs:
+        name: The widget part object
+        group: widgets
+      type: object
+      description: A part of a widget.
+      required: [object, id]
+      properties:
+        object:
+          type: string
+          enum: [widget_part]
+          description: The object type, always `widget_part`.
+        id:
+          type: string
+          description: Unique identifier for the part.
+        snapshot:
+          $ref: '#/components/schemas/PartSnapshot'
+    PartSnapshot:
+      x-docs:
+        group: widgets
+      type: object
+      description: A snapshot of a part's state.
+      properties:
+        taken_at:
+          type: string
+          format: date-time
+    Color:
+      type: string
+      description: A color.
+      enum: [red, green, blue]
+    Assembly:
+      x-docs:
+        name: The assembly object
+        group: assemblies
+        path: assemblies/object
+      type: object
+      description: An assembly of widgets.
+      required: [object, id]
+      properties:
+        object:
+          type: string
+          enum: [assembly]
+          description: The object type, always `assembly`.
+        id:
+          type: string
+        widgets:
+          type: array
+          items:
+            $ref: '#/components/schemas/Widget'
+    WidgetList:
+      x-docs:
+        hidden: true
+      type: object
+      required: [object, data]
+      properties:
+        object:
+          type: string
+          enum: [list]
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Widget'

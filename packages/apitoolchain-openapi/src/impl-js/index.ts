@@ -18,6 +18,8 @@ export * from "./xdocs/types"
 
 export {getXDocs} from "./xdocs"
 
+export * from "./xdocs/pagePaths"
+
 export {uniformPluginXDocsSidebar} from "./xdocs/pluginSidebar"
 
 export {collapseObjectsGroup, COLLAPSED_KEY} from "./xdocs/collapseObjectsGroup"

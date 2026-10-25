@@ -8,10 +8,15 @@ import uniform, {DefinitionProperty, Reference} from "@xyd-js/uniform";
 // installed (the fixture matrix covers the dispatching entry point).
 import {
     collapseObjectsGroup,
+    componentPagePath,
     deferencedOpenAPI,
+    explicitPagePath,
+    kebabCase,
     oapSchemaToReferences,
     objectsCollapsedOf,
+    operationPagePath,
     uniformPluginXDocsSidebar,
+    verbOf,
     type NavigationGroupEntry,
 } from "../src/impl-js";
 
@@ -518,6 +523,206 @@ describe("docs metadata (JS impl)", () => {
         // Tag is not listed: no page, so no canonical.
         const tags = row(page("/components/schemas/Widget")[0].definitions[0].properties, "tags");
         expect(tags.symbolDef).toEqual({id: "#/components/schemas/Tag", label: "Tag"});
+    });
+
+    it("x-docs.path names a page's path; the links follow, the grouping does not change", () => {
+        const Tag: any = {type: "object", properties: {name: {type: "string"}}};
+        const Widget: any = {
+            "x-docs": {name: "The widget object", group: "widgets", path: "widgets/object"},
+            type: "object",
+            properties: {id: {type: "string"}, tags: {type: "array", items: Tag}},
+        };
+        const WidgetList: any = {type: "object", properties: {data: {type: "array", items: Widget}}};
+        const doc: any = {
+            openapi: "3.0.3",
+            info: {title: "Widgets", version: "1.0.0"},
+            tags: [{name: "widgets"}],
+            paths: {
+                "/widgets": {
+                    get: {
+                        operationId: "listWidgets", summary: "List widgets", tags: ["widgets"],
+                        "x-docs": {path: "/widgets/list/"},
+                        responses: {"200": {description: "ok", content: {"application/json": {schema: WidgetList}}}},
+                    },
+                },
+            },
+            components: {schemas: {Widget, WidgetList, Tag}},
+        };
+        const refs = uniform(oapSchemaToReferences(doc), {plugins: [uniformPluginXDocsSidebar]}).references;
+        // The grouped layout's order: the pages without a resource group, then
+        // the `widgets` sub-group — the path does not move the page.
+        expect(refs.map(r => r.canonical)).toEqual(["widgets/list", "objects/WidgetList", "objects/Tag", "widgets/object"]);
+        expect(byCanonical(refs, "widgets/list").context?.group).toEqual(["widgets"]);
+        expect(byCanonical(refs, "widgets/object").context?.group).toEqual(["Objects", "widgets"]);
+        // listWidgets → data: array of Widget follows the explicit path; so does
+        // the page's own link.
+        const data = row(refs[0].definitions[0].variants![0].properties, "data");
+        expect(data.symbolDef?.canonical).toBe("widgets/object");
+        expect(data.ofProperty?.symbolDef?.canonical).toBe("widgets/object");
+        expect(byCanonical(refs, "widgets/object").definitions[0].symbolDef?.canonical).toBe("widgets/object");
+        // Regions mode reads the same path from the document.
+        const page = uniform(oapSchemaToReferences(doc, {regions: ["GET /widgets"]}), {plugins: [uniformPluginXDocsSidebar]}).references;
+        expect(page[0].canonical).toBe("widgets/list");
+        expect(row(page[0].definitions[0].variants![0].properties, "data").symbolDef?.canonical).toBe("widgets/object");
+    });
+
+    it("two pages at one path are an error naming both", () => {
+        const operation = (operationId: string, summary: string, xDocs?: any) => ({
+            operationId, summary, tags: ["widgets"], ...(xDocs ? {"x-docs": xDocs} : {}),
+            responses: {"200": {description: "ok"}},
+        });
+        const doc = (a: any, b: any): any => ({
+            openapi: "3.0.3",
+            info: {title: "Widgets", version: "1.0.0"},
+            paths: {"/widgets": {get: a}, "/widgets/all": {get: b}},
+            components: {schemas: {}},
+        });
+        const run = (d: any, options?: any) =>
+            () => uniform(oapSchemaToReferences(d, options), {plugins: [uniformPluginXDocsSidebar]});
+
+        // Two equal `x-docs.path`s.
+        const explicit = doc(
+            operation("listWidgets", "List widgets", {path: "widgets/list"}),
+            operation("listAllWidgets", "List all widgets", {path: "widgets/list"}),
+        );
+        expect(run(explicit)).toThrow(/two pages share the path "widgets\/list": GET \/widgets \("List widgets"\) and GET \/widgets\/all \("List all widgets"\)/);
+
+        // Two summaries that derive the same canonical under `title`.
+        const derived = doc(operation("listWidgets", "List widgets"), operation("listAllWidgets", "List all widgets"));
+        expect(run(derived, {operationPaths: "title"})).toThrow(/"widgets\/list".*GET \/widgets\/all/);
+        // The default mode: distinct operationIds, no collision.
+        expect(run(derived)().references.map(r => r.canonical)).toEqual(["listWidgets", "listAllWidgets"]);
+        // An `x-docs.path` on one of them resolves it.
+        const resolved = doc(operation("listWidgets", "List widgets"), operation("listAllWidgets", "List all widgets", {path: "widgets/list-all"}));
+        expect(run(resolved, {operationPaths: "title"})().references.map(r => r.canonical)).toEqual(["widgets/list", "widgets/list-all"]);
+    });
+
+    it("operationPaths: title derives the canonicals from the group and the verb-first summary", async () => {
+        const doc = await deferencedOpenAPI(fixture("12.page-paths"));
+        const refs = uniform(oapSchemaToReferences(doc!, {operationPaths: "title"}), {plugins: [uniformPluginXDocsSidebar]}).references;
+        expect(refs.map(r => r.canonical)).toEqual([
+            "widgets/list",
+            "widgets/create",
+            "widgets/retrieve",
+            "widgets/remove",                   // x-docs.path wins over the derived `widgets/delete`
+            "widgets/parts/list",               // the group's noun dropped
+            "widgets/part-snapshot/retrieve",
+            "archiveWidget",                    // "Widget archival" is not verb-first
+            "assemblies/list",                  // "Lists assemblies"
+            "health",                           // no group
+            "objects/color",                    // no group, no `object` constant: the kebab-cased name
+            "widgets/widget",                   // the constant `object` value, verbatim
+            "widgets/widget_part",
+            "widgets/part-snapshot",
+            "assemblies/object",                // x-docs.path
+        ]);
+        // The grouping is the layout's, whatever the paths.
+        expect(byCanonical(refs, "widgets/widget").context?.group).toEqual(["Objects", "widgets"]);
+        expect(byCanonical(refs, "assemblies/object").context?.group).toEqual(["Objects", "assemblies"]);
+        expect(byCanonical(refs, "objects/color").context?.group).toEqual(["Objects"]);
+        // The links follow the final paths.
+        const widget = byCanonical(refs, "widgets/widget").definitions[0];
+        expect(widget.symbolDef?.canonical).toBe("widgets/widget");
+        expect(row(widget.properties, "parts").symbolDef?.canonical).toBe("widgets/widget_part");
+        expect(row(widget.properties, "parts").ofProperty?.symbolDef?.canonical).toBe("widgets/widget_part");
+        expect(row(widget.properties, "color").symbolDef?.canonical).toBe("objects/color");
+        const created = byCanonical(refs, "widgets/create").definitions.find(d => d.title === "Response")!.variants![0];
+        expect(created.symbolDef?.canonical).toBe("widgets/widget");
+        const assemblies = byCanonical(refs, "assemblies/list").definitions.find(d => d.title === "Response")!.variants![0];
+        expect(assemblies.symbolDef?.canonical).toBe("assemblies/object");
+        // The hidden envelope has no page: the list root keeps its id, loses the canonical.
+        const list = byCanonical(refs, "widgets/list").definitions.find(d => d.title === "Response")!.variants![0];
+        expect(list.symbolDef).toEqual({id: "#/components/schemas/WidgetList", label: "list"});
+        // Regions mode: the page's own canonical and its links, from the document.
+        const page = (region: string) =>
+            uniform(oapSchemaToReferences(doc!, {regions: [region], operationPaths: "title"}), {plugins: [uniformPluginXDocsSidebar]}).references;
+        expect(page("GET /widgets/{widgetId}/parts")[0].canonical).toBe("widgets/parts/list");
+        const parts = page("/components/schemas/Widget")[0];
+        expect(parts.canonical).toBe("widgets/widget");
+        expect(row(parts.definitions[0].properties, "parts").symbolDef?.canonical).toBe("widgets/widget_part");
+        // The default mode leaves every canonical alone.
+        const plain = uniform(oapSchemaToReferences(doc!), {plugins: [uniformPluginXDocsSidebar]}).references;
+        expect(plain.map(r => r.canonical)).toEqual([
+            "listWidgets", "createWidget", "getWidget", "widgets/remove", "listWidgetParts", "getPartSnapshot",
+            "archiveWidget", "listAssemblies", "health",
+            "objects/Color", "objects/Widget", "objects/WidgetPart", "objects/PartSnapshot", "assemblies/object",
+        ]);
+    });
+
+    it("the derivation grammar", () => {
+        const table: [string, string, string | undefined][] = [
+            ["Create widget", "widgets", "widgets/create"],
+            ["Create a widget", "widgets", "widgets/create"],
+            ["List widgets", "widgets", "widgets/list"],
+            ["Lists all widgets", "widgets", "widgets/list"],
+            ["Retrieve widget", "widgets", "widgets/retrieve"],
+            ["List widget parts", "widgets", "widgets/parts/list"],
+            ["Retrieve part snapshot", "widgets", "widgets/part-snapshot/retrieve"],
+            ["Delete a widget.", "widgets", "widgets/delete"],
+            ["Searches the widget's parts", "widgets", "widgets/parts/search"],
+            ["List parts of a widget", "widgets", "widgets/parts/list"],
+            ["Retrieve company", "companies", "companies/retrieve"],
+            ["List company members", "companies", "companies/members/list"],
+            ["Create widget part", "Widget parts", "widget-parts/create"],
+            ["Retrieve statistics", "company statistics", "company-statistics/retrieve"],
+            ["Widget archival", "widgets", undefined],
+            ["Returns the widget", "widgets", undefined],
+            ["", "widgets", undefined],
+            ["Retrieve health", "", undefined],
+        ];
+        for (const [summary, group, expected] of table) {
+            expect(operationPagePath(summary, group), `${summary} in ${group}`).toBe(expected);
+        }
+        expect(componentPagePath("widgets", "widget")).toBe("widgets/widget");
+        expect(componentPagePath("widgets", "widget_part")).toBe("widgets/widget_part");
+        expect(componentPagePath("Widget parts", "part")).toBe("widget-parts/part");
+        expect(componentPagePath(undefined, "color")).toBe("objects/color");
+        expect(componentPagePath("", "color")).toBe("objects/color");
+        expect(explicitPagePath(" /widgets//parts/list/ ")).toBe("widgets/parts/list");
+        expect(explicitPagePath("/")).toBeUndefined();
+        expect(explicitPagePath(42)).toBeUndefined();
+        expect(kebabCase("WidgetPart")).toBe("widget-part");
+        expect(kebabCase("APIKey")).toBe("api-key");
+        expect(kebabCase("Widget_Part")).toBe("widget-part");
+        expect(kebabCase("Color")).toBe("color");
+        expect(verbOf("Lists")).toBe("list");
+        expect(verbOf("Searches")).toBe("search");
+        expect(verbOf("Widget")).toBeUndefined();
+    });
+
+    it("under an x-docs.sidebar an entry's path wins over x-docs.path; an entry without one keeps it", () => {
+        const Widget: any = {
+            "x-docs": {name: "The widget object", path: "widgets/object"},
+            type: "object",
+            properties: {id: {type: "string"}},
+        };
+        const doc: any = {
+            openapi: "3.0.3",
+            info: {title: "Widgets", version: "1.0.0"},
+            paths: {
+                "/widgets": {
+                    get: {
+                        operationId: "listWidgets", summary: "List widgets", "x-docs": {path: "widgets/list"},
+                        responses: {"200": {description: "ok", content: {"application/json": {schema: Widget}}}},
+                    },
+                },
+            },
+            components: {schemas: {Widget}},
+            "x-docs": {
+                sidebar: [{
+                    group: "Reference",
+                    pages: [
+                        {type: "endpoint", key: "listWidgets"},
+                        {type: "object", key: "Widget", path: "the-widget"},
+                    ],
+                }],
+            },
+        };
+        const refs = uniform(oapSchemaToReferences(doc), {plugins: [uniformPluginXDocsSidebar]}).references;
+        expect(refs[0].canonical).toBe("widgets/list");
+        expect(refs[1].canonical).toMatch(/the-widget$/);
+        expect(refs[1].canonical).not.toBe("widgets/object");
+        expect(refs[0].definitions[0].variants![0].symbolDef?.canonical).toBe(refs[1].canonical);
     });
 
     it("an x-docs.sidebar that lists a hidden page still shows it", () => {

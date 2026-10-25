@@ -7,14 +7,16 @@
 //! `.hidden` on component schemas, `hidden` on an operation) under the
 //! per-area objects layout; 11.objects-layouts the default, grouped layout
 //! and its ordering rule — and, with every grouped-layout golden, the
-//! `collapsed: true` flag on the top-level objects group. A case's converter
-//! options are the ones scripts/build-fused-goldens.ts lists for it.
+//! `collapsed: true` flag on the top-level objects group; 12.page-paths the
+//! explicit `x-docs.path` and the title-derived canonicals (`operationPaths:
+//! title`), the links and the sidebar following the final paths. A case's
+//! converter options are the ones scripts/build-fused-goldens.ts lists for it.
 
 use apitoolchain_openapi::fused::{uniform_oas_pages, FusedInput};
 use apitoolchain_uniform::canon;
 use serde_json::{json, Value};
 
-fn run_case(name: &str, objects_layout: Option<&str>) {
+fn run_case(name: &str, objects_layout: Option<&str>, operation_paths: Option<&str>) {
     let fixtures =
         apitoolchain_parity::fixtures_dir(env!("CARGO_MANIFEST_DIR"), "apitoolchain-openapi");
     let case = fixtures.join(name);
@@ -27,6 +29,7 @@ fn run_case(name: &str, objects_layout: Option<&str>) {
         source: case.join("input.yaml").to_string_lossy().to_string(),
         url_prefix: url_prefix.to_string(),
         objects_layout: objects_layout.map(String::from),
+        operation_paths: operation_paths.map(String::from),
         ..Default::default()
     })
     .unwrap_or_else(|e| panic!("{name}: fused failed: {e}"));
@@ -60,12 +63,15 @@ fn run_case(name: &str, objects_layout: Option<&str>) {
 
 macro_rules! fused_case {
     ($test:ident, $name:literal) => {
-        fused_case!($test, $name, None);
+        fused_case!($test, $name, None, None);
     };
     ($test:ident, $name:literal, $objects_layout:expr) => {
+        fused_case!($test, $name, $objects_layout, None);
+    };
+    ($test:ident, $name:literal, $objects_layout:expr, $operation_paths:expr) => {
         #[test]
         fn $test() {
-            run_case($name, $objects_layout);
+            run_case($name, $objects_layout, $operation_paths);
         }
     };
 }
@@ -77,6 +83,7 @@ fused_case!(xdocs_sidebar, "5.xdocs.sidebar");
 fused_case!(enums, "8.enums");
 fused_case!(xdocs_objects, "5.xdocs.objects", Some("per-area"));
 fused_case!(objects_layouts, "11.objects-layouts");
+fused_case!(page_paths, "12.page-paths", None, Some("title"));
 
 /// The group names of a sidebar level, nested groups as `(name, pages)`.
 fn group_names(level: &[Value]) -> Vec<String> {

@@ -1,4 +1,4 @@
-import type {ObjectsLayout} from "./types";
+import type {ObjectsLayout, OperationPaths} from "./types";
 
 export const SUPPORTED_HTTP_METHODS: string[] = [
     'get',
@@ -34,6 +34,16 @@ export const DEFAULT_OBJECTS_LAYOUT: ObjectsLayout = "grouped"
  *  `"per-area"` is the default. */
 export function objectsLayoutOf(options: { objectsLayout?: string } | undefined): ObjectsLayout {
     return options?.objectsLayout === "per-area" ? "per-area" : DEFAULT_OBJECTS_LAYOUT
+}
+
+/** The default `uniformOasOptions.operationPaths`: the converter's canonical
+ *  (the `operationId`, `objects/<Name>`). */
+export const DEFAULT_OPERATION_PATHS: OperationPaths = "operation-id"
+
+/** The effective page-path mode for a set of options — anything but
+ *  `"title"` is the default. */
+export function operationPathsOf(options: { operationPaths?: string } | undefined): OperationPaths {
+    return options?.operationPaths === "title" ? "title" : DEFAULT_OPERATION_PATHS
 }
 
 /** The default `uniformOasOptions.objectsCollapsed`: the generated navigation's

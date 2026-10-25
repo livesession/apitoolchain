@@ -5,11 +5,13 @@
 //! covered by the through-shim vitest tier. Component-schema examples ARE
 //! Rust-generated and stay in the comparison.
 //!
-//! Skip-list (covered by tier 2): fixtures whose oracle embeds JS-closure
-//! plugin post-processing — -2.complex.openai (uniformOpenAIMeta),
-//! 5.xdocs.sidebar, 5.xdocs.objects and 11.objects-layouts
-//! (uniformPluginXDocsSidebar; all three are also covered natively by
-//! tests/fused.rs, which runs the ported plugin).
+//! Skip-list for the plain conversion: fixtures whose oracle embeds
+//! JS-closure plugin post-processing — -2.complex.openai (uniformOpenAIMeta)
+//! and the uniformPluginXDocsSidebar fixtures 5.xdocs.sidebar,
+//! 5.xdocs.objects, 11.objects-layouts and 12.page-paths. The x-docs ones
+//! run below THROUGH the ported plugin (`xdocs_case!`, the whole reference
+//! list against the oracle) and natively through tests/fused.rs (the
+//! sidebar and the page map).
 //!
 //! -2.complex.openai additionally carries a KNOWN oracle divergence: the JS
 //! impl deep-copies circular schemas mid-construction (partial snapshots;
@@ -17,7 +19,8 @@
 //! resolves them to their final shape. The full openai docs site still builds
 //! byte-identical Rust-vs-JS; the oracle is regenerated from Rust at reap.
 
-use apitoolchain_openapi::oap_schema_to_references_from_file;
+use apitoolchain_openapi::xdocs::apply_xdocs_sidebar_with_options;
+use apitoolchain_openapi::{oap_schema_to_references_from_file, read_spec, DocCtx, Options};
 use apitoolchain_uniform::canon;
 use serde_json::Value;
 
@@ -36,6 +39,18 @@ fn strip_endpoint_examples(refs: &mut Value) {
 }
 
 fn run_case(name: &str) {
+    compare(name, None);
+}
+
+/// The plugin fixtures: convert with `options`, run the ported x-docs pass
+/// the way the fused endpoint does, and compare the whole reference list —
+/// canonicals, groups, titles, the relinked `symbolDef`s — with the oracle
+/// the JS plugin produced.
+fn run_xdocs_case(name: &str, options: Options) {
+    compare(name, Some(options));
+}
+
+fn compare(name: &str, xdocs: Option<Options>) {
     let fixtures =
         apitoolchain_parity::fixtures_dir(env!("CARGO_MANIFEST_DIR"), "apitoolchain-openapi");
     let case = fixtures.join(name);
@@ -45,9 +60,18 @@ fn run_case(name: &str) {
         .find(|p| p.exists())
         .unwrap_or_else(|| panic!("{name}: no input.(yaml|json)"));
 
-    let refs = oap_schema_to_references_from_file(input.to_str().unwrap(), None)
+    let refs = oap_schema_to_references_from_file(input.to_str().unwrap(), xdocs.clone())
         .unwrap_or_else(|e| panic!("{name}: convert failed: {e}"));
     let mut actual = serde_json::to_value(&refs).expect("serialize");
+    if let Some(options) = xdocs {
+        let raw = read_spec(input.to_str().unwrap()).unwrap();
+        let (doc, stamps) = DocCtx::preprocess(&raw);
+        let ctx = DocCtx::with_merged_stamps(&doc, &stamps);
+        let mut list = actual.as_array().cloned().unwrap_or_default();
+        apply_xdocs_sidebar_with_options(&ctx, &doc, &mut list, &options)
+            .unwrap_or_else(|e| panic!("{name}: x-docs pass failed: {e}"));
+        actual = Value::Array(list);
+    }
     strip_endpoint_examples(&mut actual);
 
     let mut oracle = apitoolchain_parity::read_oracle(&case);
@@ -108,3 +132,30 @@ parity_case!(examples_case, "7.examples");
 parity_case!(enums, "8.enums");
 parity_case!(schema_links, "9.schema-links");
 parity_case!(schema_labels, "10.schema-labels");
+
+macro_rules! xdocs_case {
+    ($test:ident, $name:literal, $options:expr) => {
+        #[test]
+        fn $test() {
+            run_xdocs_case($name, $options);
+        }
+    };
+}
+
+xdocs_case!(
+    xdocs_objects,
+    "5.xdocs.objects",
+    Options {
+        objects_layout: Some("per-area".into()),
+        ..Default::default()
+    }
+);
+xdocs_case!(objects_layouts, "11.objects-layouts", Options::default());
+xdocs_case!(
+    page_paths,
+    "12.page-paths",
+    Options {
+        operation_paths: Some("title".into()),
+        ..Default::default()
+    }
+);

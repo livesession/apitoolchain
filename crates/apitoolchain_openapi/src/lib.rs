@@ -10,6 +10,7 @@ pub mod core;
 pub mod fused;
 mod links;
 pub mod navigation;
+pub mod page_paths;
 mod paths;
 mod util;
 pub mod xdocs;
@@ -77,6 +78,46 @@ impl ObjectsLayout {
 /// The default [`ObjectsLayout`].
 pub const DEFAULT_OBJECTS_LAYOUT: ObjectsLayout = ObjectsLayout::Grouped;
 
+/// How a page without an explicit `x-docs.path` gets its canonical —
+/// [`Options::operation_paths`] (JSON `operationPaths`). Applied by the
+/// x-docs pass, like the objects layout; see [`crate::page_paths`].
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum OperationPaths {
+    /// `"operation-id"` (the default): the converter's canonical — the
+    /// `operationId` (else a slug of the summary, else `METHOD/path`) for an
+    /// operation, `objects/<Name>` for a component schema.
+    #[default]
+    OperationId,
+    /// `"title"`: an operation derives `<group>/[<sub-resource>/]<verb>` from
+    /// its group and a verb-first summary ("Create widget" in `widgets` →
+    /// `widgets/create`), falling back to the default when the summary is not
+    /// verb-first; a component page derives `<group>/<label>` (the label its
+    /// constant `object` value verbatim, else its name in kebab-case), or
+    /// `objects/<label>` without a group.
+    Title,
+}
+
+impl OperationPaths {
+    /// The JSON name of the mode.
+    pub fn as_str(self) -> &'static str {
+        match self {
+            OperationPaths::OperationId => "operation-id",
+            OperationPaths::Title => "title",
+        }
+    }
+
+    /// The mode a JSON name selects — anything but `"title"` is the default,
+    /// as in the JS twin.
+    pub fn parse(name: Option<&str>) -> Self {
+        match name {
+            Some("title") => OperationPaths::Title,
+            _ => OperationPaths::OperationId,
+        }
+    }
+}
+
+/// The default [`OperationPaths`].
+pub const DEFAULT_OPERATION_PATHS: OperationPaths = OperationPaths::OperationId;
 /// The default of [`Options::objects_collapsed`]: under the grouped layout
 /// the top-level objects group of the generated navigation is flagged
 /// `collapsed: true`.
@@ -98,6 +139,10 @@ pub struct Options {
     /// `"grouped"` or `"per-area"`); anything else → [`DEFAULT_OBJECTS_LAYOUT`].
     /// See [`ObjectsLayout`].
     pub objects_layout: Option<String>,
+    /// How a page without an `x-docs.path` gets its canonical (JSON:
+    /// `operationPaths`, `"operation-id"` or `"title"`); anything else →
+    /// [`DEFAULT_OPERATION_PATHS`]. See [`OperationPaths`].
+    pub operation_paths: Option<String>,
     /// Whether the generated navigation's top-level objects group (the
     /// grouped layout's last group) is flagged `collapsed: true`, so a
     /// renderer draws a toggle on its header and starts it folded (JSON:
@@ -119,6 +164,11 @@ impl Options {
     /// The effective objects layout.
     pub fn objects_layout(&self) -> ObjectsLayout {
         ObjectsLayout::parse(self.objects_layout.as_deref())
+    }
+
+    /// The effective page-path mode.
+    pub fn operation_paths(&self) -> OperationPaths {
+        OperationPaths::parse(self.operation_paths.as_deref())
     }
 
     /// Whether the top-level objects group is flagged collapsed (the
@@ -433,6 +483,32 @@ mod tests {
         assert_eq!(json.objects_group(), "Types");
         assert_eq!(ObjectsLayout::PerArea.as_str(), "per-area");
         assert_eq!(ObjectsLayout::parse(Some("grouped")).as_str(), "grouped");
+    }
+
+    /// `operationPaths` parses leniently too: `"title"` or the default.
+    #[test]
+    fn operation_paths_option_parses_leniently() {
+        assert_eq!(
+            Options::default().operation_paths(),
+            OperationPaths::OperationId
+        );
+        let title = Options {
+            operation_paths: Some("title".into()),
+            ..Default::default()
+        };
+        assert_eq!(title.operation_paths(), OperationPaths::Title);
+        let unknown = Options {
+            operation_paths: Some("summary".into()),
+            ..Default::default()
+        };
+        assert_eq!(unknown.operation_paths(), DEFAULT_OPERATION_PATHS);
+        let json: Options = serde_json::from_str(r#"{"operationPaths":"title"}"#).unwrap();
+        assert_eq!(json.operation_paths(), OperationPaths::Title);
+        assert_eq!(OperationPaths::Title.as_str(), "title");
+        assert_eq!(
+            OperationPaths::parse(Some("operation-id")).as_str(),
+            "operation-id"
+        );
     }
 
     /// `objectsCollapsed` defaults to `true`; only an explicit `false` turns

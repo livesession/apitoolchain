@@ -6,10 +6,11 @@
 //! its per-schema half outside sidebar mode (`x-docs.name` / `.group` /
 //! `.hidden` on component schemas, `hidden` on an operation) under the
 //! per-area objects layout; 11.objects-layouts the default, grouped layout
-//! and its ordering rule; 12.page-paths the explicit `x-docs.path` and the
-//! title-derived canonicals (`operationPaths: title`), the links and the
-//! sidebar following the final paths. A case's converter options are the
-//! ones scripts/build-fused-goldens.ts lists for it.
+//! and its ordering rule — and, with every grouped-layout golden, the
+//! `collapsed: true` flag on the top-level objects group; 12.page-paths the
+//! explicit `x-docs.path` and the title-derived canonicals (`operationPaths:
+//! title`), the links and the sidebar following the final paths. A case's
+//! converter options are the ones scripts/build-fused-goldens.ts lists for it.
 
 use apitoolchain_openapi::fused::{uniform_oas_pages, FusedInput};
 use apitoolchain_uniform::canon;
@@ -103,6 +104,14 @@ fn pages_of<'a>(level: &'a [Value], group: &str) -> &'a [Value] {
 }
 
 fn xdocs_objects_sidebar(objects_group: Option<&str>, objects_layout: Option<&str>) -> Vec<Value> {
+    xdocs_objects_sidebar_with(objects_group, objects_layout, None)
+}
+
+fn xdocs_objects_sidebar_with(
+    objects_group: Option<&str>,
+    objects_layout: Option<&str>,
+    objects_collapsed: Option<bool>,
+) -> Vec<Value> {
     let fixtures =
         apitoolchain_parity::fixtures_dir(env!("CARGO_MANIFEST_DIR"), "apitoolchain-openapi");
     uniform_oas_pages(&FusedInput {
@@ -114,10 +123,19 @@ fn xdocs_objects_sidebar(objects_group: Option<&str>, objects_layout: Option<&st
         url_prefix: "docs/api".into(),
         objects_group: objects_group.map(String::from),
         objects_layout: objects_layout.map(String::from),
+        objects_collapsed,
         ..Default::default()
     })
     .expect("fused ok")
     .sidebar
+}
+
+/// How many entries of a sidebar (any depth) carry the `collapsed` key.
+fn collapsed_flags(sidebar: &[Value]) -> usize {
+    serde_json::to_string(sidebar)
+        .unwrap()
+        .matches("\"collapsed\"")
+        .count()
 }
 
 /// The default objects layout (`grouped`, `FusedInput::objects_layout`
@@ -125,7 +143,9 @@ fn xdocs_objects_sidebar(objects_group: Option<&str>, objects_layout: Option<&st
 /// without a resource group first and then one sub-group per resource group
 /// in the order the groups appear above it — `widgets` (which has operations)
 /// before `parts` (which has none). The sub-groups are nested groups, which a
-/// renderer folds by default.
+/// renderer folds by default; the top-level group itself carries
+/// `collapsed: true` (and is the ONLY entry that does), so a renderer can
+/// draw a toggle on its header.
 #[test]
 fn grouped_layout_is_one_objects_group_last() {
     let sidebar = xdocs_objects_sidebar(None, None);
@@ -140,18 +160,44 @@ fn grouped_layout_is_one_objects_group_last() {
     assert_eq!(objects[1]["pages"][0]["page"], "docs/api/objects/Widget");
     assert_eq!(objects[2]["group"], "parts");
     assert_eq!(objects[2]["pages"][0]["page"], "docs/api/objects/Part");
+    // The Objects group is collapsed by default — the flag sits on the
+    // top-level entry only: not on the operation group, not on the
+    // sub-groups.
+    assert_eq!(sidebar[1]["collapsed"], Value::Bool(true));
+    assert!(sidebar[0].get("collapsed").is_none(), "{:?}", sidebar[0]);
+    assert!(objects[1].get("collapsed").is_none());
+    assert!(objects[2].get("collapsed").is_none());
+    assert_eq!(collapsed_flags(&sidebar), 1);
     // The explicit name selects the same layout.
     assert_eq!(xdocs_objects_sidebar(None, Some("grouped")), sidebar);
+}
+
+/// `objectsCollapsed` (`FusedInput::objects_collapsed`): `false` leaves the
+/// Objects group open — the same navigation without the flag; `true` is the
+/// default spelled out.
+#[test]
+fn objects_collapsed_option_turns_the_flag_off() {
+    let default = xdocs_objects_sidebar(None, None);
+    let open = xdocs_objects_sidebar_with(None, None, Some(false));
+    assert_eq!(collapsed_flags(&open), 0, "{open:?}");
+    let mut default_without_flag = default.clone();
+    default_without_flag[1]
+        .as_object_mut()
+        .unwrap()
+        .remove("collapsed");
+    assert_eq!(open, default_without_flag);
+    assert_eq!(xdocs_objects_sidebar_with(None, None, Some(true)), default);
 }
 
 /// `objectsLayout: per-area`: each object page with a resource group is
 /// nested under that group's own "Objects" sub-group, AFTER the group's
 /// operations; the schema without one keeps the top-level "Objects" group,
-/// last.
+/// last. Nothing is flagged collapsed: the layout is unchanged.
 #[test]
 fn per_area_layout_nests_the_object_pages_inside_their_groups() {
     let sidebar = xdocs_objects_sidebar(None, Some("per-area"));
     assert_eq!(group_names(&sidebar), vec!["widgets", "parts", "Objects"]);
+    assert_eq!(collapsed_flags(&sidebar), 0, "{sidebar:?}");
     let widgets = pages_of(&sidebar, "widgets");
     assert_eq!(widgets.len(), 4, "{widgets:?}");
     assert!(widgets[..3].iter().all(|p| p.get("group").is_none()));
@@ -174,6 +220,9 @@ fn objects_group_option_renames_the_object_groups() {
     let grouped = xdocs_objects_sidebar(Some("Types"), None);
     assert_eq!(group_names(&grouped), vec!["widgets", "Types"]);
     assert_eq!(pages_of(&grouped, "Types")[1]["group"], "widgets");
+    // The renamed top-level group carries the flag.
+    assert_eq!(grouped[1]["collapsed"], Value::Bool(true));
+    assert_eq!(collapsed_flags(&grouped), 1);
     assert!(
         !serde_json::to_string(&grouped).unwrap().contains("Objects"),
         "the default name leaked: {grouped:?}"
@@ -222,6 +271,10 @@ fn grouped_layout_puts_the_objects_group_last_whatever_the_tag_order() {
         group_names(&out.sidebar),
         vec!["parts", "widgets", "audit", "assemblies", "", "Objects"]
     );
+    // Collapsed by default; no other group — operation groups, the nameless
+    // group, the sub-groups — carries the flag.
+    assert_eq!(out.sidebar[5]["collapsed"], Value::Bool(true));
+    assert_eq!(collapsed_flags(&out.sidebar), 1);
     let objects = pages_of(&out.sidebar, "Objects");
     assert_eq!(objects[0]["page"], "docs/api/objects/Status");
     assert_eq!(objects[1]["page"], "docs/api/objects/Address");
@@ -237,4 +290,24 @@ fn grouped_layout_puts_the_objects_group_last_whatever_the_tag_order() {
         .page_front_matter
         .contains_key("docs/api/objects/WidgetList"));
     assert!(!out.page_front_matter.contains_key("docs/api/objects/Error"));
+}
+
+/// Sidebar mode (5.xdocs.sidebar: an `x-docs.sidebar`) is untouched — the
+/// author's navigation never gets the flag.
+#[test]
+fn sidebar_mode_never_flags_a_group() {
+    let fixtures =
+        apitoolchain_parity::fixtures_dir(env!("CARGO_MANIFEST_DIR"), "apitoolchain-openapi");
+    let out = uniform_oas_pages(&FusedInput {
+        source: fixtures
+            .join("5.xdocs.sidebar")
+            .join("input.yaml")
+            .to_string_lossy()
+            .to_string(),
+        url_prefix: "docs/api".into(),
+        ..Default::default()
+    })
+    .expect("fused ok");
+    assert!(!out.sidebar.is_empty());
+    assert_eq!(collapsed_flags(&out.sidebar), 0);
 }

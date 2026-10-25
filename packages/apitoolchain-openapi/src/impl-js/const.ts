@@ -45,3 +45,13 @@ export const DEFAULT_OPERATION_PATHS: OperationPaths = "operation-id"
 export function operationPathsOf(options: { operationPaths?: string } | undefined): OperationPaths {
     return options?.operationPaths === "title" ? "title" : DEFAULT_OPERATION_PATHS
 }
+
+/** The default `uniformOasOptions.objectsCollapsed`: the generated navigation's
+ *  top-level objects group is flagged `collapsed: true`. */
+export const DEFAULT_OBJECTS_COLLAPSED = true
+
+/** Whether the top-level objects group is flagged collapsed — only an explicit
+ *  `false` turns it off. */
+export function objectsCollapsedOf(options: { objectsCollapsed?: boolean } | undefined): boolean {
+    return options?.objectsCollapsed === false ? false : DEFAULT_OBJECTS_COLLAPSED
+}

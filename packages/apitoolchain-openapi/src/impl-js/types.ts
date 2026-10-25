@@ -46,6 +46,12 @@ export interface uniformOasOptions {
      *    group. See xdocs/pagePaths.ts for the grammar.
      *  Anything else means the default. */
     operationPaths?: OperationPaths
+    /** Whether the generated navigation's top-level objects group (the
+     *  `grouped` layout's last group) is flagged `collapsed: true`, so a
+     *  renderer draws a toggle on its header and starts it folded. Default
+     *  `true`; `false` leaves the group open. Never flagged under `per-area`
+     *  or with an `x-docs.sidebar`. See `collapseObjectsGroup`. */
+    objectsCollapsed?: boolean
 }
 
 export interface SelectorMethod {

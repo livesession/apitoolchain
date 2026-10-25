@@ -19,3 +19,6 @@ export * from "./xdocs/types"
 export {getXDocs} from "./xdocs"
 
 export {uniformPluginXDocsSidebar} from "./xdocs/pluginSidebar"
+
+export {collapseObjectsGroup, COLLAPSED_KEY} from "./xdocs/collapseObjectsGroup"
+export type {NavigationGroupEntry} from "./xdocs/collapseObjectsGroup"

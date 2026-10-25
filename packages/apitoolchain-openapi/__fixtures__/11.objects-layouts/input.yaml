@@ -3,7 +3,8 @@
 # LAST group of the navigation: the pages without a resource group first, then
 # one sub-group per resource group (`x-docs.group`) in the order the groups
 # appear above it (a renderer that starts nested groups collapsed shows them
-# folded). The input is arranged so the oracle pins the ordering rule rather
+# folded; the top-level group itself is flagged `collapsed: true` in the fused
+# golden — the `objectsCollapsed` default). The input is arranged so the oracle pins the ordering rule rather
 # than an accident of the input:
 # - the tags are declared in the order `parts`, `widgets` (not alphabetical);
 #   `assemblies` is an undeclared tag, so its group follows the declared ones

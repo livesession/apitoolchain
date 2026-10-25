@@ -192,7 +192,7 @@ default layout, `objectsLayout: grouped` —
 ```json
 [
   { "group": "widgets", "pages": [ "…/listWidgets", "…/createWidget" ] },
-  { "group": "Objects", "pages": [
+  { "group": "Objects", "collapsed": true, "pages": [
       "…/objects/PartBase",
       { "group": "widgets", "pages": [ "…/objects/Widget" ] },
       { "group": "parts",   "pages": [ "…/objects/Part" ] } ] }
@@ -205,8 +205,14 @@ group in the order the groups appear above it (`widgets` has operations;
 `parts` has none, so it follows, in schema order). The sub-groups are ordinary
 nested sidebar groups: a renderer that starts nested groups collapsed (xyd
 does, unless a group holds the active page) shows a single `Objects` entry
-with a folded `widgets` and `parts` toggle inside. Under `objectsLayout:
-per-area` the object pages join their resource groups instead:
+with a folded `widgets` and `parts` toggle inside. The top-level `Objects`
+entry itself carries `"collapsed": true` — the `objectsCollapsed` option,
+default `true` — so a renderer can draw a toggle on its header and start it
+folded like the sub-groups; the flag sits on that one entry only (never on an
+operation group or a sub-group, never under `per-area` or with an
+`x-docs.sidebar`), and only when the group holds object pages alone — an
+operation tagged `Objects` shares the group and keeps it open. Under
+`objectsLayout: per-area` the object pages join their resource groups instead:
 
 ```json
 [
@@ -233,10 +239,14 @@ native addon, camelCase):
 | `regions` | convert only these regions: `"METHOD /path"` or `"/components/schemas/Name"` (the per-page conversion) |
 | `objectsGroup` | the name of the component-schema pages' group, default `"Objects"` — the top-level objects group and, under `per-area`, the sub-group under a resource group (`x-docs.group`); an empty string means the default |
 | `objectsLayout` | where an object page with a resource group (`x-docs.group`) goes: `"grouped"` (the default) — one top-level objects group, last, holding the pages without a group and then a sub-group per resource group in the order the groups appear above; `"per-area"` — nested under the resource group's own objects sub-group, after its operations. Anything else means the default (the Rust `ObjectsLayout` enum, `Options::objects_layout()`) |
+| `objectsCollapsed` | whether the generated navigation's top-level objects group (the grouped layout's last group) is flagged `"collapsed": true`, so a renderer draws a toggle on its header and starts it folded. Default `true`; `false` leaves the group open. Never flagged under `per-area` or with an `x-docs.sidebar`, never on a group an operation sits in (the Rust `Options::objects_collapsed()`) |
 
 The fused endpoint (`fused::uniform_oas_pages`, `FusedInput::objects_group` /
-`FusedInput::objects_layout`) takes the same names, since it builds the
-sidebar.
+`FusedInput::objects_layout` / `FusedInput::objects_collapsed`) takes the same
+names, since it builds the sidebar — and runs the navigation's finishing pass
+that sets the flag after pluginNavigation (the Rust
+`navigation::collapse_objects_group`; the JS twin `collapseObjectsGroup(sidebar,
+doc, references, urlPrefix, options)` is what the fused goldens are built with).
 
 ## Tests
 

@@ -1,4 +1,5 @@
 export type {uniformOasOptions, SelectorMethod} from "./src/impl-js/types";
+export type {NavigationGroupEntry} from "./src";
 
 export {
     deferencedOpenAPI,
@@ -10,6 +11,9 @@ export {
     schemaObjectToUniformDefinitionProperty,
 
     getXDocs,
-    uniformPluginXDocsSidebar
+    uniformPluginXDocsSidebar,
+
+    collapseObjectsGroup,
+    COLLAPSED_KEY
 } from "./src";
 

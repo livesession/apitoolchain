@@ -11,7 +11,9 @@ use std::collections::HashMap;
 use serde_json::{json, Map, Value};
 
 use crate::doc::DocCtx;
-use crate::{ObjectsLayout, Options};
+use crate::links::object_type_constant;
+use crate::page_paths::{component_page_path, explicit_page_path, kebab_case, operation_page_path};
+use crate::{OasError, ObjectsLayout, OperationPaths, Options};
 use apitoolchain_uniform::jsrt::truthy;
 
 const COMPONENT_SCHEMA_PREFIX: &str = "#/components/schemas/";
@@ -26,8 +28,12 @@ pub fn get_xdocs_route(doc: &Value) -> Option<String> {
 
 /// [`apply_xdocs_sidebar_with_options`] with the default [`Options`] (the
 /// object pages' sub-group named [`crate::DEFAULT_OBJECTS_GROUP`]).
-pub fn apply_xdocs_sidebar(ctx: &DocCtx, doc: &Value, refs: &mut Vec<Value>) {
-    apply_xdocs_sidebar_with_options(ctx, doc, refs, &Options::default());
+pub fn apply_xdocs_sidebar(
+    ctx: &DocCtx,
+    doc: &Value,
+    refs: &mut Vec<Value>,
+) -> Result<(), OasError> {
+    apply_xdocs_sidebar_with_options(ctx, doc, refs, &Options::default())
 }
 
 /// Apply the plugin to `refs` in place: the per-ref x-docs meta pass, then
@@ -35,15 +41,23 @@ pub fn apply_xdocs_sidebar(ctx: &DocCtx, doc: &Value, refs: &mut Vec<Value>) {
 /// otherwise the generated navigation minus the `x-docs.hidden` refs.
 /// `options.objects_group()` names the object pages' group and
 /// `options.objects_layout()` says where an object page with a resource group
-/// (`x-docs.group`) goes (see [`ObjectsLayout`]).
+/// (`x-docs.group`) goes (see [`ObjectsLayout`]); `options.operation_paths()`
+/// how a page without an `x-docs.path` gets its canonical (see
+/// [`OperationPaths`]).
+///
+/// Errors when two pages of the generated navigation share one path — two
+/// equal `x-docs.path`s, or two summaries that derive the same canonical —
+/// naming both pages. (Under an `x-docs.sidebar` the entries place the pages
+/// themselves and are not checked.)
 pub fn apply_xdocs_sidebar_with_options(
     ctx: &DocCtx,
     doc: &Value,
     refs: &mut Vec<Value>,
     options: &Options,
-) {
+) -> Result<(), OasError> {
     let objects_group = options.objects_group();
     let objects_layout = options.objects_layout();
+    let derive_paths = options.operation_paths() == OperationPaths::Title;
     // ---- per-ref pass (pluginXDocsSidebarInner) -------------------------
     // ref index maps mirror refByOperationId / refByComponentSchema
     // (last-write-wins on duplicate keys, like JS object assignment).
@@ -77,10 +91,17 @@ pub fn apply_xdocs_sidebar_with_options(
             // exactly like an operation's (`name` → title, `group` → sidebar
             // group, `hidden`). The sidebar pass re-reads `name` for the
             // object pages it lists.
-            if let Some(meta) = component_xdocs(ctx, doc, cs) {
+            let meta = component_xdocs(ctx, doc, cs);
+            if let Some(meta) = meta {
                 if apply_docs_meta(r, meta, Some((objects_group, objects_layout))) {
                     hidden.push(i);
                 }
+            }
+            // The page's path: its `x-docs.path`, else (title mode) the one
+            // derived from its group and label. The links are relinked from
+            // the final list below, so they follow.
+            if let Some(canonical) = component_page_canonical(ctx, doc, cs, meta, derive_paths) {
+                r["canonical"] = Value::String(canonical);
             }
         }
 
@@ -106,43 +127,47 @@ pub fn apply_xdocs_sidebar_with_options(
             by_operation_id.insert(method_id, i);
         }
 
-        let Some(meta) = op.get("x-docs") else {
-            continue;
-        };
-
-        if apply_docs_meta(r, meta, None) {
-            hidden.push(i);
-        }
-        if !truthy(r.get("description")) {
-            let summary = op
-                .get("summary")
-                .and_then(|s| s.as_str())
-                .unwrap_or("")
-                .to_string();
-            r["description"] = Value::String(summary);
-        }
-        if let Some(returns) = meta.get("returns").filter(|v| truthy(Some(v))) {
-            let defs = r.get_mut("definitions").and_then(|d| d.as_array_mut());
-            match defs {
-                Some(defs) if !defs.is_empty() => {
-                    let last = defs.len() - 1;
-                    let title = defs[last].get("title").cloned().unwrap_or(Value::Null);
-                    defs[last] = json!({
-                        "title": title,
-                        "description": returns,
-                        "properties": [],
-                    });
-                }
-                _ => {
-                    r["definitions"] = json!([{
-                        "title": "Response",
-                        "description": returns,
-                        "properties": [],
-                    }]);
+        let meta = op.get("x-docs");
+        if let Some(meta) = meta {
+            if apply_docs_meta(r, meta, None) {
+                hidden.push(i);
+            }
+            if !truthy(r.get("description")) {
+                let summary = op
+                    .get("summary")
+                    .and_then(|s| s.as_str())
+                    .unwrap_or("")
+                    .to_string();
+                r["description"] = Value::String(summary);
+            }
+            if let Some(returns) = meta.get("returns").filter(|v| truthy(Some(v))) {
+                let defs = r.get_mut("definitions").and_then(|d| d.as_array_mut());
+                match defs {
+                    Some(defs) if !defs.is_empty() => {
+                        let last = defs.len() - 1;
+                        let title = defs[last].get("title").cloned().unwrap_or(Value::Null);
+                        defs[last] = json!({
+                            "title": title,
+                            "description": returns,
+                            "properties": [],
+                        });
+                    }
+                    _ => {
+                        r["definitions"] = json!([{
+                            "title": "Response",
+                            "description": returns,
+                            "properties": [],
+                        }]);
+                    }
                 }
             }
+            // meta.examples: NOT ported (see module header).
         }
-        // meta.examples: NOT ported (see module header).
+        // The page's path: its `x-docs.path`, else (title mode) the one
+        // derived from its group (set above) and its verb-first summary.
+        if let Some(canonical) = operation_page_canonical(r, op, meta, derive_paths) {
+            r["canonical"] = Value::String(canonical);
+        }
     }
 
     // ---- defer pass: the sidebar-driven rebuild -------------------------
@@ -164,8 +189,9 @@ pub fn apply_xdocs_sidebar_with_options(
         if objects_layout == ObjectsLayout::Grouped {
             order_objects_group(refs);
         }
+        check_page_paths(refs)?;
         relink_from_final_list(refs);
-        return;
+        return Ok(());
     };
     let xdocs = xdocs.unwrap_or(&Value::Null);
 
@@ -203,18 +229,123 @@ pub fn apply_xdocs_sidebar_with_options(
     // `references.length = 0; references.push(...output)`
     *refs = output;
     relink_from_final_list(refs);
+    Ok(())
 }
 
-/// The regions-mode counterpart of [`apply_xdocs_sidebar`]: a page's own
-/// references (one region), whose nested links still have to land on pages
-/// that exist — read from the document, since a one-page reference list
-/// cannot say which pages the navigation keeps. The JS plugin runs this pass
-/// on every generated page; the twin keeps the Rust side able to do the same.
+/// [`apply_xdocs_links_with_options`] with the default [`Options`].
 pub fn apply_xdocs_links(ctx: &DocCtx, doc: &Value, refs: &mut [Value]) {
-    let links = schema_page_links(ctx, doc);
+    apply_xdocs_links_with_options(ctx, doc, refs, &Options::default());
+}
+
+/// The regions-mode counterpart of [`apply_xdocs_sidebar_with_options`]: a
+/// page's own references (one region), whose nested links still have to land
+/// on pages that exist — read from the document, since a one-page reference
+/// list cannot say which pages the navigation keeps. The JS plugin runs this
+/// pass on every generated page; the twin keeps the Rust side able to do the
+/// same. `options.operation_paths()` decides the derived page paths the links
+/// follow, as in the whole-document pass.
+pub fn apply_xdocs_links_with_options(
+    ctx: &DocCtx,
+    doc: &Value,
+    refs: &mut [Value],
+    options: &Options,
+) {
+    let links = schema_page_links(ctx, doc, options);
     relink_schema_links(refs, &|name| {
         links.get(name).cloned().unwrap_or(PageLink::Keep)
     });
+}
+
+/// A component page's canonical when something other than the converter
+/// decides it: its `x-docs.path`, else — under `operationPaths: title` — the
+/// derived `<group>/<label>` (`objects/<label>` without a group), the label
+/// its constant `object` value verbatim, else its name in kebab-case. `None`
+/// leaves the converter's `objects/<Name>`.
+fn component_page_canonical(
+    ctx: &DocCtx,
+    doc: &Value,
+    name: &str,
+    meta: Option<&Value>,
+    derive: bool,
+) -> Option<String> {
+    if let Some(path) = meta.and_then(explicit_path_of) {
+        return Some(path);
+    }
+    if !derive {
+        return None;
+    }
+    let schema = doc.get("components")?.get("schemas")?.get(name)?;
+    let label = object_type_constant(ctx, schema).unwrap_or_else(|| kebab_case(name));
+    let group = meta
+        .and_then(|m| m.get("group"))
+        .and_then(|g| g.as_str())
+        .filter(|g| !g.trim().is_empty());
+    Some(component_page_path(group, &label))
+}
+
+/// An operation page's canonical when something other than the converter
+/// decides it: its `x-docs.path`, else — under `operationPaths: title` — the
+/// `<group>/[<sub-resource>/]<verb>` derived from its (final) group and a
+/// verb-first summary. `None` (no path, the default mode, a summary that is
+/// not verb-first, no group) leaves the converter's canonical.
+fn operation_page_canonical(
+    r: &Value,
+    op: &Value,
+    meta: Option<&Value>,
+    derive: bool,
+) -> Option<String> {
+    if let Some(path) = meta.and_then(explicit_path_of) {
+        return Some(path);
+    }
+    if !derive {
+        return None;
+    }
+    let summary = op.get("summary")?.as_str()?;
+    let group = r
+        .get("context")?
+        .get("group")?
+        .as_array()?
+        .first()?
+        .as_str()?;
+    operation_page_path(summary, group)
+}
+
+/// `x-docs.path`, normalised (see [`explicit_page_path`]).
+fn explicit_path_of(meta: &Value) -> Option<String> {
+    explicit_page_path(meta.get("path")?.as_str()?)
+}
+
+/// Two pages of the generated navigation at one path are an error naming
+/// both — one would overwrite the other's page.
+fn check_page_paths(refs: &[Value]) -> Result<(), OasError> {
+    let mut seen: HashMap<&str, &Value> = HashMap::new();
+    for r in refs {
+        let Some(canonical) = r.get("canonical").and_then(|c| c.as_str()) else {
+            continue;
+        };
+        if let Some(first) = seen.insert(canonical, r) {
+            return Err(OasError(format!(
+                "two pages share the path \"{canonical}\": {} and {} — give one of them an `x-docs.path` of its own",
+                describe_page(first),
+                describe_page(r)
+            )));
+        }
+    }
+    Ok(())
+}
+
+/// `POST /widgets ("Create widget")` / `/components/schemas/Widget ("The
+/// widget object")` — how an error names a page.
+fn describe_page(r: &Value) -> String {
+    let ctx = r.get("context");
+    let get = |k: &str| ctx.and_then(|c| c.get(k)).and_then(|v| v.as_str());
+    let region = match (get("method"), get("path"), get("componentSchema")) {
+        (Some(method), Some(path), _) => format!("{} {path}", method.to_uppercase()),
+        (_, _, Some(schema)) => format!("/components/schemas/{schema}"),
+        _ => "a page".to_string(),
+    };
+    let title = r.get("title").and_then(|t| t.as_str()).unwrap_or("");
+    format!("{region} (\"{title}\")")
 }
 
 /// What a nested link to a component schema becomes: the canonical of the
@@ -257,11 +388,13 @@ fn relink_from_final_list(refs: &mut [Value]) {
 
 /// The page links read from the DOCUMENT (regions mode, where the reference
 /// list is one page long and cannot say which pages exist): without an
-/// `x-docs.sidebar` a schema has a page unless it is `x-docs.hidden`; with
-/// one, only the schemas it lists have a page, where the entry puts it. The
-/// same rules the whole-document pass applies through the surviving
-/// references.
-fn schema_page_links(ctx: &DocCtx, doc: &Value) -> HashMap<String, PageLink> {
+/// `x-docs.sidebar` a schema has a page unless it is `x-docs.hidden`, at its
+/// `x-docs.path` or its title-derived path when one applies; with a sidebar,
+/// only the schemas it lists have a page, where the entry puts it (an entry
+/// without a `path` leaves the page at its `x-docs.path` / derived path /
+/// the converter's). The same rules the whole-document pass applies through
+/// the surviving references.
+fn schema_page_links(ctx: &DocCtx, doc: &Value, options: &Options) -> HashMap<String, PageLink> {
     let mut links: HashMap<String, PageLink> = HashMap::new();
     let Some(schemas) = doc
         .get("components")
@@ -269,6 +402,16 @@ fn schema_page_links(ctx: &DocCtx, doc: &Value) -> HashMap<String, PageLink> {
         .and_then(|s| s.as_object())
     else {
         return links;
+    };
+    let derive = options.operation_paths() == OperationPaths::Title;
+    // The page's canonical when the document decides it (`x-docs.path`, the
+    // title derivation), else the converter's.
+    let own_link = |name: &str| -> PageLink {
+        let meta = component_xdocs(ctx, doc, name);
+        match component_page_canonical(ctx, doc, name, meta, derive) {
+            Some(canonical) => PageLink::Set(canonical),
+            None => PageLink::Keep,
+        }
     };
     let xdocs = doc.get("x-docs");
     let sidebar = xdocs
@@ -284,7 +427,7 @@ fn schema_page_links(ctx: &DocCtx, doc: &Value) -> HashMap<String, PageLink> {
                 if hidden {
                     PageLink::Drop
                 } else {
-                    PageLink::Keep
+                    own_link(name)
                 },
             );
         }
@@ -304,12 +447,13 @@ fn schema_page_links(ctx: &DocCtx, doc: &Value) -> HashMap<String, PageLink> {
         parent_path: Option<&str>,
         inherit: bool,
         schemas: &Map<String, Value>,
+        own_link: &dyn Fn(&str) -> PageLink,
         links: &mut HashMap<String, PageLink>,
     ) {
         for page in pages {
             if let Some(nested) = page.get("pages").and_then(|p| p.as_array()) {
                 let pp = page.get("path").and_then(|p| p.as_str());
-                walk(nested, pp, inherit, schemas, links);
+                walk(nested, pp, inherit, schemas, own_link, links);
             } else if page.get("type").and_then(|t| t.as_str()) == Some("object") {
                 let Some(key) = page.get("key").and_then(|k| k.as_str()) else {
                     continue;
@@ -321,7 +465,7 @@ fn schema_page_links(ctx: &DocCtx, doc: &Value) -> HashMap<String, PageLink> {
                 // own (that is an operation's), so `inherit` reads the group's.
                 let link = match sidebar_page_canonical(inherit, page, parent_path, "") {
                     Some(canonical) => PageLink::Set(canonical),
-                    None => PageLink::Keep,
+                    None => own_link(key),
                 };
                 links.insert(key.to_string(), link);
             }
@@ -329,7 +473,7 @@ fn schema_page_links(ctx: &DocCtx, doc: &Value) -> HashMap<String, PageLink> {
     }
     for group in sidebar {
         if let Some(pages) = group.get("pages").and_then(|p| p.as_array()) {
-            walk(pages, None, inherit, schemas, &mut links);
+            walk(pages, None, inherit, schemas, &own_link, &mut links);
         }
     }
     links
@@ -763,8 +907,21 @@ mod tests {
             .collect();
         let (processed, stamps) = DocCtx::preprocess(doc);
         let ctx = DocCtx::with_merged_stamps(&processed, &stamps);
-        apply_xdocs_sidebar(&ctx, &processed, &mut refs);
+        apply_xdocs_sidebar(&ctx, &processed, &mut refs).expect("no page-path collision");
         refs
+    }
+
+    /// Like [`refs_after_xdocs`], the collision error surfaced.
+    fn try_refs_after_xdocs(doc: &Value, options: &crate::Options) -> Result<Vec<Value>, OasError> {
+        let refs = oap_schema_to_references(doc, Some(options.clone()));
+        let mut refs: Vec<Value> = refs
+            .iter()
+            .map(|r| serde_json::to_value(r).expect("Reference serializes"))
+            .collect();
+        let (processed, stamps) = DocCtx::preprocess(doc);
+        let ctx = DocCtx::with_merged_stamps(&processed, &stamps);
+        apply_xdocs_sidebar_with_options(&ctx, &processed, &mut refs, options)?;
+        Ok(refs)
     }
 
     /// Convert ONE region the way a generated page does, then the
@@ -782,6 +939,23 @@ mod tests {
         let (processed, stamps) = DocCtx::preprocess(doc);
         let ctx = DocCtx::with_merged_stamps(&processed, &stamps);
         apply_xdocs_links(&ctx, &processed, &mut refs);
+        refs
+    }
+
+    /// [`region_after_xdocs`] with options (the title-derived paths).
+    fn region_after_xdocs_with(doc: &Value, region: &str, options: &crate::Options) -> Vec<Value> {
+        let options = crate::Options {
+            regions: Some(vec![region.to_string()]),
+            ..options.clone()
+        };
+        let refs = oap_schema_to_references(doc, Some(options.clone()));
+        let mut refs: Vec<Value> = refs
+            .iter()
+            .map(|r| serde_json::to_value(r).expect("Reference serializes"))
+            .collect();
+        let (processed, stamps) = DocCtx::preprocess(doc);
+        let ctx = DocCtx::with_merged_stamps(&processed, &stamps);
+        apply_xdocs_links_with_options(&ctx, &processed, &mut refs, &options);
         refs
     }
 
@@ -919,7 +1093,8 @@ mod tests {
             .collect();
         let (processed, stamps) = DocCtx::preprocess(doc);
         let ctx = DocCtx::with_merged_stamps(&processed, &stamps);
-        apply_xdocs_sidebar_with_options(&ctx, &processed, &mut refs, options);
+        apply_xdocs_sidebar_with_options(&ctx, &processed, &mut refs, options)
+            .expect("no page-path collision");
         refs
     }
 
@@ -1339,6 +1514,224 @@ mod tests {
             titles(&refs),
             vec!["The bundle object", "Kit", "The part object"]
         );
+    }
+
+    fn title_mode() -> crate::Options {
+        crate::Options {
+            operation_paths: Some("title".into()),
+            ..Default::default()
+        }
+    }
+
+    /// `x-docs.path` names a page's path outright — on an operation and on a
+    /// component schema — under the default mode: the canonical is the path
+    /// (normalised: no outer slashes), the sidebar grouping is untouched, and
+    /// every link to the schema follows the final canonical.
+    #[test]
+    fn explicit_paths_set_the_canonical_and_the_links_follow() {
+        let mut doc = widgets_doc(None);
+        doc["paths"]["/widgets"]["get"]["x-docs"] = json!({ "path": "/widgets/list/" });
+        doc["components"]["schemas"]["Widget"]["x-docs"]["path"] = json!("widgets/object");
+        let refs = refs_after_xdocs(&doc);
+        assert_eq!(
+            canonicals(&refs),
+            vec![
+                "widgets/list",
+                "objects/PartBase",
+                "widgets/object",
+                "objects/Part"
+            ]
+        );
+        assert_eq!(group_of(&refs, "List widgets"), vec!["widgets"]);
+        assert_eq!(
+            group_of(&refs, "The widget object"),
+            vec!["Objects", "widgets"]
+        );
+        let list_links = links_of(&refs, "widgets/list");
+        assert!(
+            list_links.contains(&(
+                "#/components/schemas/Widget".to_string(),
+                Some("widgets/object".to_string())
+            )),
+            "the link did not follow the explicit path: {list_links:?}"
+        );
+        // The page's own link too.
+        let widget = refs
+            .iter()
+            .find(|r| r["canonical"] == "widgets/object")
+            .unwrap();
+        assert_eq!(
+            widget["definitions"][0]["symbolDef"]["canonical"],
+            "widgets/object"
+        );
+    }
+
+    /// Two pages at one path are an error naming both — two equal
+    /// `x-docs.path`s, or (title mode) two summaries that derive the same
+    /// canonical.
+    #[test]
+    fn colliding_page_paths_are_an_error_naming_both() {
+        let mut doc = widgets_doc(None);
+        doc["paths"]["/widgets/all"] = json!({
+            "get": {
+                "operationId": "listAllWidgets",
+                "summary": "List all widgets",
+                "tags": ["widgets"],
+                "x-docs": { "path": "widgets/list" },
+                "responses": { "200": { "description": "ok" } }
+            }
+        });
+        doc["paths"]["/widgets"]["get"]["x-docs"] = json!({ "path": "widgets/list" });
+        let err = try_refs_after_xdocs(&doc, &crate::Options::default())
+            .expect_err("a collision is an error");
+        let message = err.to_string();
+        for needle in [
+            "\"widgets/list\"",
+            "GET /widgets (\"List widgets\")",
+            "GET /widgets/all (\"List all widgets\")",
+        ] {
+            assert!(message.contains(needle), "{message}");
+        }
+
+        // Derived: both summaries are "List … widgets" in `widgets`.
+        doc["paths"]["/widgets"]["get"]
+            .as_object_mut()
+            .unwrap()
+            .remove("x-docs");
+        doc["paths"]["/widgets/all"]["get"]
+            .as_object_mut()
+            .unwrap()
+            .remove("x-docs");
+        let message = try_refs_after_xdocs(&doc, &title_mode())
+            .expect_err("a derived collision is an error")
+            .to_string();
+        assert!(message.contains("\"widgets/list\""), "{message}");
+        assert!(message.contains("GET /widgets/all"), "{message}");
+        // An `x-docs.path` on one of them resolves it.
+        doc["paths"]["/widgets/all"]["get"]["x-docs"] = json!({ "path": "widgets/list-all" });
+        let refs = try_refs_after_xdocs(&doc, &title_mode()).expect("resolved");
+        assert!(canonicals(&refs).contains(&"widgets/list-all".to_string()));
+        // Under the default mode the operationIds differ: no collision.
+        try_refs_after_xdocs(&doc, &crate::Options::default()).expect("distinct operationIds");
+    }
+
+    /// `operationPaths: title`: an operation derives `<group>/[<sub>/]<verb>`
+    /// from its group and verb-first summary; a component page `<group>/<label>`
+    /// (the label its constant `object` value, else the kebab-cased name) or
+    /// `objects/<label>` without a group; an `x-docs.path` wins over both; a
+    /// summary that is not verb-first keeps the operationId. The links follow.
+    #[test]
+    fn title_mode_derives_the_canonicals() {
+        let mut doc = widgets_doc(None);
+        doc["paths"]["/widgets/{widgetId}/parts"] = json!({
+            "get": {
+                "operationId": "listWidgetParts",
+                "summary": "List widget parts",
+                "tags": ["widgets"],
+                "responses": { "200": { "description": "ok" } }
+            }
+        });
+        doc["paths"]["/widgets/{widgetId}/archive"] = json!({
+            "post": {
+                "operationId": "archiveWidget",
+                "summary": "Widget archival",
+                "tags": ["widgets"],
+                "responses": { "200": { "description": "ok" } }
+            }
+        });
+        doc["paths"]["/status"] = json!({
+            "get": {
+                "operationId": "getStatus",
+                "summary": "Retrieve status",
+                "responses": { "200": { "description": "ok" } }
+            }
+        });
+        doc["components"]["schemas"]["Widget"]["properties"]["object"] =
+            json!({ "type": "string", "enum": ["widget"] });
+        doc["components"]["schemas"]["Part"]["allOf"][1]["x-docs"]["path"] = json!("parts/object");
+        let refs = refs_after_xdocs_with(&doc, &title_mode());
+        assert_eq!(
+            canonicals(&refs),
+            vec![
+                "widgets/list",
+                "widgets/parts/list",
+                "archiveWidget",
+                "getStatus",
+                "objects/part-base",
+                "widgets/widget",
+                "parts/object",
+            ]
+        );
+        // The grouping is the layout's, not the path's.
+        assert_eq!(
+            group_of(&refs, "The widget object"),
+            vec!["Objects", "widgets"]
+        );
+        let list_links = links_of(&refs, "widgets/list");
+        assert!(
+            list_links.contains(&(
+                "#/components/schemas/Widget".to_string(),
+                Some("widgets/widget".to_string())
+            )),
+            "the link did not follow the derived path: {list_links:?}"
+        );
+        // Regions mode (the links only): the same targets, read from the
+        // document.
+        let page = region_after_xdocs_with(&doc, "GET /widgets", &title_mode());
+        let page_links = links_of(&page, "listWidgets");
+        assert!(
+            page_links.contains(&(
+                "#/components/schemas/Widget".to_string(),
+                Some("widgets/widget".to_string())
+            )),
+            "{page_links:?}"
+        );
+        let widget_page =
+            region_after_xdocs_with(&doc, "/components/schemas/Widget", &title_mode());
+        let widget_links = links_of(&widget_page, "objects/Widget");
+        assert!(
+            widget_links
+                .iter()
+                .filter(|(id, _)| id == "#/components/schemas/Tag")
+                .all(|(_, canonical)| canonical.is_none()),
+            "{widget_links:?}"
+        );
+        // An explicit path is followed in regions mode too.
+        doc["components"]["schemas"]["Widget"]["x-docs"]["path"] = json!("widgets/object");
+        let page = region_after_xdocs_with(&doc, "GET /widgets", &crate::Options::default());
+        assert!(links_of(&page, "listWidgets").contains(&(
+            "#/components/schemas/Widget".to_string(),
+            Some("widgets/object".to_string())
+        )));
+    }
+
+    /// Under an `x-docs.sidebar` the entries place the pages: an entry with a
+    /// `path` wins over the schema's `x-docs.path`; one without leaves the
+    /// page at its `x-docs.path`. Collisions are not checked there.
+    #[test]
+    fn sidebar_entries_win_over_explicit_paths() {
+        let sidebar = json!([{
+            "group": "Reference",
+            "pages": [
+                { "type": "endpoint", "key": "listWidgets" },
+                { "type": "object", "key": "Widget", "path": "the-widget" }
+            ]
+        }]);
+        let mut doc = widgets_doc(Some(sidebar));
+        doc["paths"]["/widgets"]["get"]["x-docs"] = json!({ "path": "widgets/list" });
+        doc["components"]["schemas"]["Widget"]["x-docs"]["path"] = json!("widgets/object");
+        let refs = refs_after_xdocs(&doc);
+        assert_eq!(refs[0]["canonical"], "widgets/list");
+        let widget_canonical = refs[1]["canonical"].as_str().unwrap();
+        assert!(
+            widget_canonical.ends_with("the-widget"),
+            "{widget_canonical}"
+        );
+        let list_links = links_of(&refs, "widgets/list");
+        assert!(list_links.contains(&(
+            "#/components/schemas/Widget".to_string(),
+            Some(widget_canonical.to_string())
+        )));
     }
 
     /// No `x-docs` anywhere: the pass is a no-op on the ref list.

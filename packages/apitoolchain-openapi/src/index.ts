@@ -29,8 +29,9 @@ export * from "./impl-js/utils";
 export * from "./impl-js/xdocs/types";
 export { getXDocs } from "./impl-js/xdocs";
 export { uniformPluginXDocsSidebar } from "./impl-js/xdocs/pluginSidebar";
+export * from "./impl-js/xdocs/pagePaths";
 export { oapExamples } from "./impl-js/converters/oas-examples";
-export type { uniformOasOptions, ObjectsLayout, SelectorMethod, OasJSONSchema } from "./impl-js/types";
+export type { uniformOasOptions, ObjectsLayout, OperationPaths, SelectorMethod, OasJSONSchema } from "./impl-js/types";
 
 /** Same JS deref as always (the cyclic doc feeds the examples post-pass and
  *  the __UNSAFE_selector thunks) — plus a non-enumerable stash of the SOURCE

@@ -39,6 +39,13 @@ export interface XDocsMeta {
     /** Drop the page from the generated navigation (envelopes, errors, ids).
      *  An `x-docs.sidebar` that lists the page explicitly still shows it. */
     hidden?: boolean
+
+    /** The page's path (its canonical), relative, no leading slash —
+     *  `widgets/create`, `widgets/parts/list`, `widgets/object`. Every link to
+     *  the page follows it; the sidebar grouping does not change. Two pages at
+     *  one path are an error. Under an `x-docs.sidebar` an entry's own `path`
+     *  wins. */
+    path?: string
 }
 
 /** `x-docs` on an operation. */

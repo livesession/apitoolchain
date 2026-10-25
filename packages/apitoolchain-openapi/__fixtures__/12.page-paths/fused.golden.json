@@ -1,0 +1,193 @@
+{
+  "urlPrefix": "docs/api",
+  "sidebar": [
+    {
+      "group": "widgets",
+      "pages": [
+        {
+          "virtual": ".xyd/.cache/.content/docs/api/widgets/list",
+          "page": "docs/api/widgets/list"
+        },
+        {
+          "virtual": ".xyd/.cache/.content/docs/api/widgets/create",
+          "page": "docs/api/widgets/create"
+        },
+        {
+          "virtual": ".xyd/.cache/.content/docs/api/widgets/retrieve",
+          "page": "docs/api/widgets/retrieve"
+        },
+        {
+          "virtual": ".xyd/.cache/.content/docs/api/widgets/remove",
+          "page": "docs/api/widgets/remove"
+        },
+        {
+          "virtual": ".xyd/.cache/.content/docs/api/widgets/parts/list",
+          "page": "docs/api/widgets/parts/list"
+        },
+        {
+          "virtual": ".xyd/.cache/.content/docs/api/widgets/part-snapshot/retrieve",
+          "page": "docs/api/widgets/part-snapshot/retrieve"
+        },
+        {
+          "virtual": ".xyd/.cache/.content/docs/api/archiveWidget",
+          "page": "docs/api/archiveWidget"
+        }
+      ]
+    },
+    {
+      "group": "assemblies",
+      "pages": [
+        {
+          "virtual": ".xyd/.cache/.content/docs/api/assemblies/list",
+          "page": "docs/api/assemblies/list"
+        }
+      ]
+    },
+    {
+      "group": "",
+      "pages": [
+        {
+          "virtual": ".xyd/.cache/.content/docs/api/health",
+          "page": "docs/api/health"
+        }
+      ]
+    },
+    {
+      "group": "Objects",
+      "pages": [
+        {
+          "virtual": ".xyd/.cache/.content/docs/api/objects/color",
+          "page": "docs/api/objects/color"
+        },
+        {
+          "group": "widgets",
+          "pages": [
+            {
+              "virtual": ".xyd/.cache/.content/docs/api/widgets/widget",
+              "page": "docs/api/widgets/widget"
+            },
+            {
+              "virtual": ".xyd/.cache/.content/docs/api/widgets/widget_part",
+              "page": "docs/api/widgets/widget_part"
+            },
+            {
+              "virtual": ".xyd/.cache/.content/docs/api/widgets/part-snapshot",
+              "page": "docs/api/widgets/part-snapshot"
+            }
+          ]
+        },
+        {
+          "group": "assemblies",
+          "pages": [
+            {
+              "virtual": ".xyd/.cache/.content/docs/api/assemblies/object",
+              "page": "docs/api/assemblies/object"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "pageFrontMatter": {
+    "docs/api/widgets/list": {
+      "title": "List widgets"
+    },
+    "docs/api/widgets/create": {
+      "title": "Create widget"
+    },
+    "docs/api/widgets/retrieve": {
+      "title": "Retrieve widget"
+    },
+    "docs/api/widgets/remove": {
+      "title": "Delete widget"
+    },
+    "docs/api/widgets/parts/list": {
+      "title": "List widget parts"
+    },
+    "docs/api/widgets/part-snapshot/retrieve": {
+      "title": "Retrieve part snapshot"
+    },
+    "docs/api/archiveWidget": {
+      "title": "Widget archival"
+    },
+    "docs/api/assemblies/list": {
+      "title": "Lists assemblies"
+    },
+    "docs/api/health": {
+      "title": "Retrieve health"
+    },
+    "docs/api/objects/color": {
+      "title": "Color"
+    },
+    "docs/api/widgets/widget": {
+      "title": "The widget object"
+    },
+    "docs/api/widgets/widget_part": {
+      "title": "The widget part object"
+    },
+    "docs/api/widgets/part-snapshot": {
+      "title": "PartSnapshot"
+    },
+    "docs/api/assemblies/object": {
+      "title": "The assembly object"
+    }
+  },
+  "pages": [
+    {
+      "pagePath": "docs/api/widgets/list",
+      "region": "GET /widgets"
+    },
+    {
+      "pagePath": "docs/api/widgets/create",
+      "region": "POST /widgets"
+    },
+    {
+      "pagePath": "docs/api/widgets/retrieve",
+      "region": "GET /widgets/{widgetId}"
+    },
+    {
+      "pagePath": "docs/api/widgets/remove",
+      "region": "DELETE /widgets/{widgetId}"
+    },
+    {
+      "pagePath": "docs/api/widgets/parts/list",
+      "region": "GET /widgets/{widgetId}/parts"
+    },
+    {
+      "pagePath": "docs/api/widgets/part-snapshot/retrieve",
+      "region": "GET /widgets/{widgetId}/parts/{partId}/snapshot"
+    },
+    {
+      "pagePath": "docs/api/archiveWidget",
+      "region": "POST /widgets/{widgetId}/archive"
+    },
+    {
+      "pagePath": "docs/api/assemblies/list",
+      "region": "GET /assemblies"
+    },
+    {
+      "pagePath": "docs/api/health",
+      "region": "GET /health"
+    },
+    {
+      "pagePath": "docs/api/objects/color",
+      "region": "/components/schemas/Color"
+    },
+    {
+      "pagePath": "docs/api/widgets/widget",
+      "region": "/components/schemas/Widget"
+    },
+    {
+      "pagePath": "docs/api/widgets/widget_part",
+      "region": "/components/schemas/WidgetPart"
+    },
+    {
+      "pagePath": "docs/api/widgets/part-snapshot",
+      "region": "/components/schemas/PartSnapshot"
+    },
+    {
+      "pagePath": "docs/api/assemblies/object",
+      "region": "/components/schemas/Assembly"
+    }
+  ]
+}

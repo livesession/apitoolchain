@@ -32,6 +32,10 @@ pub struct FusedInput {
     /// The objects layout (the converter option `objectsLayout`: `"grouped"`
     /// or `"per-area"`). `None` → [`crate::DEFAULT_OBJECTS_LAYOUT`].
     pub objects_layout: Option<String>,
+    /// How a page without an `x-docs.path` gets its canonical (the converter
+    /// option `operationPaths`: `"operation-id"` or `"title"`). `None` →
+    /// [`crate::DEFAULT_OPERATION_PATHS`].
+    pub operation_paths: Option<String>,
 }
 
 pub struct FusedOutput {
@@ -56,6 +60,7 @@ pub fn uniform_oas_pages(input: &FusedInput) -> Result<FusedOutput, OasError> {
         regions: None,
         objects_group: input.objects_group.clone(),
         objects_layout: input.objects_layout.clone(),
+        operation_paths: input.operation_paths.clone(),
     };
 
     // Full conversion (endpoint examples are a JS post-pass the page flow
@@ -93,7 +98,9 @@ pub fn uniform_oas_pages(input: &FusedInput) -> Result<FusedOutput, OasError> {
 
     // Plugin order matches `uniform(refs, {plugins: [xdocs, navigation]})`:
     // the x-docs defer may REPLACE the ref list before navigation sees it.
-    apply_xdocs_sidebar_with_options(&ctx, &doc, &mut refs, &options);
+    // Two pages at one path (`x-docs.path`, or two summaries that derive the
+    // same canonical) are an error here, naming both.
+    apply_xdocs_sidebar_with_options(&ctx, &doc, &mut refs, &options)?;
 
     let settings_stub = json!({"engine": {"uniform": {"store": input.store}}});
     let nav = plugin_navigation(&settings_stub, &url_prefix, &refs)

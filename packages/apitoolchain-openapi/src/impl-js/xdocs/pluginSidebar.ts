@@ -11,8 +11,10 @@ import {
     OpenAPIReferenceContext
 } from "@xyd-js/uniform";
 
-import {XDocs, XDocsSidebar, XDocsPage, XDocsMeta, XDocsSchemaMeta} from "./types";
-import {DEFAULT_OBJECTS_LAYOUT, objectsGroupOf, objectsLayoutOf} from "../const";
+import {XDocs, XDocsSidebar, XDocsPage, XDocsMeta, XDocsOperationMeta, XDocsSchemaMeta} from "./types";
+import {componentPagePath, explicitPagePath, kebabCase, operationPagePath} from "./pagePaths";
+import {DEFAULT_OBJECTS_LAYOUT, objectsGroupOf, objectsLayoutOf, operationPathsOf} from "../const";
+import {objectTypeConstant} from "../component-links";
 import type {ObjectsLayout, uniformOasOptions} from "../types";
 
 interface NavigationGroup {
@@ -59,7 +61,8 @@ export function uniformPluginXDocsSidebar({
     // The converter options travel on the reference list (`__internal_options`,
     // set by the converter and by the native shim alike): `objectsGroup` names
     // the object pages' group, `objectsLayout` says where an object page with
-    // a resource group goes (see `uniformOasOptions`).
+    // a resource group goes, `operationPaths` how a page without an
+    // `x-docs.path` gets its canonical (see `uniformOasOptions`).
     // @ts-ignore
     const options: uniformOasOptions | undefined = typeof references.__internal_options === "function"
         // @ts-ignore
@@ -67,6 +70,7 @@ export function uniformPluginXDocsSidebar({
         : undefined
     const objectsGroup = objectsGroupOf(options)
     const objectsLayout = objectsLayoutOf(options)
+    const derivePaths = operationPathsOf(options) === "title"
 
     defer(() => {
         if (!schema) {
@@ -84,7 +88,7 @@ export function uniformPluginXDocsSidebar({
                 // on the page still have to land on pages that exist, and a
                 // one-page reference list cannot say which do. The document can.
                 if (Array.isArray(references)) {
-                    relinkSchemaLinks(references, schemaPageLinks(schema))
+                    relinkSchemaLinks(references, schemaPageLinks(schema, derivePaths))
                 }
                 return {}
             }
@@ -96,11 +100,14 @@ export function uniformPluginXDocsSidebar({
         if (!xDocs?.sidebar) {
             // No sidebar: the generated navigation, minus the hidden refs — and,
             // under the grouped objects layout, the objects group's own order.
+            // Two pages at one path (`x-docs.path`, or two summaries that
+            // derive the same canonical) are an error here, naming both.
             if (Array.isArray(references)) {
                 let kept = hiddenRefs.size ? references.filter(ref => !hiddenRefs.has(ref)) : [...references]
                 if (objectsLayout === "grouped") {
                     kept = orderObjectsGroup(kept)
                 }
+                checkPagePaths(kept)
                 references.length = 0
                 references.push(...kept)
                 relinkSchemaLinks(references, pageLinksOf(references))
@@ -293,9 +300,17 @@ export function uniformPluginXDocsSidebar({
             // exactly like an operation's (`name` → title, `group` → sidebar
             // group, `hidden`). The sidebar pass re-reads `name` for the object
             // pages it lists.
-            const meta = componentXDocs(selector("[component]") as OpenAPIV3.SchemaObject | undefined)
+            const component = selector("[component]") as OpenAPIV3.SchemaObject | undefined
+            const meta = componentXDocs(component)
             if (meta && applyDocsMeta(ref, meta, objectsGroup, objectsLayout)) {
                 hiddenRefs.add(ref)
+            }
+            // The page's path: its `x-docs.path`, else (title mode) the one
+            // derived from its group and label. The links are relinked from the
+            // final list in the defer, so they follow.
+            const canonical = componentPageCanonical(component, ctx.componentSchema, meta, derivePaths)
+            if (canonical !== undefined) {
+                ref.canonical = canonical
             }
         }
 
@@ -319,44 +334,125 @@ export function uniformPluginXDocsSidebar({
             refByOperationId[methodId] = ref
         }
 
-        const meta = (methodPath as any)["x-docs"]
-        if (!meta) {
-            return
-        }
-
-        if (applyDocsMeta(ref, meta, undefined)) {
-            hiddenRefs.add(ref)
-        }
-
-        if (!ref.description) {
-            ref.description = methodPath.summary || ""
-        }
-
-        if (meta.examples) {
-            const exampleGroups = oasXDocsExamples(meta.examples)
-            ref.examples = {
-                groups: exampleGroups,
+        const meta = (methodPath as any)["x-docs"] as XDocsOperationMeta | undefined
+        if (meta) {
+            if (applyDocsMeta(ref, meta, undefined)) {
+                hiddenRefs.add(ref)
             }
-        }
 
-        if (meta.returns) {
-            if (ref.definitions?.length) {
-                ref.definitions[ref.definitions.length - 1] = {
-                    title: ref.definitions[ref.definitions.length - 1].title,
-                    description: meta.returns,
-                    properties: []
+            if (!ref.description) {
+                ref.description = methodPath.summary || ""
+            }
+
+            if (meta.examples) {
+                const exampleGroups = oasXDocsExamples(meta.examples as Examples)
+                ref.examples = {
+                    groups: exampleGroups,
                 }
-            } else {
-                ref.definitions = [
-                    {
-                        title: "Response",
+            }
+
+            if (meta.returns) {
+                if (ref.definitions?.length) {
+                    ref.definitions[ref.definitions.length - 1] = {
+                        title: ref.definitions[ref.definitions.length - 1].title,
                         description: meta.returns,
                         properties: []
                     }
-                ]
+                } else {
+                    ref.definitions = [
+                        {
+                            title: "Response",
+                            description: meta.returns,
+                            properties: []
+                        }
+                    ]
+                }
             }
         }
+
+        // The page's path: its `x-docs.path`, else (title mode) the one derived
+        // from its group (set above) and its verb-first summary.
+        const canonical = operationPageCanonical(ref, methodPath, meta, derivePaths)
+        if (canonical !== undefined) {
+            ref.canonical = canonical
+        }
     }
+}
+
+/** A component page's canonical when something other than the converter
+ *  decides it: its `x-docs.path`, else — under `operationPaths: "title"` — the
+ *  derived `<group>/<label>` (`objects/<label>` without a group), the label its
+ *  constant `object` value verbatim, else its name in kebab-case. `undefined`
+ *  leaves the converter's `objects/<Name>`. */
+function componentPageCanonical(
+    component: OpenAPIV3.SchemaObject | undefined,
+    name: string,
+    meta: XDocsSchemaMeta | undefined,
+    derive: boolean
+): string | undefined {
+    const explicit = explicitPagePath(meta?.path)
+    if (explicit !== undefined) {
+        return explicit
+    }
+    if (!derive || !component) {
+        return undefined
+    }
+    const label = objectTypeConstant(component) ?? kebabCase(name)
+    const group = typeof meta?.group === "string" && meta.group.trim() ? meta.group : undefined
+    return componentPagePath(group, label)
+}
+
+/** An operation page's canonical when something other than the converter
+ *  decides it: its `x-docs.path`, else — under `operationPaths: "title"` — the
+ *  `<group>/[<sub-resource>/]<verb>` derived from its (final) group and a
+ *  verb-first summary. `undefined` (no path, the default mode, a summary that
+ *  is not verb-first, no group) leaves the converter's canonical. */
+function operationPageCanonical(
+    ref: Reference,
+    operation: OpenAPIV3.OperationObject,
+    meta: XDocsOperationMeta | undefined,
+    derive: boolean
+): string | undefined {
+    const explicit = explicitPagePath(meta?.path)
+    if (explicit !== undefined) {
+        return explicit
+    }
+    if (!derive) {
+        return undefined
+    }
+    const group = ref.context?.group
+    return operationPagePath(operation.summary, Array.isArray(group) ? group[0] : undefined)
+}
+
+/** Two pages of the generated navigation at one path are an error naming
+ *  both — one would overwrite the other's page. */
+function checkPagePaths(references: Reference[]) {
+    const seen = new Map<string, Reference>()
+    for (const ref of references) {
+        if (typeof ref.canonical !== "string") {
+            continue
+        }
+        const first = seen.get(ref.canonical)
+        if (first) {
+            throw new Error(
+                `two pages share the path "${ref.canonical}": ${describePage(first)} and ${describePage(ref)}`
+                + " — give one of them an `x-docs.path` of its own"
+            )
+        }
+        seen.set(ref.canonical, ref)
+    }
+}
+
+/** `POST /widgets ("Create widget")` / `/components/schemas/Widget ("The widget
+ *  object")` — how an error names a page. */
+function describePage(ref: Reference): string {
+    const ctx = ref.context as OpenAPIReferenceContext | undefined
+    const region = ctx?.method && ctx?.path
+        ? `${ctx.method.toUpperCase()} ${ctx.path}`
+        : ctx?.componentSchema
+            ? `/components/schemas/${ctx.componentSchema}`
+            : "a page"
+    return `${region} ("${ref.title ?? ""}")`
 }
 
 /** The common `x-docs` keys of an operation or a component schema: `name` →
@@ -474,17 +570,24 @@ function pageLinksOf(references: Reference[]): (name: string) => PageLink {
 
 /** The page links read from the DOCUMENT (regions mode, where the reference
  *  list is one page long and cannot say which pages exist): without an
- *  `x-docs.sidebar` a schema has a page unless it is `x-docs.hidden`; with one,
- *  only the schemas it lists have a page, where the entry puts it. The same
- *  rules the whole-document pass applies through the surviving references. */
-function schemaPageLinks(schema: ExtensionSchema): (name: string) => PageLink {
+ *  `x-docs.sidebar` a schema has a page unless it is `x-docs.hidden`, at its
+ *  `x-docs.path` or its title-derived path when one applies; with a sidebar,
+ *  only the schemas it lists have a page, where the entry puts it (an entry
+ *  without a `path` leaves the page at its `x-docs.path` / derived path / the
+ *  converter's). The same rules the whole-document pass applies through the
+ *  surviving references. */
+function schemaPageLinks(schema: ExtensionSchema, derivePaths: boolean): (name: string) => PageLink {
     const schemas = (schema.components?.schemas || {}) as Record<string, OpenAPIV3.SchemaObject>
     const xDocs = schema["x-docs"]
     const links = new Map<string, PageLink>()
+    // The page's canonical when the document decides it (`x-docs.path`, the
+    // title derivation), else the converter's.
+    const ownLink = (name: string): PageLink =>
+        componentPageCanonical(schemas[name], name, componentXDocs(schemas[name]), derivePaths)
 
     if (!xDocs?.sidebar) {
         for (const name of Object.keys(schemas)) {
-            links.set(name, componentXDocs(schemas[name])?.hidden ? null : undefined)
+            links.set(name, componentXDocs(schemas[name])?.hidden ? null : ownLink(name))
         }
         return name => links.get(name)
     }
@@ -497,7 +600,7 @@ function schemaPageLinks(schema: ExtensionSchema): (name: string) => PageLink {
             if ('pages' in page && Array.isArray(page.pages)) {
                 walk(page.pages, page.path)
             } else if ('type' in page && 'key' in page && page.type === "object" && page.key in schemas) {
-                links.set(page.key, sidebarPageCanonical(xDocs, page, parentPath, undefined))
+                links.set(page.key, sidebarPageCanonical(xDocs, page, parentPath, undefined) ?? ownLink(page.key))
             }
         }
     }

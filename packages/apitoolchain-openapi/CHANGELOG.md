@@ -4,11 +4,48 @@
 
 Both halves of the converter (the Rust core in `crates/apitoolchain_openapi`
 and the JS impl in `src/impl-js`) change together; the fixtures `9.schema-links`,
-`5.xdocs.objects` (the per-area objects layout) and `11.objects-layouts` (the
-grouped default) pin the new output on both sides.
+`5.xdocs.objects` (the per-area objects layout), `11.objects-layouts` (the
+grouped default) and `12.page-paths` (explicit and title-derived page paths)
+pin the new output on both sides.
 
 ### Added
 
+- **Explicit page paths — `x-docs.path`** on an operation or a component
+  schema (read on the schema or on the first `allOf` member that carries it):
+  the page's canonical becomes that path, relative and without a leading
+  slash (`widgets/create`, `widgets/parts/list`, `widgets/object`). Every link
+  to the page — a nested `symbolDef.canonical`, a request/response root's, the
+  page's own, the sidebar, the page map — follows the final canonical; the
+  sidebar grouping is unchanged. Under an `x-docs.sidebar` an entry's own
+  `path` wins; an entry without one leaves the page at its `x-docs.path`.
+  `XDocsMeta.path`.
+- **A derived-canonical option — `operationPaths`**
+  (`uniformOasOptions.operationPaths`, the Rust `Options::operation_paths` /
+  `FusedInput::operation_paths` and the `OperationPaths` enum, JSON
+  `operationPaths`): `"operation-id"` (the default, today's canonicals) or
+  `"title"`, under which a page without an `x-docs.path` derives its path —
+  an operation `<group>/[<sub-resource>/]<verb>` from its group and a
+  verb-first summary ("Create widget" in `widgets` → `widgets/create`, "List
+  widget parts" → `widgets/parts/list`, "Retrieve part snapshot" →
+  `widgets/part-snapshot/retrieve`; the grammar and the verb table are in the
+  README and in `page_paths.rs` / `xdocs/pagePaths.ts`), falling back to the
+  `operationId` when the summary is not verb-first or the operation has no
+  group; a component page `<group>/<label>` with an `x-docs.group`, else
+  `objects/<label>`, the label its constant `object` value verbatim
+  (`widgets/widget`, `widgets/widget_part`) else its name in kebab-case
+  (`objects/color`). Applied by the x-docs pass, in whole-document and regions
+  mode alike.
+- **Page-path collisions are an error.** Two pages of the generated navigation
+  at one path — two equal `x-docs.path`s, or two summaries that derive the
+  same canonical — fail the pass naming both pages (`two pages share the path
+  "widgets/list": GET /widgets ("List widgets") and GET /widgets/all ("List all
+  widgets")`). The Rust `xdocs::apply_xdocs_sidebar` /
+  `apply_xdocs_sidebar_with_options` now return `Result<(), OasError>` (the
+  fused endpoint propagates it); the JS plugin throws. An `x-docs.sidebar`
+  places its pages itself and is not checked.
+- `xdocs::apply_xdocs_links_with_options` — the regions-mode relink with the
+  options (the derived paths the links follow); `apply_xdocs_links` keeps the
+  defaults.
 - **A constant's value.** A property with a single-value `enum` or a `const`
   carries the meta `{ name: "const", value: <literal> }` beside its `$$enum`
   children and `enum-type` (scalars as they are, object/array literals
@@ -120,6 +157,17 @@ grouped default) pin the new output on both sides.
   the root and page links), the `5.xdocs.objects` oracle and fused golden
   with the nested `Objects` sub-group. Unit tests on both twins for the
   labels, the nesting and the `objectsGroup` option (incl. the fused path).
+- `12.page-paths` (an `x-docs.path` on an operation and on a schema, the
+  title-derived paths of every other page — the group's noun dropped, a
+  third-person verb, a summary that is not verb-first, an untagged operation,
+  the `object` constant verbatim and a kebab-cased name — and the links that
+  follow them; oracle + fused golden), converted with `operationPaths:
+  "title"`; the other fixtures are unchanged under the default. Unit tests on
+  both twins: the derivation table, the explicit paths, the collision error
+  naming both pages, the sidebar precedence, regions mode. The Rust tier-1
+  parity now also runs the x-docs fixtures THROUGH the ported plugin
+  (`xdocs_case!` in tests/parity.rs: the whole reference list against the
+  oracle, not only the fused sidebar/page map).
 - The fixture matrix skips, under the native path only, the fixtures a
   published `@xyd-js/native` built from an older core cannot produce. The gate
   is a feature probe (does the addon produce this core's `9.schema-links` rows:

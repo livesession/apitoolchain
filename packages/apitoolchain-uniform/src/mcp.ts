@@ -39,6 +39,9 @@ export interface McpToolInputSchema extends McpJsonSchema {
     additionalProperties: boolean | McpJsonSchema;
 }
 
+/** The input layout of a tool (see `McpToolBinding.layout`). */
+export type McpToolLayout = "flat" | "grouped";
+
 /** Where a renamed input goes on the HTTP request, and under which name. */
 export interface McpToolInput {
     in: "path" | "query" | "body";
@@ -62,6 +65,11 @@ export interface McpToolBinding {
     path: string;
     /** The first server's URL joined with the path (the path when unknown). */
     fullPath: string;
+    /** How the inputs are laid out: `"flat"` (path, query and body inputs at
+     *  the top level) or `"grouped"` (under `pathParams` / `queryParams` /
+     *  `headers` / `cookies` / `requestBody`) — the `flatten` option. A caller
+     *  reads the arguments by it, never by guessing from property names. */
+    layout: McpToolLayout;
     /** The input properties that fill the path placeholders (input names —
      *  see `inputs` for one that was renamed). */
     pathParams: string[];
@@ -227,6 +235,7 @@ export function uniformToMcpTools(references: Reference[], options: McpToolsOpti
                 method,
                 path,
                 fullPath: typeof ctx.fullPath === "string" && ctx.fullPath ? ctx.fullPath : path,
+                layout: settings.flatten ? "flat" : "grouped",
                 pathParams: binding.pathParams,
                 queryParams: binding.queryParams,
                 body: binding.body,

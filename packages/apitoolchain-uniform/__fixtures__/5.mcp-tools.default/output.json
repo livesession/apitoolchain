@@ -51,6 +51,7 @@
       "method": "GET",
       "path": "/pets",
       "fullPath": "https://api.example.com/v1/pets",
+      "layout": "flat",
       "pathParams": [],
       "queryParams": [
         "limit",
@@ -171,6 +172,7 @@
       "method": "POST",
       "path": "/pets",
       "fullPath": "https://api.example.com/v1/pets",
+      "layout": "flat",
       "pathParams": [],
       "queryParams": [],
       "body": "json",
@@ -236,6 +238,7 @@
       "method": "POST",
       "path": "/pets/search",
       "fullPath": "https://api.example.com/v1/pets/search",
+      "layout": "flat",
       "pathParams": [],
       "queryParams": [],
       "body": "json",
@@ -275,6 +278,7 @@
       "method": "GET",
       "path": "/pets/{petId}",
       "fullPath": "https://api.example.com/v1/pets/{petId}",
+      "layout": "flat",
       "pathParams": [
         "petId"
       ],
@@ -332,6 +336,7 @@
       "method": "PATCH",
       "path": "/pets/{petId}",
       "fullPath": "https://api.example.com/v1/pets/{petId}",
+      "layout": "flat",
       "pathParams": [
         "petId"
       ],
@@ -370,6 +375,7 @@
       "method": "DELETE",
       "path": "/pets/{petId}",
       "fullPath": "https://api.example.com/v1/pets/{petId}",
+      "layout": "flat",
       "pathParams": [
         "petId"
       ],
@@ -412,6 +418,7 @@
       "method": "PUT",
       "path": "/pets/{petId}/tags",
       "fullPath": "https://api.example.com/v1/pets/{petId}/tags",
+      "layout": "flat",
       "pathParams": [
         "petId"
       ],
@@ -455,6 +462,7 @@
       "method": "GET",
       "path": "/owners/{name}/pets",
       "fullPath": "https://api.example.com/v1/owners/{name}/pets",
+      "layout": "flat",
       "pathParams": [
         "name"
       ],
@@ -493,6 +501,7 @@
       "method": "GET",
       "path": "/store/inventory",
       "fullPath": "https://api.example.com/v1/store/inventory",
+      "layout": "flat",
       "pathParams": [],
       "queryParams": [],
       "body": null,
@@ -592,6 +601,7 @@
       "method": "POST",
       "path": "/store/orders",
       "fullPath": "https://api.example.com/v1/store/orders",
+      "layout": "flat",
       "pathParams": [],
       "queryParams": [],
       "body": "json",
@@ -636,6 +646,7 @@
       "method": "POST",
       "path": "/store/orders/{id}/ship",
       "fullPath": "https://api.example.com/v1/store/orders/{id}/ship",
+      "layout": "flat",
       "pathParams": [
         "id"
       ],
@@ -685,6 +696,7 @@
       "method": "GET",
       "path": "/store/orders/{id}",
       "fullPath": "https://api.example.com/v1/store/orders/{id}",
+      "layout": "flat",
       "pathParams": [
         "id"
       ],
@@ -749,6 +761,7 @@
       "method": "PUT",
       "path": "/store/orders/{id}",
       "fullPath": "https://api.example.com/v1/store/orders/{id}",
+      "layout": "flat",
       "pathParams": [
         "id"
       ],
@@ -793,6 +806,7 @@
       "method": "DELETE",
       "path": "/store/orders/{id}",
       "fullPath": "https://api.example.com/v1/store/orders/{id}",
+      "layout": "flat",
       "pathParams": [
         "id"
       ],
@@ -823,6 +837,7 @@
       "method": "GET",
       "path": "/health",
       "fullPath": "https://api.example.com/v1/health",
+      "layout": "flat",
       "pathParams": [],
       "queryParams": [],
       "body": null,

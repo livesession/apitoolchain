@@ -12,6 +12,7 @@ export type {
     McpToolAnnotations,
     McpToolBinding,
     McpToolInputSchema,
+    McpToolLayout,
     McpToolsOptions,
     McpJsonSchema,
 } from "./src/mcp"

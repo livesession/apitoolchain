@@ -74,10 +74,12 @@ const tools = uniformToMcpTools(references, {
   PUT, PATCH — they remove or overwrite; POST only adds), `idempotent` (the read-only
   methods, PUT, DELETE), `openWorld` (false): each a predicate over the reference.
 - **binding** — how a call maps back onto the HTTP request; a server keeps it and strips
-  it before listing the tool. `extras` attaches data of your own to each tool (e.g. a
-  documentation path).
+  it before listing the tool. `binding.layout` is `"flat"` or `"grouped"` (the `flatten`
+  option). `extras` attaches data of your own to each tool (e.g. a documentation path).
 
-Sending a call: `binding.pathParams` and `binding.queryParams` list INPUT names; an input
+Sending a call: read the arguments by `binding.layout` — never by guessing from the input
+property names, since a flat body may well have a property called `headers`.
+`binding.pathParams` and `binding.queryParams` list INPUT names; an input
 listed in `binding.inputs` goes out under the `name` given there (`{ id_query: { in:
 "query", name: "id" } }` → the query parameter `id`), every other one under its own name.
 Fill `binding.path`'s `{placeholders}` from the path inputs and the query string from the
@@ -92,8 +94,8 @@ query inputs. When `binding.body` is `"json"`, the request body is:
   query input, each under its wire name.
 
 ```ts
-// The flat layout (the default); in the grouped one, read the parameters from
-// args.pathParams / args.queryParams instead.
+// The flat layout (the default, binding.layout === "flat"); in the grouped one,
+// read the parameters from args.pathParams / args.queryParams instead.
 function request(tool: McpTool, args: Record<string, unknown>) {
     const { binding } = tool;
     const wire = (input: string) => binding.inputs?.[input]?.name ?? input;

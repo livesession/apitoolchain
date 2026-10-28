@@ -45,6 +45,16 @@ pub enum McpToolBody {
     Json,
 }
 
+/// How a tool's inputs are laid out (the `flatten` option).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum McpToolLayout {
+    /// Path, query and body inputs at the top level.
+    Flat,
+    /// Under `pathParams` / `queryParams` / `headers` / `cookies` / `requestBody`.
+    Grouped,
+}
+
 /// Where a renamed input goes on the HTTP request.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
@@ -121,6 +131,8 @@ pub struct McpToolBinding {
     pub path: String,
     /// The first server's URL joined with the path (the path when unknown).
     pub full_path: String,
+    /// How the inputs are laid out; a caller reads the arguments by it.
+    pub layout: McpToolLayout,
     /// The input properties that fill the path placeholders (input names —
     /// see `inputs` for one that was renamed).
     pub path_params: Vec<String>,
@@ -324,6 +336,11 @@ pub fn uniform_to_mcp_tools(
             },
             binding: McpToolBinding {
                 full_path: operation_full_path(reference).unwrap_or_else(|| path.clone()),
+                layout: if settings.flatten {
+                    McpToolLayout::Flat
+                } else {
+                    McpToolLayout::Grouped
+                },
                 method,
                 path,
                 path_params: input.path_params,

@@ -1137,11 +1137,15 @@
               {
                 "name": "limit",
                 "type": "integer",
-                "description": "Maximum number of matches",
+                "description": "Maximum number of matches, 100 by default and at most\n5000. Larger values are rejected.",
                 "meta": [
                   {
                     "name": "defaults",
                     "value": 100
+                  },
+                  {
+                    "name": "maximum",
+                    "value": 5000
                   }
                 ]
               }

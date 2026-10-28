@@ -222,7 +222,7 @@
         },
         "limit": {
           "type": "integer",
-          "description": "Maximum number of matches. Capped at 50 by this server.",
+          "description": "Maximum number of matches, 100 by default. Larger values are rejected. Capped at 50 by this server.",
           "default": 50,
           "maximum": 50
         }

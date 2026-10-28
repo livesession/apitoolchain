@@ -16,7 +16,7 @@ Content type: `application/json`. Required.
 | `filters` | object | no | Narrow the matches; every filter must hold: - status - tags |
 | `filters.status` | string | no | One of: `available`, `pending`, `sold`. |
 | `filters.tags` | array of string | no |  |
-| `limit` | integer | no | Maximum number of matches. Default: `100`. |
+| `limit` | integer | no | Maximum number of matches, 100 by default and at most 5000. Larger values are rejected. Default: `100`. Maximum: `5000`. |
 
 ## Responses
 

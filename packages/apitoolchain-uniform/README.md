@@ -43,7 +43,8 @@ const tools = uniformToMcpTools(references, {
   `toolName` overrides it.
 - **description** — the description's first sentence, cut to `descriptionChars` (default
   240), then ` — METHOD path`. Hard-wrapped lines are joined first (fenced code, headings
-  and lists keep their lines). A sentence ends at `.`, `!` or `?` followed by the end of
+  and lists keep their lines; as in CommonMark, only an item numbered 1 starts a list
+  inside a paragraph, so a wrapped "…at most\n5000. …" stays one sentence). A sentence ends at `.`, `!` or `?` followed by the end of
   the line, or by whitespace and an uppercase letter, a digit, a quote or a bracket — never
   at the period of an abbreviation (`e.g.`, `i.e.`, an initial, `No.`, `vs.`, `cf.`…).
 - **inputSchema** — JSON Schema from the uniform property tree: types, enums, arrays,
@@ -53,7 +54,8 @@ const tools = uniformToMcpTools(references, {
   converter emits for a `null` enum value is dropped for it). `limitCap` caps an integer
   `limit` parameter (or top-level body property) unless its own `maximum` is lower: the
   maximum and a larger default come down to the cap, and the description ends "Capped at
-  N by this server." in place of an "at most N" clause it carried.
+  N by this server." in place of an "at most N" clause it carried (removed with the comma,
+  semicolon or `and`/`or`/`but` that joined it).
 - **the layouts** — by default (`flatten`) path, query and JSON-body properties sit side by
   side at the top level; header and cookie parameters are left out. An input that shares
   an earlier input's name (path parameters first, then query parameters, then body

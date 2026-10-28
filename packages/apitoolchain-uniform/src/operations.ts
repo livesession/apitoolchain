@@ -253,7 +253,14 @@ export function objectChildren(prop: DefinitionProperty): DefinitionProperty[] {
     return prop.properties || [];
 }
 
-const LIST_ITEM = /^([-*+]|[0-9]+[.)])[ \t]/;
+const BULLET_ITEM = /^[-*+][ \t]+\S/;
+const ORDERED_ITEM = /^([0-9]+)[.)][ \t]+\S/;
+
+/** An ordered list item's number (its digits), when the line starts one with content. */
+function orderedItem(line: string): string | null {
+    const match = ORDERED_ITEM.exec(line);
+    return match ? match[1] : null;
+}
 
 interface Fence {
     char: string;
@@ -301,11 +308,14 @@ function isRuleLine(line: string): boolean {
     );
 }
 
-/** Whether a line opens a markdown block of its own: indented, a list item,
- *  a heading, a quote, a table row, a code fence or a rule line. */
-function startsBlock(line: string): boolean {
+/** Whether a line opens a markdown block of its own after a non-blank line:
+ *  indented, a heading, a quote, a table row, a code fence, a rule line or a
+ *  list item. As in CommonMark, an ordered item interrupts a paragraph only
+ *  when it is numbered 1 — any number continues a list already open — so a
+ *  wrapped "…at most\n5000. Larger…" stays one paragraph. */
+function startsBlock(line: string, inOrderedList: boolean): boolean {
     const first = line[0];
-    return (
+    if (
         first === " " ||
         first === "\t" ||
         first === "#" ||
@@ -313,8 +323,12 @@ function startsBlock(line: string): boolean {
         first === "|" ||
         fenceOf(line) !== null ||
         isRuleLine(line) ||
-        LIST_ITEM.test(line)
-    );
+        BULLET_ITEM.test(line)
+    ) {
+        return true;
+    }
+    const number = orderedItem(line);
+    return number !== null && (inOrderedList || number.replace(/^0+/, "") === "1");
 }
 
 /** Whether nothing may be joined onto a line: a heading, a table row, a code
@@ -332,6 +346,9 @@ export function unwrapSoftBreaks(value: string): string {
     const lines = value.split("\n");
     let out = lines[0];
     let fence = fenceOf(lines[0]);
+    // Whether the last line that started a block of its own (not indented,
+    // not blank) is an ordered list item: the list is open.
+    let inOrderedList = orderedItem(lines[0]) !== null;
     for (let i = 1; i < lines.length; i++) {
         const line = lines[i];
         if (fence) {
@@ -343,8 +360,17 @@ export function unwrapSoftBreaks(value: string): string {
         }
         fence = fenceOf(line);
         const previous = lines[i - 1];
-        if (fence || previous.trim() === "" || line.trim() === "" || startsBlock(line) || endsBlock(previous)) {
+        if (
+            fence ||
+            previous.trim() === "" ||
+            line.trim() === "" ||
+            startsBlock(line, inOrderedList) ||
+            endsBlock(previous)
+        ) {
             out += "\n" + line;
+            if (line.trim() !== "" && line[0] !== " " && line[0] !== "\t") {
+                inOrderedList = orderedItem(line) !== null;
+            }
         } else {
             out = out.trimEnd() + " " + line;
         }

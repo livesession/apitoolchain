@@ -138,7 +138,8 @@ export interface McpToolsOptions {
      *  integer (a whole number, at least 1) unless its own `maximum` is lower:
      *  `maximum` becomes the cap, a larger default comes down to it, and the
      *  description ends "Capped at N by this server." in place of an "at most
-     *  N" clause it carried. */
+     *  N" clause it carried (removed with the comma, semicolon or conjunction
+     *  that joined it). */
     limitCap?: number;
     /** The tool description is the first sentence of the reference's
      *  description (hard-wrapped lines joined first) cut to this many
@@ -795,10 +796,13 @@ function capLimit(f: Fields, cap: number) {
 }
 
 const CLAUSE_END = new Set([".", ",", ";", ")"]);
+const CONJUNCTIONS = new Set(["and", "or", "but"]);
 
-/** Drops an "at most N" clause (any case) that ends a clause — `…, at most 200.`
- *  or `… (at most 200).` — with the comma or parentheses around it. Nothing
- *  but punctuation left reads as no description. */
+/** Drops an "at most N" clause (any case) that ends a clause — `…, at most 200.`,
+ *  `… and at most 200`, `…; at most 200` or `… (at most 200).` — with what joins
+ *  it to the sentence: the comma or semicolon, a conjunction (`and`, `or`,
+ *  `but`), the parentheses. Nothing but punctuation left reads as no
+ *  description. */
 export function stripAtMost(description: string): string {
     const chars = Array.from(description);
     const pattern = Array.from("at most");
@@ -821,6 +825,13 @@ export function stripAtMost(description: string): string {
             }
             if (spaced && numbered && (end === chars.length || CLAUSE_END.has(chars[end]))) {
                 while (start > 0 && space(chars[start - 1])) start--;
+                // a conjunction joining the clause on: " and at most 200"
+                let word = start;
+                while (word > 0 && /^[A-Za-z]$/.test(chars[word - 1])) word--;
+                if (word < start && !alnum(chars[word - 1]) && CONJUNCTIONS.has(chars.slice(word, start).join("").toLowerCase())) {
+                    start = word;
+                    while (start > 0 && space(chars[start - 1])) start--;
+                }
                 if (start > 0 && (chars[start - 1] === "," || chars[start - 1] === ";")) start--;
                 chars.splice(start, end - start);
                 i = start;

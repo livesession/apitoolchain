@@ -1081,8 +1081,12 @@ fn cap_limit(f: &mut Fields, cap: u64) {
 }
 
 /// Drops an "at most N" clause (any case) that ends a clause — `…, at most
-/// 200.` or `… (at most 200).` — with the comma or parentheses around it.
-/// Nothing but punctuation left reads as no description.
+/// 200.`, `… and at most 200`, `…; at most 200` or `… (at most 200).` — with
+/// what joins it to the sentence: the comma or semicolon, a conjunction
+/// (`and`, `or`, `but`), the parentheses. Nothing but punctuation left reads
+/// as no description.
+const CONJUNCTIONS: &[&str] = &["and", "or", "but"];
+
 pub fn strip_at_most(description: &str) -> String {
     let mut chars: Vec<char> = description.chars().collect();
     let pattern: Vec<char> = "at most".chars().collect();
@@ -1122,6 +1126,22 @@ pub fn strip_at_most(description: &str) -> String {
             if spaced && numbered && closes {
                 while start > 0 && space(at(&chars, start - 1)) {
                     start -= 1;
+                }
+                // a conjunction joining the clause on: " and at most 200"
+                let mut word = start;
+                while word > 0 && at(&chars, word - 1).is_some_and(|c| c.is_ascii_alphabetic()) {
+                    word -= 1;
+                }
+                let joined: String = chars[word as usize..start as usize].iter().collect();
+                let detached = !at(&chars, word - 1).is_some_and(|c| c.is_ascii_alphanumeric());
+                if word < start
+                    && detached
+                    && CONJUNCTIONS.contains(&joined.to_ascii_lowercase().as_str())
+                {
+                    start = word;
+                    while start > 0 && space(at(&chars, start - 1)) {
+                        start -= 1;
+                    }
                 }
                 if start > 0 && matches!(at(&chars, start - 1), Some(',' | ';')) {
                     start -= 1;
@@ -1212,6 +1232,19 @@ mod tests {
         assert_eq!(strip_at_most("Page size (at most 200)."), "Page size.");
         assert_eq!(strip_at_most("Page size; At Most 200"), "Page size");
         assert_eq!(strip_at_most("At most 200."), "");
+        assert_eq!(
+            strip_at_most("10 by default and at most 200"),
+            "10 by default"
+        );
+        assert_eq!(
+            strip_at_most("Defaults to 10, and at most 200."),
+            "Defaults to 10."
+        );
+        assert_eq!(
+            strip_at_most("Up to 10 or at most 20; more is rejected."),
+            "Up to 10; more is rejected."
+        );
+        assert_eq!(strip_at_most("Brand at most 2."), "Brand.");
         assert_eq!(
             strip_at_most("At most 200 items are returned."),
             "At most 200 items are returned."

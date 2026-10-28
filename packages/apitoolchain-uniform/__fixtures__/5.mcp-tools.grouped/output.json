@@ -234,8 +234,9 @@
             },
             "limit": {
               "type": "integer",
-              "description": "Maximum number of matches",
-              "default": 100
+              "description": "Maximum number of matches, 100 by default and at most 5000. Larger values are rejected.",
+              "default": 100,
+              "maximum": 5000
             }
           },
           "required": [

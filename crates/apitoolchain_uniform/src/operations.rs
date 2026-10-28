@@ -433,29 +433,42 @@ fn is_rule_line(line: &str) -> bool {
     })
 }
 
-/// Whether a line opens a markdown block of its own: indented, a list item,
-/// a heading, a quote, a table row, a code fence or a rule line.
-fn starts_block(line: &str) -> bool {
+/// `^[-*+][ \t]+\S` — a bullet item with content.
+fn is_bullet_item(line: &str) -> bool {
+    let mut chars = line.chars();
+    if !matches!(chars.next(), Some('-' | '*' | '+')) {
+        return false;
+    }
+    let rest = chars.as_str();
+    let content = rest.trim_start_matches([' ', '\t']);
+    content.len() < rest.len() && content.chars().next().is_some_and(|c| !c.is_whitespace())
+}
+
+/// `^([0-9]+)[.)][ \t]+\S` — an ordered item with content: its digits.
+fn ordered_item(line: &str) -> Option<&str> {
+    let digits = line.bytes().take_while(|b| b.is_ascii_digit()).count();
+    if digits == 0 || !matches!(line.as_bytes().get(digits), Some(b'.' | b')')) {
+        return None;
+    }
+    let rest = &line[digits + 1..];
+    let content = rest.trim_start_matches([' ', '\t']);
+    (content.len() < rest.len() && content.chars().next().is_some_and(|c| !c.is_whitespace()))
+        .then(|| &line[..digits])
+}
+
+/// Whether a line opens a markdown block of its own after a non-blank line:
+/// indented, a heading, a quote, a table row, a code fence, a rule line or a
+/// list item. As in CommonMark, an ordered item interrupts a paragraph only
+/// when it is numbered 1 — any number continues a list already open.
+fn starts_block(line: &str, in_ordered_list: bool) -> bool {
     if line.starts_with([' ', '\t', '#', '>', '|'])
         || fence_of(line).is_some()
         || is_rule_line(line)
+        || is_bullet_item(line)
     {
         return true;
     }
-    // `^([-*+]|[0-9]+[.)])[ \t]`
-    let bytes = line.as_bytes();
-    let marker_end = match bytes.first() {
-        Some(b'-' | b'*' | b'+') => 1,
-        Some(b) if b.is_ascii_digit() => {
-            let digits = bytes.iter().take_while(|b| b.is_ascii_digit()).count();
-            match bytes.get(digits) {
-                Some(b'.' | b')') => digits + 1,
-                _ => return false,
-            }
-        }
-        _ => return false,
-    };
-    matches!(bytes.get(marker_end), Some(b' ' | b'\t'))
+    ordered_item(line).is_some_and(|n| in_ordered_list || n.trim_start_matches('0') == "1")
 }
 
 /// Whether nothing may be joined onto a line: a heading, a table row, a code
@@ -471,6 +484,9 @@ pub(crate) fn unwrap_soft_breaks(value: &str) -> String {
     let lines: Vec<&str> = value.split('\n').collect();
     let mut out = lines[0].to_string();
     let mut fence = fence_of(lines[0]);
+    // Whether the last line that started a block of its own (not indented,
+    // not blank) is an ordered list item: the list is open.
+    let mut in_ordered_list = ordered_item(lines[0]).is_some();
     for i in 1..lines.len() {
         let line = lines[i];
         if let Some(open) = fence {
@@ -486,11 +502,14 @@ pub(crate) fn unwrap_soft_breaks(value: &str) -> String {
         if fence.is_some()
             || js_trim(previous).is_empty()
             || js_trim(line).is_empty()
-            || starts_block(line)
+            || starts_block(line, in_ordered_list)
             || ends_block(previous)
         {
             out.push('\n');
             out.push_str(line);
+            if !js_trim(line).is_empty() && !line.starts_with([' ', '\t']) {
+                in_ordered_list = ordered_item(line).is_some();
+            }
         } else {
             let kept = js_trim_end(&out).len();
             out.truncate(kept);
@@ -513,8 +532,10 @@ mod tests {
         );
         assert_eq!(
             unwrap_soft_breaks("a\n  indented\n1. item\n# heading\n- dash\n10) ten"),
-            "a\n  indented\n1. item\n# heading\n- dash\n10) ten"
+            "a\n  indented\n1. item\n# heading\n- dash 10) ten"
         );
+        // `1)` may interrupt a paragraph, `10)` may not
+        assert_eq!(unwrap_soft_breaks("a\n1) one"), "a\n1) one");
         assert_eq!(unwrap_soft_breaks("a\n1.5 kg"), "a 1.5 kg");
     }
 
@@ -534,6 +555,23 @@ mod tests {
             "# Head\nnext line"
         );
         assert_eq!(unwrap_soft_breaks("a\n***\nb"), "a\n***\nb");
+        assert_eq!(
+            unwrap_soft_breaks("Up to 10 and at most\n5000. Larger is rejected."),
+            "Up to 10 and at most 5000. Larger is rejected."
+        );
+        assert_eq!(
+            unwrap_soft_breaks("Steps:\n1. one\n2. two\nlazy\n3. three"),
+            "Steps:\n1. one\n2. two lazy\n3. three"
+        );
+        assert_eq!(unwrap_soft_breaks("5. five\n6. six"), "5. five\n6. six");
+        assert_eq!(
+            unwrap_soft_breaks("Text\n\n7. seven\n8. eight"),
+            "Text\n\n7. seven\n8. eight"
+        );
+        assert_eq!(
+            unwrap_soft_breaks("1. one\n\nText\n2. two"),
+            "1. one\n\nText 2. two"
+        );
         assert_eq!(
             unwrap_soft_breaks("~~~~\nx\n~~~\ny\n~~~~\nz\nw"),
             "~~~~\nx\n~~~\ny\n~~~~\nz w"

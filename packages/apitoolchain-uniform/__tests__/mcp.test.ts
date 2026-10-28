@@ -245,6 +245,11 @@ describe("uniformToMcpTools", () => {
         expect(stripAtMost("Page size (at most 200).")).toBe("Page size.");
         expect(stripAtMost("Page size; At Most 200")).toBe("Page size");
         expect(stripAtMost("At most 200.")).toBe("");
+        // with what joins it on
+        expect(stripAtMost("10 by default and at most 200")).toBe("10 by default");
+        expect(stripAtMost("Defaults to 10, and at most 200.")).toBe("Defaults to 10.");
+        expect(stripAtMost("Up to 10 or at most 20; more is rejected.")).toBe("Up to 10; more is rejected.");
+        expect(stripAtMost("Brand at most 2.")).toBe("Brand.");
         // not a clause of its own: kept
         expect(stripAtMost("At most 200 items are returned.")).toBe("At most 200 items are returned.");
         expect(stripAtMost("Whatnot most 2.")).toBe("Whatnot most 2.");
@@ -276,6 +281,14 @@ describe("uniformToMcpTools", () => {
         expect(unwrapSoftBreaks("Title\n---\nText")).toBe("Title\n---\nText");
         expect(unwrapSoftBreaks("# Head\nnext\nline")).toBe("# Head\nnext line");
         expect(unwrapSoftBreaks("a\n***\nb")).toBe("a\n***\nb");
+        // only an item numbered 1 interrupts a paragraph; any number continues an open list
+        expect(unwrapSoftBreaks("Up to 10 and at most\n5000. Larger is rejected.")).toBe(
+            "Up to 10 and at most 5000. Larger is rejected."
+        );
+        expect(unwrapSoftBreaks("Steps:\n1. one\n2. two\nlazy\n3. three")).toBe("Steps:\n1. one\n2. two lazy\n3. three");
+        expect(unwrapSoftBreaks("5. five\n6. six")).toBe("5. five\n6. six");
+        expect(unwrapSoftBreaks("Text\n\n7. seven\n8. eight")).toBe("Text\n\n7. seven\n8. eight");
+        expect(unwrapSoftBreaks("1. one\n\nText\n2. two")).toBe("1. one\n\nText 2. two");
         // a longer fence is closed only by one at least as long
         expect(unwrapSoftBreaks("~~~~\nx\n~~~\ny\n~~~~\nz\nw")).toBe("~~~~\nx\n~~~\ny\n~~~~\nz w");
         const references: Reference[] = readFixture("5.mcp-tools.default/input.json");

@@ -11,6 +11,15 @@ grouped-layout case pin the `collapsed` flag.
 
 ### Added
 
+- **`additionalProperties` meta**: a schema that sets `additionalProperties`
+  (anything but `false`) gives its property, and a request body gives its
+  variant, the meta `{ name: "additionalProperties", value }` — `true` for
+  `true` or a schema without a `type`, else `{ type }` (the value schema's
+  type, `"null"` added for `nullable: true`; a looser form that never rejects
+  what the schema accepts — nested shapes are not copied). Fixture
+  `13.open-objects-null-enums`; the `-2.complex.openai` oracle gains 153 of
+  these metas and nothing else.
+
 - **Explicit page paths — `x-docs.path`** on an operation or a component
   schema (read on the schema or on the first `allOf` member that carries it):
   the page's canonical becomes that path, relative and without a leading
@@ -118,6 +127,11 @@ grouped-layout case pin the `collapsed` flag.
   exported, builds the fused goldens).
 
 ### Changed
+
+- **A `null` enum member** is no longer a value row named `"null"`: it is
+  dropped from the children and the enum gets the `nullable` meta (once,
+  beside an explicit `nullable`), so consumers see one real null. A one-value
+  enum of `null` keeps its `const`.
 
 - **The object pages' default navigation.** Out of the box the component-schema
   pages no longer form one flat list: the `Objects` group (still the last group

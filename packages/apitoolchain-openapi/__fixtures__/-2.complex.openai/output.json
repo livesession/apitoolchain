@@ -1021,6 +1021,10 @@
                               {
                                 "name": "required",
                                 "value": "true"
+                              },
+                              {
+                                "name": "additionalProperties",
+                                "value": true
                               }
                             ],
                             "symbolDef": {
@@ -1684,6 +1688,10 @@
                                 {
                                   "name": "required",
                                   "value": "true"
+                                },
+                                {
+                                  "name": "additionalProperties",
+                                  "value": true
                                 }
                               ]
                             },
@@ -3954,6 +3962,10 @@
                                           {
                                             "name": "nullable",
                                             "value": "true"
+                                          },
+                                          {
+                                            "name": "additionalProperties",
+                                            "value": true
                                           }
                                         ],
                                         "symbolDef": {
@@ -6449,6 +6461,12 @@
               {
                 "name": "nullable",
                 "value": "true"
+              },
+              {
+                "name": "additionalProperties",
+                "value": {
+                  "type": "string"
+                }
               }
             ],
             "symbolDef": {
@@ -7265,6 +7283,10 @@
                           {
                             "name": "required",
                             "value": "true"
+                          },
+                          {
+                            "name": "additionalProperties",
+                            "value": true
                           }
                         ],
                         "symbolDef": {
@@ -7928,6 +7950,10 @@
                             {
                               "name": "required",
                               "value": "true"
+                            },
+                            {
+                              "name": "additionalProperties",
+                              "value": true
                             }
                           ]
                         },
@@ -9616,6 +9642,10 @@
                               {
                                 "name": "nullable",
                                 "value": "true"
+                              },
+                              {
+                                "name": "additionalProperties",
+                                "value": true
                               }
                             ],
                             "symbolDef": {
@@ -12400,6 +12430,10 @@
                               {
                                 "name": "nullable",
                                 "value": "true"
+                              },
+                              {
+                                "name": "additionalProperties",
+                                "value": true
                               }
                             ],
                             "symbolDef": {
@@ -14100,6 +14134,12 @@
                   {
                     "name": "nullable",
                     "value": "true"
+                  },
+                  {
+                    "name": "additionalProperties",
+                    "value": {
+                      "type": "string"
+                    }
                   }
                 ],
                 "symbolDef": {
@@ -14916,6 +14956,10 @@
                               {
                                 "name": "required",
                                 "value": "true"
+                              },
+                              {
+                                "name": "additionalProperties",
+                                "value": true
                               }
                             ],
                             "symbolDef": {
@@ -15579,6 +15623,10 @@
                                 {
                                   "name": "required",
                                   "value": "true"
+                                },
+                                {
+                                  "name": "additionalProperties",
+                                  "value": true
                                 }
                               ]
                             },
@@ -17267,6 +17315,10 @@
                                   {
                                     "name": "nullable",
                                     "value": "true"
+                                  },
+                                  {
+                                    "name": "additionalProperties",
+                                    "value": true
                                   }
                                 ],
                                 "symbolDef": {
@@ -18852,6 +18904,12 @@
                   {
                     "name": "nullable",
                     "value": "true"
+                  },
+                  {
+                    "name": "additionalProperties",
+                    "value": {
+                      "type": "string"
+                    }
                   }
                 ],
                 "symbolDef": {
@@ -19668,6 +19726,10 @@
                               {
                                 "name": "required",
                                 "value": "true"
+                              },
+                              {
+                                "name": "additionalProperties",
+                                "value": true
                               }
                             ],
                             "symbolDef": {
@@ -20331,6 +20393,10 @@
                                 {
                                   "name": "required",
                                   "value": "true"
+                                },
+                                {
+                                  "name": "additionalProperties",
+                                  "value": true
                                 }
                               ]
                             },
@@ -22019,6 +22085,10 @@
                                   {
                                     "name": "nullable",
                                     "value": "true"
+                                  },
+                                  {
+                                    "name": "additionalProperties",
+                                    "value": true
                                   }
                                 ],
                                 "symbolDef": {
@@ -23604,6 +23674,12 @@
                   {
                     "name": "nullable",
                     "value": "true"
+                  },
+                  {
+                    "name": "additionalProperties",
+                    "value": {
+                      "type": "string"
+                    }
                   }
                 ],
                 "symbolDef": {
@@ -24420,6 +24496,10 @@
                               {
                                 "name": "required",
                                 "value": "true"
+                              },
+                              {
+                                "name": "additionalProperties",
+                                "value": true
                               }
                             ],
                             "symbolDef": {
@@ -25083,6 +25163,10 @@
                                 {
                                   "name": "required",
                                   "value": "true"
+                                },
+                                {
+                                  "name": "additionalProperties",
+                                  "value": true
                                 }
                               ]
                             },
@@ -26771,6 +26855,10 @@
                                   {
                                     "name": "nullable",
                                     "value": "true"
+                                  },
+                                  {
+                                    "name": "additionalProperties",
+                                    "value": true
                                   }
                                 ],
                                 "symbolDef": {
@@ -28356,6 +28444,12 @@
                   {
                     "name": "nullable",
                     "value": "true"
+                  },
+                  {
+                    "name": "additionalProperties",
+                    "value": {
+                      "type": "string"
+                    }
                   }
                 ],
                 "symbolDef": {
@@ -29172,6 +29266,10 @@
                               {
                                 "name": "required",
                                 "value": "true"
+                              },
+                              {
+                                "name": "additionalProperties",
+                                "value": true
                               }
                             ],
                             "symbolDef": {
@@ -29835,6 +29933,10 @@
                                 {
                                   "name": "required",
                                   "value": "true"
+                                },
+                                {
+                                  "name": "additionalProperties",
+                                  "value": true
                                 }
                               ]
                             },
@@ -31523,6 +31625,10 @@
                                   {
                                     "name": "nullable",
                                     "value": "true"
+                                  },
+                                  {
+                                    "name": "additionalProperties",
+                                    "value": true
                                   }
                                 ],
                                 "symbolDef": {
@@ -33108,6 +33214,12 @@
                   {
                     "name": "nullable",
                     "value": "true"
+                  },
+                  {
+                    "name": "additionalProperties",
+                    "value": {
+                      "type": "string"
+                    }
                   }
                 ],
                 "symbolDef": {
@@ -33924,6 +34036,10 @@
                               {
                                 "name": "required",
                                 "value": "true"
+                              },
+                              {
+                                "name": "additionalProperties",
+                                "value": true
                               }
                             ],
                             "symbolDef": {
@@ -34587,6 +34703,10 @@
                                 {
                                   "name": "required",
                                   "value": "true"
+                                },
+                                {
+                                  "name": "additionalProperties",
+                                  "value": true
                                 }
                               ]
                             },
@@ -36275,6 +36395,10 @@
                                   {
                                     "name": "nullable",
                                     "value": "true"
+                                  },
+                                  {
+                                    "name": "additionalProperties",
+                                    "value": true
                                   }
                                 ],
                                 "symbolDef": {
@@ -38618,6 +38742,10 @@
                             {
                               "name": "nullable",
                               "value": "true"
+                            },
+                            {
+                              "name": "additionalProperties",
+                              "value": true
                             }
                           ],
                           "symbolDef": {
@@ -40820,6 +40948,10 @@
                             {
                               "name": "nullable",
                               "value": "true"
+                            },
+                            {
+                              "name": "additionalProperties",
+                              "value": true
                             }
                           ],
                           "symbolDef": {
@@ -48311,7 +48443,12 @@
                             "name": "schema",
                             "type": "object",
                             "description": "The schema for the response format, described as a JSON Schema object.\nLearn how to build JSON schemas [here](https://json-schema.org/).\n",
-                            "meta": [],
+                            "meta": [
+                              {
+                                "name": "additionalProperties",
+                                "value": true
+                              }
+                            ],
                             "symbolDef": {
                               "id": "#/components/schemas/ResponseFormatJsonSchemaSchema",
                               "canonical": "objects/ResponseFormatJsonSchemaSchema",
@@ -48664,6 +48801,12 @@
                   {
                     "name": "nullable",
                     "value": "true"
+                  },
+                  {
+                    "name": "additionalProperties",
+                    "value": {
+                      "type": "integer"
+                    }
                   }
                 ]
               },
@@ -49011,7 +49154,12 @@
                           "name": "parameters",
                           "type": "object",
                           "description": "The parameters the functions accepts, described as a JSON Schema object. See the [guide](/docs/guides/function-calling) for examples, and the [JSON Schema reference](https://json-schema.org/understanding-json-schema/) for documentation about the format. \n\nOmitting `parameters` defines a function with an empty parameter list.",
-                          "meta": [],
+                          "meta": [
+                            {
+                              "name": "additionalProperties",
+                              "value": true
+                            }
+                          ],
                           "symbolDef": {
                             "id": "#/components/schemas/FunctionParameters",
                             "canonical": "objects/FunctionParameters",
@@ -49287,7 +49435,12 @@
                       "name": "parameters",
                       "type": "object",
                       "description": "The parameters the functions accepts, described as a JSON Schema object. See the [guide](/docs/guides/function-calling) for examples, and the [JSON Schema reference](https://json-schema.org/understanding-json-schema/) for documentation about the format. \n\nOmitting `parameters` defines a function with an empty parameter list.",
-                      "meta": [],
+                      "meta": [
+                        {
+                          "name": "additionalProperties",
+                          "value": true
+                        }
+                      ],
                       "symbolDef": {
                         "id": "#/components/schemas/FunctionParameters",
                         "canonical": "objects/FunctionParameters",
@@ -49655,6 +49808,12 @@
               {
                 "name": "nullable",
                 "value": "true"
+              },
+              {
+                "name": "additionalProperties",
+                "value": {
+                  "type": "string"
+                }
               }
             ],
             "symbolDef": {
@@ -49823,6 +49982,12 @@
                   {
                     "name": "nullable",
                     "value": "true"
+                  },
+                  {
+                    "name": "additionalProperties",
+                    "value": {
+                      "type": "string"
+                    }
                   }
                 ],
                 "symbolDef": {
@@ -57331,6 +57496,12 @@
                   {
                     "name": "nullable",
                     "value": "true"
+                  },
+                  {
+                    "name": "additionalProperties",
+                    "value": {
+                      "type": "string"
+                    }
                   }
                 ],
                 "symbolDef": {
@@ -62256,6 +62427,12 @@
                   {
                     "name": "nullable",
                     "value": "true"
+                  },
+                  {
+                    "name": "additionalProperties",
+                    "value": {
+                      "type": "string"
+                    }
                   }
                 ],
                 "symbolDef": {
@@ -63130,6 +63307,12 @@
                   {
                     "name": "nullable",
                     "value": "true"
+                  },
+                  {
+                    "name": "additionalProperties",
+                    "value": {
+                      "type": "string"
+                    }
                   }
                 ],
                 "symbolDef": {
@@ -70271,6 +70454,12 @@
                   {
                     "name": "nullable",
                     "value": "true"
+                  },
+                  {
+                    "name": "additionalProperties",
+                    "value": {
+                      "type": "string"
+                    }
                   }
                 ],
                 "symbolDef": {
@@ -70348,6 +70537,10 @@
                           {
                             "name": "example",
                             "value": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"name\": {\"type\": \"string\"},\n    \"age\": {\"type\": \"integer\"}\n  },\n  \"required\": [\"name\", \"age\"]\n}\n"
+                          },
+                          {
+                            "name": "additionalProperties",
+                            "value": true
                           }
                         ]
                       },
@@ -70424,6 +70617,10 @@
                           {
                             "name": "example",
                             "value": "{\n  \"use_case\": \"customer_support_agent\"\n}\n"
+                          },
+                          {
+                            "name": "additionalProperties",
+                            "value": true
                           }
                         ]
                       }
@@ -71824,6 +72021,12 @@
                   {
                     "name": "nullable",
                     "value": "true"
+                  },
+                  {
+                    "name": "additionalProperties",
+                    "value": {
+                      "type": "string"
+                    }
                   }
                 ],
                 "symbolDef": {
@@ -72471,6 +72674,12 @@
                   {
                     "name": "nullable",
                     "value": "true"
+                  },
+                  {
+                    "name": "additionalProperties",
+                    "value": {
+                      "type": "string"
+                    }
                   }
                 ],
                 "symbolDef": {
@@ -72616,6 +72825,10 @@
                                         {
                                           "name": "required",
                                           "value": "true"
+                                        },
+                                        {
+                                          "name": "additionalProperties",
+                                          "value": true
                                         }
                                       ]
                                     },
@@ -72623,7 +72836,12 @@
                                       "name": "sample",
                                       "type": "object",
                                       "description": "",
-                                      "meta": []
+                                      "meta": [
+                                        {
+                                          "name": "additionalProperties",
+                                          "value": true
+                                        }
+                                      ]
                                     }
                                   ],
                                   "description": "",
@@ -73691,6 +73909,10 @@
                                         {
                                           "name": "required",
                                           "value": "true"
+                                        },
+                                        {
+                                          "name": "additionalProperties",
+                                          "value": true
                                         }
                                       ]
                                     },
@@ -73698,7 +73920,12 @@
                                       "name": "sample",
                                       "type": "object",
                                       "description": "",
-                                      "meta": []
+                                      "meta": [
+                                        {
+                                          "name": "additionalProperties",
+                                          "value": true
+                                        }
+                                      ]
                                     }
                                   ],
                                   "description": "",
@@ -73837,6 +74064,12 @@
                                   {
                                     "name": "nullable",
                                     "value": "true"
+                                  },
+                                  {
+                                    "name": "additionalProperties",
+                                    "value": {
+                                      "type": "string"
+                                    }
                                   }
                                 ],
                                 "symbolDef": {
@@ -74482,6 +74715,10 @@
                                         {
                                           "name": "required",
                                           "value": "true"
+                                        },
+                                        {
+                                          "name": "additionalProperties",
+                                          "value": true
                                         }
                                       ]
                                     },
@@ -74489,7 +74726,12 @@
                                       "name": "sample",
                                       "type": "object",
                                       "description": "",
-                                      "meta": []
+                                      "meta": [
+                                        {
+                                          "name": "additionalProperties",
+                                          "value": true
+                                        }
+                                      ]
                                     }
                                   ],
                                   "description": "",
@@ -75449,6 +75691,10 @@
                       {
                         "name": "example",
                         "value": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"item\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"label\": {\"type\": \"string\"},\n      },\n      \"required\": [\"label\"]\n    }\n  },\n  \"required\": [\"item\"]\n}\n"
+                      },
+                      {
+                        "name": "additionalProperties",
+                        "value": true
                       }
                     ]
                   }
@@ -75514,6 +75760,12 @@
                       {
                         "name": "nullable",
                         "value": "true"
+                      },
+                      {
+                        "name": "additionalProperties",
+                        "value": {
+                          "type": "string"
+                        }
                       }
                     ],
                     "symbolDef": {
@@ -75530,6 +75782,10 @@
                       {
                         "name": "required",
                         "value": "true"
+                      },
+                      {
+                        "name": "additionalProperties",
+                        "value": true
                       }
                     ]
                   }
@@ -76709,6 +76965,12 @@
               {
                 "name": "nullable",
                 "value": "true"
+              },
+              {
+                "name": "additionalProperties",
+                "value": {
+                  "type": "string"
+                }
               }
             ],
             "symbolDef": {
@@ -77220,6 +77482,10 @@
                                     {
                                       "name": "required",
                                       "value": "true"
+                                    },
+                                    {
+                                      "name": "additionalProperties",
+                                      "value": true
                                     }
                                   ]
                                 },
@@ -77227,7 +77493,12 @@
                                   "name": "sample",
                                   "type": "object",
                                   "description": "",
-                                  "meta": []
+                                  "meta": [
+                                    {
+                                      "name": "additionalProperties",
+                                      "value": true
+                                    }
+                                  ]
                                 }
                               ],
                               "description": "",
@@ -78295,6 +78566,10 @@
                                     {
                                       "name": "required",
                                       "value": "true"
+                                    },
+                                    {
+                                      "name": "additionalProperties",
+                                      "value": true
                                     }
                                   ]
                                 },
@@ -78302,7 +78577,12 @@
                                   "name": "sample",
                                   "type": "object",
                                   "description": "",
-                                  "meta": []
+                                  "meta": [
+                                    {
+                                      "name": "additionalProperties",
+                                      "value": true
+                                    }
+                                  ]
                                 }
                               ],
                               "description": "",
@@ -78441,6 +78721,12 @@
                               {
                                 "name": "nullable",
                                 "value": "true"
+                              },
+                              {
+                                "name": "additionalProperties",
+                                "value": {
+                                  "type": "string"
+                                }
                               }
                             ],
                             "symbolDef": {
@@ -79086,6 +79372,10 @@
                                     {
                                       "name": "required",
                                       "value": "true"
+                                    },
+                                    {
+                                      "name": "additionalProperties",
+                                      "value": true
                                     }
                                   ]
                                 },
@@ -79093,7 +79383,12 @@
                                   "name": "sample",
                                   "type": "object",
                                   "description": "",
-                                  "meta": []
+                                  "meta": [
+                                    {
+                                      "name": "additionalProperties",
+                                      "value": true
+                                    }
+                                  ]
                                 }
                               ],
                               "description": "",
@@ -79422,6 +79717,12 @@
               {
                 "name": "nullable",
                 "value": "true"
+              },
+              {
+                "name": "additionalProperties",
+                "value": {
+                  "type": "string"
+                }
               }
             ],
             "symbolDef": {
@@ -79627,6 +79928,10 @@
               {
                 "name": "required",
                 "value": "true"
+              },
+              {
+                "name": "additionalProperties",
+                "value": true
               }
             ]
           },
@@ -79650,6 +79955,10 @@
                 {
                   "name": "required",
                   "value": "true"
+                },
+                {
+                  "name": "additionalProperties",
+                  "value": true
                 }
               ]
             }
@@ -81074,6 +81383,12 @@
                   {
                     "name": "nullable",
                     "value": "true"
+                  },
+                  {
+                    "name": "additionalProperties",
+                    "value": {
+                      "type": "string"
+                    }
                   }
                 ],
                 "symbolDef": {
@@ -81212,6 +81527,12 @@
               {
                 "name": "nullable",
                 "value": "true"
+              },
+              {
+                "name": "additionalProperties",
+                "value": {
+                  "type": "string"
+                }
               }
             ]
           }
@@ -83458,7 +83779,12 @@
                       "name": "parameters",
                       "type": "object",
                       "description": "The parameters the functions accepts, described as a JSON Schema object. See the [guide](/docs/guides/function-calling) for examples, and the [JSON Schema reference](https://json-schema.org/understanding-json-schema/) for documentation about the format. \n\nOmitting `parameters` defines a function with an empty parameter list.",
-                      "meta": [],
+                      "meta": [
+                        {
+                          "name": "additionalProperties",
+                          "value": true
+                        }
+                      ],
                       "symbolDef": {
                         "id": "#/components/schemas/FunctionParameters",
                         "canonical": "objects/FunctionParameters",
@@ -83549,7 +83875,12 @@
                   "name": "parameters",
                   "type": "object",
                   "description": "The parameters the functions accepts, described as a JSON Schema object. See the [guide](/docs/guides/function-calling) for examples, and the [JSON Schema reference](https://json-schema.org/understanding-json-schema/) for documentation about the format. \n\nOmitting `parameters` defines a function with an empty parameter list.",
-                  "meta": [],
+                  "meta": [
+                    {
+                      "name": "additionalProperties",
+                      "value": true
+                    }
+                  ],
                   "symbolDef": {
                     "id": "#/components/schemas/FunctionParameters",
                     "canonical": "objects/FunctionParameters",
@@ -85040,7 +85371,12 @@
                           "name": "parameters",
                           "type": "object",
                           "description": "The parameters the functions accepts, described as a JSON Schema object. See the [guide](/docs/guides/function-calling) for examples, and the [JSON Schema reference](https://json-schema.org/understanding-json-schema/) for documentation about the format. \n\nOmitting `parameters` defines a function with an empty parameter list.",
-                          "meta": [],
+                          "meta": [
+                            {
+                              "name": "additionalProperties",
+                              "value": true
+                            }
+                          ],
                           "symbolDef": {
                             "id": "#/components/schemas/FunctionParameters",
                             "canonical": "objects/FunctionParameters",
@@ -87098,6 +87434,12 @@
               {
                 "name": "nullable",
                 "value": "true"
+              },
+              {
+                "name": "additionalProperties",
+                "value": {
+                  "type": "string"
+                }
               }
             ],
             "symbolDef": {
@@ -87806,6 +88148,12 @@
                   {
                     "name": "nullable",
                     "value": "true"
+                  },
+                  {
+                    "name": "additionalProperties",
+                    "value": {
+                      "type": "string"
+                    }
                   }
                 ],
                 "symbolDef": {
@@ -88462,6 +88810,12 @@
               {
                 "name": "nullable",
                 "value": "true"
+              },
+              {
+                "name": "additionalProperties",
+                "value": {
+                  "type": "string"
+                }
               }
             ],
             "symbolDef": {
@@ -92755,6 +93109,12 @@
                   {
                     "name": "nullable",
                     "value": "true"
+                  },
+                  {
+                    "name": "additionalProperties",
+                    "value": {
+                      "type": "string"
+                    }
                   }
                 ],
                 "symbolDef": {
@@ -93203,6 +93563,12 @@
                   {
                     "name": "nullable",
                     "value": "true"
+                  },
+                  {
+                    "name": "additionalProperties",
+                    "value": {
+                      "type": "string"
+                    }
                   }
                 ],
                 "symbolDef": {
@@ -94241,6 +94607,12 @@
               {
                 "name": "nullable",
                 "value": "true"
+              },
+              {
+                "name": "additionalProperties",
+                "value": {
+                  "type": "string"
+                }
               }
             ],
             "symbolDef": {
@@ -94554,6 +94926,10 @@
                   {
                     "name": "nullable",
                     "value": "true"
+                  },
+                  {
+                    "name": "additionalProperties",
+                    "value": true
                   }
                 ],
                 "symbolDef": {
@@ -95118,6 +95494,10 @@
                   {
                     "name": "nullable",
                     "value": "true"
+                  },
+                  {
+                    "name": "additionalProperties",
+                    "value": true
                   }
                 ],
                 "symbolDef": {
@@ -95615,6 +95995,10 @@
               {
                 "name": "nullable",
                 "value": "true"
+              },
+              {
+                "name": "additionalProperties",
+                "value": true
               }
             ],
             "symbolDef": {
@@ -95941,6 +96325,10 @@
                   {
                     "name": "nullable",
                     "value": "true"
+                  },
+                  {
+                    "name": "additionalProperties",
+                    "value": true
                   }
                 ],
                 "symbolDef": {
@@ -97362,7 +97750,12 @@
                               "name": "parameters",
                               "type": "object",
                               "description": "The parameters the functions accepts, described as a JSON Schema object. See the [guide](/docs/guides/function-calling) for examples, and the [JSON Schema reference](https://json-schema.org/understanding-json-schema/) for documentation about the format. \n\nOmitting `parameters` defines a function with an empty parameter list.",
-                              "meta": [],
+                              "meta": [
+                                {
+                                  "name": "additionalProperties",
+                                  "value": true
+                                }
+                              ],
                               "symbolDef": {
                                 "id": "#/components/schemas/FunctionParameters",
                                 "canonical": "objects/FunctionParameters",
@@ -97461,6 +97854,12 @@
                   {
                     "name": "nullable",
                     "value": "true"
+                  },
+                  {
+                    "name": "additionalProperties",
+                    "value": {
+                      "type": "string"
+                    }
                   }
                 ],
                 "symbolDef": {
@@ -97721,7 +98120,12 @@
                             "name": "schema",
                             "type": "object",
                             "description": "The schema for the response format, described as a JSON Schema object.\nLearn how to build JSON schemas [here](https://json-schema.org/).\n",
-                            "meta": [],
+                            "meta": [
+                              {
+                                "name": "additionalProperties",
+                                "value": true
+                              }
+                            ],
                             "symbolDef": {
                               "id": "#/components/schemas/ResponseFormatJsonSchemaSchema",
                               "canonical": "objects/ResponseFormatJsonSchemaSchema",
@@ -98720,7 +99124,12 @@
                               "name": "parameters",
                               "type": "object",
                               "description": "The parameters the functions accepts, described as a JSON Schema object. See the [guide](/docs/guides/function-calling) for examples, and the [JSON Schema reference](https://json-schema.org/understanding-json-schema/) for documentation about the format. \n\nOmitting `parameters` defines a function with an empty parameter list.",
-                              "meta": [],
+                              "meta": [
+                                {
+                                  "name": "additionalProperties",
+                                  "value": true
+                                }
+                              ],
                               "symbolDef": {
                                 "id": "#/components/schemas/FunctionParameters",
                                 "canonical": "objects/FunctionParameters",
@@ -98821,6 +99230,12 @@
                   {
                     "name": "nullable",
                     "value": "true"
+                  },
+                  {
+                    "name": "additionalProperties",
+                    "value": {
+                      "type": "string"
+                    }
                   }
                 ],
                 "symbolDef": {
@@ -99081,7 +99496,12 @@
                             "name": "schema",
                             "type": "object",
                             "description": "The schema for the response format, described as a JSON Schema object.\nLearn how to build JSON schemas [here](https://json-schema.org/).\n",
-                            "meta": [],
+                            "meta": [
+                              {
+                                "name": "additionalProperties",
+                                "value": true
+                              }
+                            ],
                             "symbolDef": {
                               "id": "#/components/schemas/ResponseFormatJsonSchemaSchema",
                               "canonical": "objects/ResponseFormatJsonSchemaSchema",
@@ -99649,7 +100069,12 @@
                           "name": "parameters",
                           "type": "object",
                           "description": "The parameters the functions accepts, described as a JSON Schema object. See the [guide](/docs/guides/function-calling) for examples, and the [JSON Schema reference](https://json-schema.org/understanding-json-schema/) for documentation about the format. \n\nOmitting `parameters` defines a function with an empty parameter list.",
-                          "meta": [],
+                          "meta": [
+                            {
+                              "name": "additionalProperties",
+                              "value": true
+                            }
+                          ],
                           "symbolDef": {
                             "id": "#/components/schemas/FunctionParameters",
                             "canonical": "objects/FunctionParameters",
@@ -99759,6 +100184,12 @@
               {
                 "name": "nullable",
                 "value": "true"
+              },
+              {
+                "name": "additionalProperties",
+                "value": {
+                  "type": "string"
+                }
               }
             ],
             "symbolDef": {
@@ -100019,7 +100450,12 @@
                         "name": "schema",
                         "type": "object",
                         "description": "The schema for the response format, described as a JSON Schema object.\nLearn how to build JSON schemas [here](https://json-schema.org/).\n",
-                        "meta": [],
+                        "meta": [
+                          {
+                            "name": "additionalProperties",
+                            "value": true
+                          }
+                        ],
                         "symbolDef": {
                           "id": "#/components/schemas/ResponseFormatJsonSchemaSchema",
                           "canonical": "objects/ResponseFormatJsonSchemaSchema",
@@ -100726,6 +101162,12 @@
                         {
                           "name": "nullable",
                           "value": "true"
+                        },
+                        {
+                          "name": "additionalProperties",
+                          "value": {
+                            "type": "string"
+                          }
                         }
                       ],
                       "symbolDef": {
@@ -100817,6 +101259,12 @@
                   {
                     "name": "nullable",
                     "value": "true"
+                  },
+                  {
+                    "name": "additionalProperties",
+                    "value": {
+                      "type": "string"
+                    }
                   }
                 ],
                 "symbolDef": {
@@ -101104,6 +101552,12 @@
                   {
                     "name": "nullable",
                     "value": "true"
+                  },
+                  {
+                    "name": "additionalProperties",
+                    "value": {
+                      "type": "string"
+                    }
                   }
                 ],
                 "symbolDef": {
@@ -101374,6 +101828,12 @@
               {
                 "name": "nullable",
                 "value": "true"
+              },
+              {
+                "name": "additionalProperties",
+                "value": {
+                  "type": "string"
+                }
               }
             ],
             "symbolDef": {
@@ -102024,6 +102484,12 @@
                   {
                     "name": "nullable",
                     "value": "true"
+                  },
+                  {
+                    "name": "additionalProperties",
+                    "value": {
+                      "type": "string"
+                    }
                   }
                 ],
                 "symbolDef": {
@@ -102441,6 +102907,12 @@
                   {
                     "name": "nullable",
                     "value": "true"
+                  },
+                  {
+                    "name": "additionalProperties",
+                    "value": {
+                      "type": "string"
+                    }
                   }
                 ],
                 "symbolDef": {
@@ -103657,6 +104129,12 @@
               {
                 "name": "nullable",
                 "value": "true"
+              },
+              {
+                "name": "additionalProperties",
+                "value": {
+                  "type": "string"
+                }
               }
             ],
             "symbolDef": {
@@ -104771,6 +105249,12 @@
                         {
                           "name": "nullable",
                           "value": "true"
+                        },
+                        {
+                          "name": "additionalProperties",
+                          "value": {
+                            "type": "string"
+                          }
                         }
                       ],
                       "symbolDef": {
@@ -105069,7 +105553,12 @@
                               "name": "parameters",
                               "type": "object",
                               "description": "The parameters the functions accepts, described as a JSON Schema object. See the [guide](/docs/guides/function-calling) for examples, and the [JSON Schema reference](https://json-schema.org/understanding-json-schema/) for documentation about the format. \n\nOmitting `parameters` defines a function with an empty parameter list.",
-                              "meta": [],
+                              "meta": [
+                                {
+                                  "name": "additionalProperties",
+                                  "value": true
+                                }
+                              ],
                               "symbolDef": {
                                 "id": "#/components/schemas/FunctionParameters",
                                 "canonical": "objects/FunctionParameters",
@@ -105108,6 +105597,12 @@
                   {
                     "name": "nullable",
                     "value": "true"
+                  },
+                  {
+                    "name": "additionalProperties",
+                    "value": {
+                      "type": "string"
+                    }
                   }
                 ],
                 "symbolDef": {
@@ -105625,7 +106120,12 @@
                             "name": "schema",
                             "type": "object",
                             "description": "The schema for the response format, described as a JSON Schema object.\nLearn how to build JSON schemas [here](https://json-schema.org/).\n",
-                            "meta": [],
+                            "meta": [
+                              {
+                                "name": "additionalProperties",
+                                "value": true
+                              }
+                            ],
                             "symbolDef": {
                               "id": "#/components/schemas/ResponseFormatJsonSchemaSchema",
                               "canonical": "objects/ResponseFormatJsonSchemaSchema",
@@ -106385,6 +106885,12 @@
                             {
                               "name": "nullable",
                               "value": "true"
+                            },
+                            {
+                              "name": "additionalProperties",
+                              "value": {
+                                "type": "string"
+                              }
                             }
                           ],
                           "symbolDef": {
@@ -106476,6 +106982,12 @@
                       {
                         "name": "nullable",
                         "value": "true"
+                      },
+                      {
+                        "name": "additionalProperties",
+                        "value": {
+                          "type": "string"
+                        }
                       }
                     ],
                     "symbolDef": {
@@ -106995,7 +107507,12 @@
                               "name": "parameters",
                               "type": "object",
                               "description": "The parameters the functions accepts, described as a JSON Schema object. See the [guide](/docs/guides/function-calling) for examples, and the [JSON Schema reference](https://json-schema.org/understanding-json-schema/) for documentation about the format. \n\nOmitting `parameters` defines a function with an empty parameter list.",
-                              "meta": [],
+                              "meta": [
+                                {
+                                  "name": "additionalProperties",
+                                  "value": true
+                                }
+                              ],
                               "symbolDef": {
                                 "id": "#/components/schemas/FunctionParameters",
                                 "canonical": "objects/FunctionParameters",
@@ -107096,6 +107613,12 @@
                   {
                     "name": "nullable",
                     "value": "true"
+                  },
+                  {
+                    "name": "additionalProperties",
+                    "value": {
+                      "type": "string"
+                    }
                   }
                 ],
                 "symbolDef": {
@@ -107613,7 +108136,12 @@
                             "name": "schema",
                             "type": "object",
                             "description": "The schema for the response format, described as a JSON Schema object.\nLearn how to build JSON schemas [here](https://json-schema.org/).\n",
-                            "meta": [],
+                            "meta": [
+                              {
+                                "name": "additionalProperties",
+                                "value": true
+                              }
+                            ],
                             "symbolDef": {
                               "id": "#/components/schemas/ResponseFormatJsonSchemaSchema",
                               "canonical": "objects/ResponseFormatJsonSchemaSchema",
@@ -108050,6 +108578,12 @@
                   {
                     "name": "nullable",
                     "value": "true"
+                  },
+                  {
+                    "name": "additionalProperties",
+                    "value": {
+                      "type": "string"
+                    }
                   }
                 ],
                 "symbolDef": {
@@ -109255,7 +109789,12 @@
                           "name": "parameters",
                           "type": "object",
                           "description": "The parameters the functions accepts, described as a JSON Schema object. See the [guide](/docs/guides/function-calling) for examples, and the [JSON Schema reference](https://json-schema.org/understanding-json-schema/) for documentation about the format. \n\nOmitting `parameters` defines a function with an empty parameter list.",
-                          "meta": [],
+                          "meta": [
+                            {
+                              "name": "additionalProperties",
+                              "value": true
+                            }
+                          ],
                           "symbolDef": {
                             "id": "#/components/schemas/FunctionParameters",
                             "canonical": "objects/FunctionParameters",
@@ -109303,6 +109842,12 @@
               {
                 "name": "nullable",
                 "value": "true"
+              },
+              {
+                "name": "additionalProperties",
+                "value": {
+                  "type": "string"
+                }
               }
             ],
             "symbolDef": {
@@ -109872,7 +110417,12 @@
                         "name": "schema",
                         "type": "object",
                         "description": "The schema for the response format, described as a JSON Schema object.\nLearn how to build JSON schemas [here](https://json-schema.org/).\n",
-                        "meta": [],
+                        "meta": [
+                          {
+                            "name": "additionalProperties",
+                            "value": true
+                          }
+                        ],
                         "symbolDef": {
                           "id": "#/components/schemas/ResponseFormatJsonSchemaSchema",
                           "canonical": "objects/ResponseFormatJsonSchemaSchema",
@@ -111398,6 +111948,12 @@
               {
                 "name": "nullable",
                 "value": "true"
+              },
+              {
+                "name": "additionalProperties",
+                "value": {
+                  "type": "string"
+                }
               }
             ],
             "symbolDef": {
@@ -113046,6 +113602,12 @@
                               {
                                 "name": "nullable",
                                 "value": "true"
+                              },
+                              {
+                                "name": "additionalProperties",
+                                "value": {
+                                  "type": "string"
+                                }
                               }
                             ],
                             "symbolDef": {
@@ -113958,7 +114520,12 @@
                                           "name": "parameters",
                                           "type": "object",
                                           "description": "The parameters the functions accepts, described as a JSON Schema object. See the [guide](/docs/guides/function-calling) for examples, and the [JSON Schema reference](https://json-schema.org/understanding-json-schema/) for documentation about the format. \n\nOmitting `parameters` defines a function with an empty parameter list.",
-                                          "meta": [],
+                                          "meta": [
+                                            {
+                                              "name": "additionalProperties",
+                                              "value": true
+                                            }
+                                          ],
                                           "symbolDef": {
                                             "id": "#/components/schemas/FunctionParameters",
                                             "canonical": "objects/FunctionParameters",
@@ -114006,6 +114573,12 @@
                               {
                                 "name": "nullable",
                                 "value": "true"
+                              },
+                              {
+                                "name": "additionalProperties",
+                                "value": {
+                                  "type": "string"
+                                }
                               }
                             ],
                             "symbolDef": {
@@ -114575,7 +115148,12 @@
                                         "name": "schema",
                                         "type": "object",
                                         "description": "The schema for the response format, described as a JSON Schema object.\nLearn how to build JSON schemas [here](https://json-schema.org/).\n",
-                                        "meta": [],
+                                        "meta": [
+                                          {
+                                            "name": "additionalProperties",
+                                            "value": true
+                                          }
+                                        ],
                                         "symbolDef": {
                                           "id": "#/components/schemas/ResponseFormatJsonSchemaSchema",
                                           "canonical": "objects/ResponseFormatJsonSchemaSchema",
@@ -115504,7 +116082,12 @@
                                           "name": "parameters",
                                           "type": "object",
                                           "description": "The parameters the functions accepts, described as a JSON Schema object. See the [guide](/docs/guides/function-calling) for examples, and the [JSON Schema reference](https://json-schema.org/understanding-json-schema/) for documentation about the format. \n\nOmitting `parameters` defines a function with an empty parameter list.",
-                                          "meta": [],
+                                          "meta": [
+                                            {
+                                              "name": "additionalProperties",
+                                              "value": true
+                                            }
+                                          ],
                                           "symbolDef": {
                                             "id": "#/components/schemas/FunctionParameters",
                                             "canonical": "objects/FunctionParameters",
@@ -115552,6 +116135,12 @@
                               {
                                 "name": "nullable",
                                 "value": "true"
+                              },
+                              {
+                                "name": "additionalProperties",
+                                "value": {
+                                  "type": "string"
+                                }
                               }
                             ],
                             "symbolDef": {
@@ -116121,7 +116710,12 @@
                                         "name": "schema",
                                         "type": "object",
                                         "description": "The schema for the response format, described as a JSON Schema object.\nLearn how to build JSON schemas [here](https://json-schema.org/).\n",
-                                        "meta": [],
+                                        "meta": [
+                                          {
+                                            "name": "additionalProperties",
+                                            "value": true
+                                          }
+                                        ],
                                         "symbolDef": {
                                           "id": "#/components/schemas/ResponseFormatJsonSchemaSchema",
                                           "canonical": "objects/ResponseFormatJsonSchemaSchema",
@@ -117050,7 +117644,12 @@
                                           "name": "parameters",
                                           "type": "object",
                                           "description": "The parameters the functions accepts, described as a JSON Schema object. See the [guide](/docs/guides/function-calling) for examples, and the [JSON Schema reference](https://json-schema.org/understanding-json-schema/) for documentation about the format. \n\nOmitting `parameters` defines a function with an empty parameter list.",
-                                          "meta": [],
+                                          "meta": [
+                                            {
+                                              "name": "additionalProperties",
+                                              "value": true
+                                            }
+                                          ],
                                           "symbolDef": {
                                             "id": "#/components/schemas/FunctionParameters",
                                             "canonical": "objects/FunctionParameters",
@@ -117098,6 +117697,12 @@
                               {
                                 "name": "nullable",
                                 "value": "true"
+                              },
+                              {
+                                "name": "additionalProperties",
+                                "value": {
+                                  "type": "string"
+                                }
                               }
                             ],
                             "symbolDef": {
@@ -117667,7 +118272,12 @@
                                         "name": "schema",
                                         "type": "object",
                                         "description": "The schema for the response format, described as a JSON Schema object.\nLearn how to build JSON schemas [here](https://json-schema.org/).\n",
-                                        "meta": [],
+                                        "meta": [
+                                          {
+                                            "name": "additionalProperties",
+                                            "value": true
+                                          }
+                                        ],
                                         "symbolDef": {
                                           "id": "#/components/schemas/ResponseFormatJsonSchemaSchema",
                                           "canonical": "objects/ResponseFormatJsonSchemaSchema",
@@ -118596,7 +119206,12 @@
                                           "name": "parameters",
                                           "type": "object",
                                           "description": "The parameters the functions accepts, described as a JSON Schema object. See the [guide](/docs/guides/function-calling) for examples, and the [JSON Schema reference](https://json-schema.org/understanding-json-schema/) for documentation about the format. \n\nOmitting `parameters` defines a function with an empty parameter list.",
-                                          "meta": [],
+                                          "meta": [
+                                            {
+                                              "name": "additionalProperties",
+                                              "value": true
+                                            }
+                                          ],
                                           "symbolDef": {
                                             "id": "#/components/schemas/FunctionParameters",
                                             "canonical": "objects/FunctionParameters",
@@ -118644,6 +119259,12 @@
                               {
                                 "name": "nullable",
                                 "value": "true"
+                              },
+                              {
+                                "name": "additionalProperties",
+                                "value": {
+                                  "type": "string"
+                                }
                               }
                             ],
                             "symbolDef": {
@@ -119213,7 +119834,12 @@
                                         "name": "schema",
                                         "type": "object",
                                         "description": "The schema for the response format, described as a JSON Schema object.\nLearn how to build JSON schemas [here](https://json-schema.org/).\n",
-                                        "meta": [],
+                                        "meta": [
+                                          {
+                                            "name": "additionalProperties",
+                                            "value": true
+                                          }
+                                        ],
                                         "symbolDef": {
                                           "id": "#/components/schemas/ResponseFormatJsonSchemaSchema",
                                           "canonical": "objects/ResponseFormatJsonSchemaSchema",
@@ -120142,7 +120768,12 @@
                                           "name": "parameters",
                                           "type": "object",
                                           "description": "The parameters the functions accepts, described as a JSON Schema object. See the [guide](/docs/guides/function-calling) for examples, and the [JSON Schema reference](https://json-schema.org/understanding-json-schema/) for documentation about the format. \n\nOmitting `parameters` defines a function with an empty parameter list.",
-                                          "meta": [],
+                                          "meta": [
+                                            {
+                                              "name": "additionalProperties",
+                                              "value": true
+                                            }
+                                          ],
                                           "symbolDef": {
                                             "id": "#/components/schemas/FunctionParameters",
                                             "canonical": "objects/FunctionParameters",
@@ -120190,6 +120821,12 @@
                               {
                                 "name": "nullable",
                                 "value": "true"
+                              },
+                              {
+                                "name": "additionalProperties",
+                                "value": {
+                                  "type": "string"
+                                }
                               }
                             ],
                             "symbolDef": {
@@ -120759,7 +121396,12 @@
                                         "name": "schema",
                                         "type": "object",
                                         "description": "The schema for the response format, described as a JSON Schema object.\nLearn how to build JSON schemas [here](https://json-schema.org/).\n",
-                                        "meta": [],
+                                        "meta": [
+                                          {
+                                            "name": "additionalProperties",
+                                            "value": true
+                                          }
+                                        ],
                                         "symbolDef": {
                                           "id": "#/components/schemas/ResponseFormatJsonSchemaSchema",
                                           "canonical": "objects/ResponseFormatJsonSchemaSchema",
@@ -121688,7 +122330,12 @@
                                           "name": "parameters",
                                           "type": "object",
                                           "description": "The parameters the functions accepts, described as a JSON Schema object. See the [guide](/docs/guides/function-calling) for examples, and the [JSON Schema reference](https://json-schema.org/understanding-json-schema/) for documentation about the format. \n\nOmitting `parameters` defines a function with an empty parameter list.",
-                                          "meta": [],
+                                          "meta": [
+                                            {
+                                              "name": "additionalProperties",
+                                              "value": true
+                                            }
+                                          ],
                                           "symbolDef": {
                                             "id": "#/components/schemas/FunctionParameters",
                                             "canonical": "objects/FunctionParameters",
@@ -121736,6 +122383,12 @@
                               {
                                 "name": "nullable",
                                 "value": "true"
+                              },
+                              {
+                                "name": "additionalProperties",
+                                "value": {
+                                  "type": "string"
+                                }
                               }
                             ],
                             "symbolDef": {
@@ -122305,7 +122958,12 @@
                                         "name": "schema",
                                         "type": "object",
                                         "description": "The schema for the response format, described as a JSON Schema object.\nLearn how to build JSON schemas [here](https://json-schema.org/).\n",
-                                        "meta": [],
+                                        "meta": [
+                                          {
+                                            "name": "additionalProperties",
+                                            "value": true
+                                          }
+                                        ],
                                         "symbolDef": {
                                           "id": "#/components/schemas/ResponseFormatJsonSchemaSchema",
                                           "canonical": "objects/ResponseFormatJsonSchemaSchema",
@@ -123234,7 +123892,12 @@
                                           "name": "parameters",
                                           "type": "object",
                                           "description": "The parameters the functions accepts, described as a JSON Schema object. See the [guide](/docs/guides/function-calling) for examples, and the [JSON Schema reference](https://json-schema.org/understanding-json-schema/) for documentation about the format. \n\nOmitting `parameters` defines a function with an empty parameter list.",
-                                          "meta": [],
+                                          "meta": [
+                                            {
+                                              "name": "additionalProperties",
+                                              "value": true
+                                            }
+                                          ],
                                           "symbolDef": {
                                             "id": "#/components/schemas/FunctionParameters",
                                             "canonical": "objects/FunctionParameters",
@@ -123282,6 +123945,12 @@
                               {
                                 "name": "nullable",
                                 "value": "true"
+                              },
+                              {
+                                "name": "additionalProperties",
+                                "value": {
+                                  "type": "string"
+                                }
                               }
                             ],
                             "symbolDef": {
@@ -123851,7 +124520,12 @@
                                         "name": "schema",
                                         "type": "object",
                                         "description": "The schema for the response format, described as a JSON Schema object.\nLearn how to build JSON schemas [here](https://json-schema.org/).\n",
-                                        "meta": [],
+                                        "meta": [
+                                          {
+                                            "name": "additionalProperties",
+                                            "value": true
+                                          }
+                                        ],
                                         "symbolDef": {
                                           "id": "#/components/schemas/ResponseFormatJsonSchemaSchema",
                                           "canonical": "objects/ResponseFormatJsonSchemaSchema",
@@ -124780,7 +125454,12 @@
                                           "name": "parameters",
                                           "type": "object",
                                           "description": "The parameters the functions accepts, described as a JSON Schema object. See the [guide](/docs/guides/function-calling) for examples, and the [JSON Schema reference](https://json-schema.org/understanding-json-schema/) for documentation about the format. \n\nOmitting `parameters` defines a function with an empty parameter list.",
-                                          "meta": [],
+                                          "meta": [
+                                            {
+                                              "name": "additionalProperties",
+                                              "value": true
+                                            }
+                                          ],
                                           "symbolDef": {
                                             "id": "#/components/schemas/FunctionParameters",
                                             "canonical": "objects/FunctionParameters",
@@ -124828,6 +125507,12 @@
                               {
                                 "name": "nullable",
                                 "value": "true"
+                              },
+                              {
+                                "name": "additionalProperties",
+                                "value": {
+                                  "type": "string"
+                                }
                               }
                             ],
                             "symbolDef": {
@@ -125397,7 +126082,12 @@
                                         "name": "schema",
                                         "type": "object",
                                         "description": "The schema for the response format, described as a JSON Schema object.\nLearn how to build JSON schemas [here](https://json-schema.org/).\n",
-                                        "meta": [],
+                                        "meta": [
+                                          {
+                                            "name": "additionalProperties",
+                                            "value": true
+                                          }
+                                        ],
                                         "symbolDef": {
                                           "id": "#/components/schemas/ResponseFormatJsonSchemaSchema",
                                           "canonical": "objects/ResponseFormatJsonSchemaSchema",
@@ -126326,7 +127016,12 @@
                                           "name": "parameters",
                                           "type": "object",
                                           "description": "The parameters the functions accepts, described as a JSON Schema object. See the [guide](/docs/guides/function-calling) for examples, and the [JSON Schema reference](https://json-schema.org/understanding-json-schema/) for documentation about the format. \n\nOmitting `parameters` defines a function with an empty parameter list.",
-                                          "meta": [],
+                                          "meta": [
+                                            {
+                                              "name": "additionalProperties",
+                                              "value": true
+                                            }
+                                          ],
                                           "symbolDef": {
                                             "id": "#/components/schemas/FunctionParameters",
                                             "canonical": "objects/FunctionParameters",
@@ -126374,6 +127069,12 @@
                               {
                                 "name": "nullable",
                                 "value": "true"
+                              },
+                              {
+                                "name": "additionalProperties",
+                                "value": {
+                                  "type": "string"
+                                }
                               }
                             ],
                             "symbolDef": {
@@ -126943,7 +127644,12 @@
                                         "name": "schema",
                                         "type": "object",
                                         "description": "The schema for the response format, described as a JSON Schema object.\nLearn how to build JSON schemas [here](https://json-schema.org/).\n",
-                                        "meta": [],
+                                        "meta": [
+                                          {
+                                            "name": "additionalProperties",
+                                            "value": true
+                                          }
+                                        ],
                                         "symbolDef": {
                                           "id": "#/components/schemas/ResponseFormatJsonSchemaSchema",
                                           "canonical": "objects/ResponseFormatJsonSchemaSchema",
@@ -127872,7 +128578,12 @@
                                           "name": "parameters",
                                           "type": "object",
                                           "description": "The parameters the functions accepts, described as a JSON Schema object. See the [guide](/docs/guides/function-calling) for examples, and the [JSON Schema reference](https://json-schema.org/understanding-json-schema/) for documentation about the format. \n\nOmitting `parameters` defines a function with an empty parameter list.",
-                                          "meta": [],
+                                          "meta": [
+                                            {
+                                              "name": "additionalProperties",
+                                              "value": true
+                                            }
+                                          ],
                                           "symbolDef": {
                                             "id": "#/components/schemas/FunctionParameters",
                                             "canonical": "objects/FunctionParameters",
@@ -127920,6 +128631,12 @@
                               {
                                 "name": "nullable",
                                 "value": "true"
+                              },
+                              {
+                                "name": "additionalProperties",
+                                "value": {
+                                  "type": "string"
+                                }
                               }
                             ],
                             "symbolDef": {
@@ -128489,7 +129206,12 @@
                                         "name": "schema",
                                         "type": "object",
                                         "description": "The schema for the response format, described as a JSON Schema object.\nLearn how to build JSON schemas [here](https://json-schema.org/).\n",
-                                        "meta": [],
+                                        "meta": [
+                                          {
+                                            "name": "additionalProperties",
+                                            "value": true
+                                          }
+                                        ],
                                         "symbolDef": {
                                           "id": "#/components/schemas/ResponseFormatJsonSchemaSchema",
                                           "canonical": "objects/ResponseFormatJsonSchemaSchema",
@@ -129679,6 +130401,12 @@
                               {
                                 "name": "nullable",
                                 "value": "true"
+                              },
+                              {
+                                "name": "additionalProperties",
+                                "value": {
+                                  "type": "string"
+                                }
                               }
                             ],
                             "symbolDef": {
@@ -130881,6 +131609,12 @@
                               {
                                 "name": "nullable",
                                 "value": "true"
+                              },
+                              {
+                                "name": "additionalProperties",
+                                "value": {
+                                  "type": "string"
+                                }
                               }
                             ],
                             "symbolDef": {
@@ -132713,6 +133447,12 @@
                               {
                                 "name": "nullable",
                                 "value": "true"
+                              },
+                              {
+                                "name": "additionalProperties",
+                                "value": {
+                                  "type": "string"
+                                }
                               }
                             ],
                             "symbolDef": {
@@ -133915,6 +134655,12 @@
                               {
                                 "name": "nullable",
                                 "value": "true"
+                              },
+                              {
+                                "name": "additionalProperties",
+                                "value": {
+                                  "type": "string"
+                                }
                               }
                             ],
                             "symbolDef": {
@@ -135117,6 +135863,12 @@
                               {
                                 "name": "nullable",
                                 "value": "true"
+                              },
+                              {
+                                "name": "additionalProperties",
+                                "value": {
+                                  "type": "string"
+                                }
                               }
                             ],
                             "symbolDef": {
@@ -136319,6 +137071,12 @@
                               {
                                 "name": "nullable",
                                 "value": "true"
+                              },
+                              {
+                                "name": "additionalProperties",
+                                "value": {
+                                  "type": "string"
+                                }
                               }
                             ],
                             "symbolDef": {
@@ -137525,6 +138283,12 @@
                               {
                                 "name": "nullable",
                                 "value": "true"
+                              },
+                              {
+                                "name": "additionalProperties",
+                                "value": {
+                                  "type": "string"
+                                }
                               }
                             ],
                             "symbolDef": {
@@ -138663,6 +139427,12 @@
                               {
                                 "name": "nullable",
                                 "value": "true"
+                              },
+                              {
+                                "name": "additionalProperties",
+                                "value": {
+                                  "type": "string"
+                                }
                               }
                             ],
                             "symbolDef": {
@@ -140529,6 +141299,12 @@
                               {
                                 "name": "nullable",
                                 "value": "true"
+                              },
+                              {
+                                "name": "additionalProperties",
+                                "value": {
+                                  "type": "string"
+                                }
                               }
                             ],
                             "symbolDef": {
@@ -141667,6 +142443,12 @@
                               {
                                 "name": "nullable",
                                 "value": "true"
+                              },
+                              {
+                                "name": "additionalProperties",
+                                "value": {
+                                  "type": "string"
+                                }
                               }
                             ],
                             "symbolDef": {
@@ -153565,6 +154347,12 @@
                   {
                     "name": "nullable",
                     "value": "true"
+                  },
+                  {
+                    "name": "additionalProperties",
+                    "value": {
+                      "type": "integer"
+                    }
                   }
                 ]
               },
@@ -154049,7 +154837,14 @@
                         "type": "object",
                         "properties": [],
                         "description": "",
-                        "meta": []
+                        "meta": [
+                          {
+                            "name": "additionalProperties",
+                            "value": {
+                              "type": "number"
+                            }
+                          }
+                        ]
                       }
                     }
                   ]

@@ -415,8 +415,18 @@ export function schemaObjectToUniformDefinitionProperty(
         ?? ("const" in schema ? [(schema as any).const] : undefined)
 
     if (enumValues) {
+        // A `null` member is not a value row: it makes the enum nullable (one
+        // real null for consumers), so it becomes the `nullable` meta instead
+        // of a child named "null".
+        const memberValues = enumValues.filter((value) => value !== null)
+        if (memberValues.length !== enumValues.length && !meta.some((m) => m.name === "nullable")) {
+            meta.push({
+                name: "nullable",
+                value: "true"
+            })
+        }
         const enumProperties = schemaObjectToUniformDefinitionProperties({
-            properties: enumValues.reduce((acc, enumName) => ({
+            properties: memberValues.reduce((acc, enumName) => ({
                 ...acc,
                 [enumName]: {
                     type: schema.type,
@@ -617,8 +627,41 @@ export function schemaObjectToUniformDefinitionPropertyMeta(objProp: OpenAPIV3.S
             value: objProp.minimum
         })
     }
+    const additionalProperties = additionalPropertiesMetaValue(objProp as OpenAPIV3.SchemaObject)
+    if (additionalProperties !== undefined) {
+        meta.push({
+            name: "additionalProperties",
+            value: additionalProperties
+        })
+    }
 
     return meta
+}
+
+/**
+ * The `additionalProperties` meta value of an object schema that allows keys
+ * beyond its `properties`: `true` for `additionalProperties: true` or a schema
+ * without a `type`, else `{ type }` — the schema's type (with `"null"` added
+ * for `nullable: true`), a looser form of it that never rejects what the
+ * schema accepts; nested shapes are not copied. `undefined` when the schema
+ * does not say (or says `false`).
+ */
+export function additionalPropertiesMetaValue(schema: OpenAPIV3.SchemaObject | undefined): unknown {
+    const additional = (schema as any)?.additionalProperties
+    if (additional === true) {
+        return true
+    }
+    if (additional === null || typeof additional !== "object" || Array.isArray(additional)) {
+        return undefined
+    }
+    const type = additional.type
+    if (typeof type === "string") {
+        return {type: additional.nullable === true && type !== "null" ? [type, "null"] : type}
+    }
+    if (Array.isArray(type) && type.length && type.every((t: unknown) => typeof t === "string")) {
+        return {type: [...type]}
+    }
+    return true
 }
 
 // The allOf rows merge: a row that exists already is spread-merged with the

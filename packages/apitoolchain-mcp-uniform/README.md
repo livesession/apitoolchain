@@ -39,11 +39,13 @@ Failures are not silent:
 - a server whose `initialize` is unknown to it (HTTP 404, 405 or 501, or the JSON-RPC errors
   -32601 / -32600) is read without the handshake headers, the way earlier versions read every
   server;
-- a network failure, a timeout or a 5xx on `initialize` is tried once more, then thrown;
-  a 401, a 403 or any other error is thrown at once;
-- a list the server does not offer (left out of its capabilities, or answered as an unknown
-  method) is empty; any other failure of a list is thrown (`McpRpcError`, with the HTTP
-  `status` and the JSON-RPC `code`), and a failure on a later page names the cursor.
+- a network failure, a timeout or any 5xx on `initialize` (a JSON-RPC error body or not) is
+  tried once more, then thrown; a 401, a 403 or any other error is thrown at once;
+- a list the server does not offer is empty: one left out of its declared capabilities (not
+  requested), or — for a server that declared none — answered with the JSON-RPC error -32601.
+  Any other failure of a list is thrown (`McpRpcError`, with the HTTP `status` and the
+  JSON-RPC `code`): an HTTP 404 or 405 there is a wrong URL or not an MCP server, not an
+  empty one. A failure on a later page names the cursor.
 
 Every request carries `Accept: application/json, text/event-stream`, the bearer token and
 the extra `headers`. `fetcher` replaces the network call (tests inject one); it receives

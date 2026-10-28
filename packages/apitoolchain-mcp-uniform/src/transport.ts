@@ -182,23 +182,29 @@ async function readLocalManifest(filePath: string): Promise<McpManifest> {
 /** Most pages a list call (`tools/list`, `resources/list`) follows through `nextCursor`. */
 const MAX_LIST_PAGES = 100;
 
-/** Answers to `initialize` that mean "this server has no initialize": read it without the handshake. */
+/** HTTP answers to `initialize` that mean "this server has no initialize". */
 const NO_INITIALIZE_STATUS = new Set([404, 405, 501]);
-/** JSON-RPC codes that mean the method is unknown or the request unsupported. */
-const UNSUPPORTED_CODES = new Set([-32601, -32600]);
+/** JSON-RPC codes on `initialize` that mean the same: the method is unknown, the request unsupported. */
+const NO_INITIALIZE_CODES = new Set([-32601, -32600]);
+/** The JSON-RPC code of an unknown method. */
+const METHOD_NOT_FOUND = -32601;
 
-function unsupported(error: unknown): boolean {
+/** Whether an `initialize` failure means the server has none: read it without the handshake. */
+function noInitialize(error: unknown): boolean {
     return (
         error instanceof McpRpcError &&
-        (NO_INITIALIZE_STATUS.has(error.status) || (error.code !== undefined && UNSUPPORTED_CODES.has(error.code)))
+        (NO_INITIALIZE_STATUS.has(error.status) || (error.code !== undefined && NO_INITIALIZE_CODES.has(error.code)))
     );
 }
 
-/** A failure worth one more try: no answer at all, a timeout or a 5xx (not 501). */
+/**
+ * A failure worth one more try: no answer at all, a timeout, a 429 or any 5xx
+ * but 501 — whether or not its body carries a JSON-RPC error (a server's
+ * internal error is often an HTTP 500 with code -32603).
+ */
 function transient(error: unknown): boolean {
     return (
         error instanceof McpRpcError &&
-        error.code === undefined &&
         (error.status === 0 || error.status === 429 || (error.status >= 500 && error.status !== 501))
     );
 }
@@ -206,8 +212,9 @@ function transient(error: unknown): boolean {
 interface McpSession {
     /**
      * Every item of a paginated list method, following `nextCursor`. A list the
-     * server does not offer is empty; a failure on a later page is thrown with
-     * the cursor it stopped at.
+     * server does not offer is empty: one left out of its declared capabilities
+     * (not requested), or — when it declared none — answered with JSON-RPC
+     * -32601. Any other failure is thrown; one on a later page names the cursor.
      */
     list<T>(method: string, key: string, capability: string): Promise<T[]>;
     /** Ends the session the server opened, if it opened one (best effort). */
@@ -221,9 +228,10 @@ interface McpSession {
  *
  * A server whose `initialize` is unknown to it (HTTP 404, 405 or 501, or the
  * JSON-RPC errors -32601 / -32600) is read the way this transport always read
- * servers: plain requests without the handshake headers. A network failure, a
- * timeout or a 5xx is tried once more; anything else (401, 403, another 4xx,
- * another JSON-RPC error) is thrown.
+ * servers: plain requests without the handshake headers — and if those fail
+ * too (a wrong URL answers 404 to everything), the list request's failure is
+ * thrown. A network failure, a timeout or a 5xx on `initialize` is tried once
+ * more; anything else (401, 403, another 4xx, another JSON-RPC error) is thrown.
  */
 async function openSession(
     url: string,
@@ -316,7 +324,7 @@ async function openSession(
             initialized = true;
             break;
         } catch (error) {
-            if (unsupported(error)) {
+            if (noInitialize(error)) {
                 break; // Not an initialize-aware server: no handshake headers, as before.
             }
             if (attempt === 1 && transient(error)) {
@@ -350,7 +358,15 @@ async function openSession(
                 try {
                     ({ result } = await send<Record<string, unknown>>(method, cursor ? { cursor } : undefined));
                 } catch (error) {
-                    if (page === 0 && unsupported(error)) {
+                    // Only an unknown method on a list the server never declared means
+                    // "no such list". An HTTP 404 or 405 is a wrong URL or not an MCP
+                    // server, and a declared list that fails is a failing server.
+                    if (
+                        page === 0 &&
+                        !capabilities &&
+                        error instanceof McpRpcError &&
+                        error.code === METHOD_NOT_FOUND
+                    ) {
                         return [];
                     }
                     if (page > 0 && error instanceof Error) {

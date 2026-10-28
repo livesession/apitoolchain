@@ -283,6 +283,83 @@ describe("resolveMcpSurface — failures are not silent", () => {
     });
 });
 
+describe("resolveMcpSurface — a wrong URL or a failing list is not an empty server", () => {
+    /** Answers every request with `status` (and, for a JSON-RPC body, `code`). */
+    function everything(code: number, rpcCode?: number): McpFetcher {
+        return async () => ({
+            ok: false,
+            status: code,
+            json: async () => ({}),
+            text: async () =>
+                rpcCode === undefined ? "<html>not here</html>" : JSON.stringify({ jsonrpc: "2.0", id: null, error: { code: rpcCode, message: "x" } }),
+        });
+    }
+
+    it("P1: a mistyped path (404 to everything) throws", async () => {
+        await expect(resolveMcpSurface("https://example.com/mpc", { fetcher: everything(404) })).rejects.toMatchObject({
+            method: "tools/list",
+            status: 404,
+        });
+    });
+
+    it("P2: a static site (405 to every POST) throws", async () => {
+        await expect(resolveMcpSurface("https://example.com/", { fetcher: everything(405) })).rejects.toMatchObject({
+            status: 405,
+        });
+    });
+
+    it("P3: a server that declared tools but fails tools/list throws, 404 or -32601", async () => {
+        for (const failure of [
+            { ok: false, status: 404, json: async () => ({}) },
+            {
+                ok: true,
+                status: 200,
+                json: async () => ({ jsonrpc: "2.0", id: 2, error: { code: -32601, message: "Method not found" } }),
+            },
+        ] as McpFetchResponse[]) {
+            const server = strictServer();
+            const fetcher: McpFetcher = async (url, init) => {
+                const body = init.body ? JSON.parse(init.body) : undefined;
+                return body?.method === "tools/list" ? failure : server.fetcher(url, init);
+            };
+            await expect(resolveMcpSurface("https://example.com/mcp", { fetcher })).rejects.toBeInstanceOf(McpRpcError);
+        }
+    });
+
+    it("an unknown list on a server that declared no capabilities is empty", async () => {
+        const fetcher: McpFetcher = async (_url, init) => {
+            const body = JSON.parse(init.body);
+            if (body.method === "resources/list") {
+                return {
+                    ok: true,
+                    status: 200,
+                    json: async () => ({ jsonrpc: "2.0", id: body.id, error: { code: -32601, message: "Method not found" } }),
+                };
+            }
+            const result =
+                body.method === "initialize" ? { protocolVersion: MCP_PROTOCOL_VERSION, serverInfo: { name: "t", version: "0" } } : { tools: [{ name: "echo" }] };
+            return { ok: true, status: 200, json: async () => ({ jsonrpc: "2.0", id: body.id, result }) };
+        };
+        const surface = await resolveMcpSurface("https://example.com/mcp", { fetcher });
+        expect(surface.tools.map((t) => t.name)).toEqual(["echo"]);
+        expect(surface.resources).toEqual([]);
+    });
+
+    it("P5: a 500 with a JSON-RPC internal error on initialize is tried once more", async () => {
+        const server = failingInitialize([
+            () => ({
+                ok: false,
+                status: 500,
+                json: async () => ({}),
+                text: async () => JSON.stringify({ jsonrpc: "2.0", id: 1, error: { code: -32603, message: "Internal error" } }),
+            }),
+        ]);
+        const surface = await resolveMcpSurface("https://example.com/mcp", { fetcher: server.fetcher });
+        expect(surface.tools).toHaveLength(1);
+        expect(server.attempts()).toBe(1);
+    });
+});
+
 describe("resolveMcpSurface — streams and time", () => {
     it("stops reading an event stream at its answer, even when the server leaves it open", async () => {
         const server = strictServer();

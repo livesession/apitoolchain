@@ -41,57 +41,76 @@ const tools = uniformToMcpTools(references, {
 - **name** — the canonical (an OpenAPI `operationId`) when it is a valid tool name
   (`^[A-Za-z0-9_-]{1,128}$`), else a slug of it; unique in reference order (`_2`, `_3`…).
   `toolName` overrides it.
-- **description** — the description's first sentence (hard-wrapped lines joined first),
-  cut to `descriptionChars` (default 240), then ` — METHOD path`.
+- **description** — the description's first sentence, cut to `descriptionChars` (default
+  240), then ` — METHOD path`. Hard-wrapped lines are joined first (fenced code, headings
+  and lists keep their lines). A sentence ends at `.`, `!` or `?` followed by the end of
+  the line, or by whitespace and an uppercase letter, a digit, a quote or a bracket — never
+  at the period of an abbreviation (`e.g.`, `i.e.`, an initial, `No.`, `vs.`, `cf.`…).
 - **inputSchema** — JSON Schema from the uniform property tree: types, enums, arrays,
-  `anyOf`/`oneOf`, nullable, defaults, bounds, examples, required; descriptions keep their
-  paragraphs and lists, with hard-wrapped lines joined. Objects deeper than `maxDepth`
-  (default 7) lose their properties. `limitCap` caps an integer `limit` parameter (or
-  top-level body property) unless its own `maximum` is lower: the maximum and a larger
-  default come down to the cap, and the description ends "Capped at N by this server."
-  in place of an "at most N" clause it carried.
+  `anyOf`/`oneOf`, nullable, defaults, bounds, examples, required. A top-level input is at
+  depth 1; an object deeper than `maxDepth` (default 7) is emitted as `{ type: "object" }`
+  without its properties. A nullable enum ends with a real `null` (a `"null"` member the
+  converter emits for a `null` enum value is dropped for it). `limitCap` caps an integer
+  `limit` parameter (or top-level body property) unless its own `maximum` is lower: the
+  maximum and a larger default come down to the cap, and the description ends "Capped at
+  N by this server." in place of an "at most N" clause it carried.
 - **the layouts** — by default (`flatten`) path, query and JSON-body properties sit side by
-  side at the top level (`additionalProperties: false`); header and cookie parameters are
-  left out. `flatten: false` groups the inputs under `pathParams`, `queryParams`,
-  `headers`, `cookies` and `requestBody`.
-- **annotations** — `readOnly` (default GET), `destructive` (DELETE), `idempotent` (GET,
-  PUT, DELETE), `openWorld` (false): each a predicate over the reference.
+  side at the top level; header and cookie parameters are left out. An input that shares
+  an earlier input's name (path parameters first, then query parameters, then body
+  properties) is renamed `<name>_query` / `<name>_body` (`_2`, `_3`… if taken) and mapped
+  back in `binding.inputs`. The top level is closed (`additionalProperties: false`) unless
+  the flattened body declares itself open: an `additionalProperties` meta (`true` or a
+  JSON Schema) on its variant or definition is carried through. An optional body's
+  required properties are not required inputs (they are required only when a body is
+  sent). `flatten: false` groups the inputs under `pathParams`, `queryParams`, `headers`,
+  `cookies` and `requestBody`, nothing renamed.
+- **operations** — every REST operation whose request body, if it has one, has a JSON
+  variant; one that only takes a form, multipart or binary body is skipped. `include`
+  replaces that rule: an operation it lets in without a JSON body becomes a tool with no
+  body input and `binding.body: null`.
+- **annotations** — `readOnly` (default GET, HEAD, OPTIONS, TRACE), `destructive` (DELETE,
+  PUT, PATCH — they remove or overwrite; POST only adds), `idempotent` (the read-only
+  methods, PUT, DELETE), `openWorld` (false): each a predicate over the reference.
 - **binding** — how a call maps back onto the HTTP request; a server keeps it and strips
-  it before listing the tool. `include` filters the operations, `extras` attaches data of
-  your own to each tool (e.g. a documentation path).
+  it before listing the tool. `extras` attaches data of your own to each tool (e.g. a
+  documentation path).
 
-Sending a call: fill `binding.path`'s `{placeholders}` from the `pathParams` arguments
-and the query string from the `queryParams` ones. When `binding.body` is `"json"`, the
-request body is:
+Sending a call: `binding.pathParams` and `binding.queryParams` list INPUT names; an input
+listed in `binding.inputs` goes out under the `name` given there (`{ id_query: { in:
+"query", name: "id" } }` → the query parameter `id`), every other one under its own name.
+Fill `binding.path`'s `{placeholders}` from the path inputs and the query string from the
+query inputs. When `binding.body` is `"json"`, the request body is:
 
 - `arguments[binding.bodyProperty]`, sent as it is, when `bodyProperty` is set. It is set
   when the body cannot be flattened — it is not an object with known properties (an array,
-  a union, a free-form object), or one of its properties shares a parameter's name — under
-  the key `body` (`requestBody` if a parameter takes `body`), and always in the grouped
-  layout (`requestBody`, with the parameters under `arguments.pathParams` /
-  `arguments.queryParams`);
+  a union, a free-form object) — under the key `body` (`requestBody` if a parameter takes
+  `body`), and always in the grouped layout (`requestBody`, with the parameters under
+  `arguments.pathParams` / `arguments.queryParams`);
 - otherwise (the flat layout) the object of every argument that is neither a path nor a
-  query parameter.
+  query input, each under its wire name.
 
 ```ts
 // The flat layout (the default); in the grouped one, read the parameters from
 // args.pathParams / args.queryParams instead.
 function request(tool: McpTool, args: Record<string, unknown>) {
     const { binding } = tool;
-    const url = new URL(
-        binding.fullPath.replace(/\{([^}]+)\}/g, (_, name) => encodeURIComponent(String(args[name])))
-    );
-    for (const name of binding.queryParams) {
-        if (args[name] !== undefined) url.searchParams.set(name, String(args[name]));
+    const wire = (input: string) => binding.inputs?.[input]?.name ?? input;
+    let path = binding.fullPath;
+    for (const input of binding.pathParams) {
+        path = path.replace(`{${wire(input)}}`, encodeURIComponent(String(args[input])));
+    }
+    const url = new URL(path);
+    for (const input of binding.queryParams) {
+        if (args[input] !== undefined) url.searchParams.set(wire(input), String(args[input]));
     }
     let body: unknown;
     if (binding.body === "json") {
         body = binding.bodyProperty
             ? args[binding.bodyProperty]
             : Object.fromEntries(
-                  Object.entries(args).filter(
-                      ([name]) => !binding.pathParams.includes(name) && !binding.queryParams.includes(name)
-                  )
+                  Object.entries(args)
+                      .filter(([input]) => !binding.pathParams.includes(input) && !binding.queryParams.includes(input))
+                      .map(([input, value]) => [wire(input), value])
               );
     }
     return { method: binding.method, url, body };
@@ -144,7 +163,8 @@ does not install it.
 
 ### Fixtures
 
-The emitters' fixtures convert one sample document,
+`5.mcp-tools.open-body` is hand-written: it pins the `additionalProperties` meta, which the
+OpenAPI converter does not emit yet. The other emitter fixtures convert one sample document,
 [`__fixtures__/agent-sample.openapi.yaml`](./__fixtures__/agent-sample.openapi.yaml), with
 `@xyd-js/openapi` into each case's `input.json`
 (`XYD_NATIVE=0 bun packages/apitoolchain-openapi/scripts/build-agent-fixture-inputs.ts`).

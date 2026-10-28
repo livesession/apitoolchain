@@ -1,0 +1,7 @@
+{
+  "options": {
+    "name": "pet-store-api",
+    "description": "Use when working with the Pet Store API: pets, orders and the store inventory.",
+    "references": { "perOperation": true }
+  }
+}

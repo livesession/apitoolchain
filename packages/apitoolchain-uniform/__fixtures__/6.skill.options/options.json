@@ -1,0 +1,18 @@
+{
+  "options": {
+    "name": "pet-store-api",
+    "description": "Reads and changes pets and orders in the Pet Store API",
+    "title": "Pet Store API",
+    "intro": "Every call needs `Authorization: Bearer <token>`.\n\n| Prefix | Object |\n|---|---|\n| `pet_` | a pet |\n\nRead [api/errors.md](api/errors.md) when a call fails.",
+    "references": { "dir": "api" },
+    "extras": {
+      "api/errors.md": "# Errors\n\nEvery error answers `{ \"code\", \"message\" }`.\n",
+      "guides/pagination.md": "# Pagination\n\nPass `next_cursor` back as `cursor`.\n"
+    }
+  },
+  "header": "Generated from openapi.yaml ({group}) -- regenerate, do not edit -->",
+  "exclude": ["get/health"],
+  "groups": {
+    "store-inventory": "Store / Inventory"
+  }
+}

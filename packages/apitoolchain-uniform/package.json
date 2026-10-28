@@ -9,7 +9,8 @@
     ".": "./dist/index.js",
     "./markdown": "./dist/markdown.js",
     "./content": "./dist/content.js",
-    "./inspection": "./dist/inspection.js"
+    "./inspection": "./dist/inspection.js",
+    "./skill": "./dist/skill.js"
   },
   "scripts": {
     "clean": "rimraf build",

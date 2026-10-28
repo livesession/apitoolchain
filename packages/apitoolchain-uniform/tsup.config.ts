@@ -6,6 +6,7 @@ const config: Options = {
         markdown: 'markdown.ts',
         content: 'content.ts',
         inspection: 'inspection.ts',
+        skill: 'skill.ts',
     },
     format: ['esm', 'cjs'], // Output both ESM and CJS formats
     target: 'node16', // Ensure compatibility with Node.js 16
@@ -15,6 +16,7 @@ const config: Options = {
             markdown: 'markdown.ts',
             content: 'content.ts',
             inspection: 'inspection.ts',
+            skill: 'skill.ts',
         },
         resolve: true, // Resolve external types
     },

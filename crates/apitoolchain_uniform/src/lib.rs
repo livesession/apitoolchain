@@ -15,11 +15,18 @@
 //! - Function-valued JS fields (`__UNSAFE_selector`, `__UNSAFE_refPath`) never
 //!   serialize in fixtures → they are NOT modeled here; converter crates keep
 //!   such bookkeeping in internal side-tables.
+//!
+//! Beside the model: the agent emitters [`mcp`] (`Reference[]` → MCP tool
+//! definitions) and [`skill`] (`Reference[]` → an agent skill's files), twins
+//! of the package's pure-JavaScript `uniformToMcpTools` and `skillFiles`.
 
 pub mod canon;
 pub mod converters;
 pub mod jsrt;
+pub mod mcp;
+mod operations;
 pub mod plugins;
+pub mod skill;
 mod types;
 
 pub use types::*;

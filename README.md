@@ -9,7 +9,7 @@ managing them.
 | Path | What |
 |------|------|
 | `crates/` | The Rust converters: `uniform` (the normalized API model), `openapi`, `gql`, `mcp_uniform`, `opencli_uniform`, `oas_snippet`, plus the `parity` fixture harness |
-| `packages/apitoolchain-*` | The five npm shims over those crates (`@xyd-js/uniform`, `/gql`, `/openapi`, `/mcp-uniform`, `/opencli`), each dispatching to the Rust core through `@xyd-js/native`. `gql`, `uniform` and `mcp-uniform` are native-only and throw without it; `openapi` still keeps a JS fallback |
+| `packages/apitoolchain-*` | The five npm shims over those crates (`@xyd-js/uniform`, `/gql`, `/openapi`, `/mcp-uniform`, `/opencli`), each dispatching to the Rust core through `@xyd-js/native`. `gql`, `uniform` and `mcp-uniform` are native-only and throw without it; `openapi` still keeps a JS fallback. The exception is `uniform`'s agent emitters (`uniformToMcpTools`, `@xyd-js/uniform/skill`): plain JavaScript with a Rust twin, so they run without the addon |
 | `packages/` (rest) | Toolchain packages: generated SDKs (`apitoolchainapp-*-node`), schemas, the release manager, filters, the design systems, the sdk.json wizard |
 | `apps/` | `api`, `gitprovider`, `registry-api`, `app`, `storybook-federation` |
 | `sdk.json` | What generates the SDKs and the CLI — sources (which spec) → targets (what, where). Built by `opensdk run` from this directory |

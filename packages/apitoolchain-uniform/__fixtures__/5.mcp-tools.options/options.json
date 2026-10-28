@@ -1,0 +1,21 @@
+{
+  "options": {
+    "limitCap": 50,
+    "descriptionChars": 40,
+    "maxDepth": 2
+  },
+  "readOnly": ["searchPets"],
+  "exclude": ["get/health"],
+  "toolNames": {
+    "store-inventory": "getInventory",
+    "cancelOrder": "getInventory"
+  },
+  "extras": {
+    "listPets": { "docsPath": "pets/list" },
+    "createPet": { "docsPath": "pets/create" },
+    "searchPets": { "docsPath": "pets/search" },
+    "getPet": { "docsPath": "pets/retrieve" },
+    "deletePet": { "docsPath": "pets/delete" },
+    "placeOrder": { "docsPath": "store/orders/create" }
+  }
+}

@@ -25,6 +25,22 @@ Returns one order.
 | 200 | `application/json` | Order | The order. |
 | 404 | `application/json` | Error | No order has this ID. |
 
+### 200 — `application/json`
+
+| Name | Type | Description |
+|---|---|---|
+| `id` | integer | The order's ID. |
+| `pet_id` | string |  |
+| `status` | string | One of: `placed`, `approved`, `delivered`. |
+| `ship_date` | string or null |  |
+
+### 404 — `application/json`
+
+| Name | Type | Description |
+|---|---|---|
+| `code` | string | A machine-readable error code. |
+| `message` | string | A human-readable message. |
+
 ## Example request
 
 ```shell

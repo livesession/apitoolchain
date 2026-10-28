@@ -29,6 +29,15 @@ Content type: `application/json`. Required.
 |---|---|---|---|
 | 200 | `application/json` | Order | The replaced order. |
 
+### 200 — `application/json`
+
+| Name | Type | Description |
+|---|---|---|
+| `id` | integer | The order's ID. |
+| `pet_id` | string |  |
+| `status` | string | One of: `placed`, `approved`, `delivered`. |
+| `ship_date` | string or null |  |
+
 ## Example request
 
 ```shell

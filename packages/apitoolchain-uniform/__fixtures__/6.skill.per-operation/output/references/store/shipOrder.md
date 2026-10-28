@@ -28,6 +28,15 @@ Content type: `application/json`. Optional.
 |---|---|---|---|
 | 202 | `application/json` | Order | The order is on its way. |
 
+### 202 — `application/json`
+
+| Name | Type | Description |
+|---|---|---|
+| `id` | integer | The order's ID. |
+| `pet_id` | string |  |
+| `status` | string | One of: `placed`, `approved`, `delivered`. |
+| `ship_date` | string or null |  |
+
 ## Example request
 
 ```shell

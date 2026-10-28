@@ -24,6 +24,19 @@ Content type: `application/json`. Required.
 |---|---|---|---|
 | 200 | `application/json` | PetList | The matching pets. |
 
+### 200 — `application/json`
+
+| Name | Type | Description |
+|---|---|---|
+| `data` | array of Pet |  |
+| `data[].id` | string | Unique identifier for the pet. |
+| `data[].name` | string | The pet's name. |
+| `data[].status` | string | Where the pet is in the sale. One of: `available`, `pending`, `sold`. |
+| `data[].tags` | array of string |  |
+| `data[].owner` | Owner | Who looks after the pet. |
+| `has_more` | boolean | Whether another page follows. |
+| `next_cursor` | string or null | Pass as `cursor` to fetch the next page. |
+
 ## Example request
 
 ```shell

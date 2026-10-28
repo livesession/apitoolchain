@@ -32,24 +32,35 @@ Content type: `application/json`. Required.
 | 201 | `application/json` | Order | The order that was placed. |
 | 409 | `application/json` | Error | The pet is not available. |
 
+#### 201 — `application/json`
+
+| Name | Type | Description |
+|---|---|---|
+| `id` | integer | The order's ID. |
+| `pet_id` | string |  |
+| `status` | string | One of: `placed`, `approved`, `delivered`. |
+| `ship_date` | string or null |  |
+
+#### 409 — `application/json`
+
+| Name | Type | Description |
+|---|---|---|
+| `code` | string | A machine-readable error code. |
+| `message` | string | A human-readable message. |
+
 ### Example request
 
 ```shell
 curl --request POST \
-     --url https://api.example.com/v1/store/orders \
-     --header 'accept: application/json' \
+     --url 'https://api.example.com/v1/store/orders' \
      --header 'content-type: application/json' \
-     --data '
-{
-  "pet_id": "string",
-  "quantity": 1,
+     --data '{
+  "pet_id": "<pet_id>",
   "payment": {
     "type": "card",
-    "token": "string"
-  },
-  "note": "string"
-}
-'
+    "token": "<token>"
+  }
+}'
 ```
 
 ## `shipOrder` — Ship order
@@ -80,19 +91,20 @@ Content type: `application/json`. Optional.
 |---|---|---|---|
 | 202 | `application/json` | Order | The order is on its way. |
 
+#### 202 — `application/json`
+
+| Name | Type | Description |
+|---|---|---|
+| `id` | integer | The order's ID. |
+| `pet_id` | string |  |
+| `status` | string | One of: `placed`, `approved`, `delivered`. |
+| `ship_date` | string or null |  |
+
 ### Example request
 
 ```shell
 curl --request POST \
-     --url https://api.example.com/v1/store/orders/0/ship \
-     --header 'accept: application/json' \
-     --header 'content-type: application/json' \
-     --data '
-{
-  "carrier": "string",
-  "tracking": true
-}
-'
+     --url 'https://api.example.com/v1/store/orders/<id>/ship'
 ```
 
 ## `getOrder` — Retrieve order
@@ -120,12 +132,27 @@ Returns one order.
 | 200 | `application/json` | Order | The order. |
 | 404 | `application/json` | Error | No order has this ID. |
 
+#### 200 — `application/json`
+
+| Name | Type | Description |
+|---|---|---|
+| `id` | integer | The order's ID. |
+| `pet_id` | string |  |
+| `status` | string | One of: `placed`, `approved`, `delivered`. |
+| `ship_date` | string or null |  |
+
+#### 404 — `application/json`
+
+| Name | Type | Description |
+|---|---|---|
+| `code` | string | A machine-readable error code. |
+| `message` | string | A human-readable message. |
+
 ### Example request
 
 ```shell
 curl --request GET \
-     --url https://api.example.com/v1/store/orders/0 \
-     --header 'accept: application/json'
+     --url 'https://api.example.com/v1/store/orders/<id>'
 ```
 
 ## `replaceOrder` — Replace order
@@ -157,21 +184,26 @@ Content type: `application/json`. Required.
 |---|---|---|---|
 | 200 | `application/json` | Order | The replaced order. |
 
+#### 200 — `application/json`
+
+| Name | Type | Description |
+|---|---|---|
+| `id` | integer | The order's ID. |
+| `pet_id` | string |  |
+| `status` | string | One of: `placed`, `approved`, `delivered`. |
+| `ship_date` | string or null |  |
+
 ### Example request
 
 ```shell
 curl --request PUT \
-     --url https://api.example.com/v1/store/orders/0 \
-     --header 'accept: application/json' \
+     --url 'https://api.example.com/v1/store/orders/<id>' \
      --header 'content-type: application/json' \
-     --data '
-{
+     --data '{
   "id": 0,
-  "pet_id": "string",
-  "status": "placed",
-  "ship_date": "2019-08-24T14:15:22Z"
-}
-'
+  "pet_id": "<pet_id>",
+  "status": "placed"
+}'
 ```
 
 ## `cancelOrder` — Cancel order
@@ -196,5 +228,5 @@ Cancels an order that has not shipped.
 
 ```shell
 curl --request DELETE \
-     --url https://api.example.com/v1/store/orders/0
+     --url 'https://api.example.com/v1/store/orders/<id>'
 ```

@@ -19,6 +19,25 @@ Returns one pet.
 | 200 | `application/json` | Pet | The pet. |
 | 404 | `application/json` | Error | No pet has this ID. |
 
+### 200 — `application/json`
+
+| Name | Type | Description |
+|---|---|---|
+| `id` | string | Unique identifier for the pet. |
+| `name` | string | The pet's name. |
+| `status` | string | Where the pet is in the sale. One of: `available`, `pending`, `sold`. |
+| `tags` | array of string |  |
+| `owner` | Owner | Who looks after the pet. |
+| `owner.name` | string | The owner's full name. |
+| `owner.contact` | object | How to reach the owner. |
+
+### 404 — `application/json`
+
+| Name | Type | Description |
+|---|---|---|
+| `code` | string | A machine-readable error code. |
+| `message` | string | A human-readable message. |
+
 ## Example request
 
 ```javascript

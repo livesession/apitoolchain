@@ -12,15 +12,16 @@ use std::fmt;
 use std::sync::Arc;
 
 use serde::Deserialize;
-use serde_json::Value;
+use serde_json::{Map, Value};
 
 use crate::jsrt::{is_js_whitespace, truthy};
 use crate::mcp::ReferencePredicate;
 use crate::operations::{
-    array_item, array_of, definition_properties, effective_property, enum_base_type, find_meta,
-    first_group, is_required, is_rest_operation, js_trim, json_schema_type, meta_flag, meta_value,
-    object_at, object_children, operation_method, operation_path, request_body, response_variants,
-    str_of, text, variant_content_type,
+    array_item, array_of, definition_properties, effective_property, enum_base_type, enum_value,
+    find_meta, first_group, is_json_content_type, is_required, is_rest_operation, js_ordered,
+    js_trim, json_schema_type, meta_flag, meta_value, object_at, object_children,
+    operation_full_path, operation_method, operation_path, request_body, response_variants, str_of,
+    text, variant_content_type,
 };
 
 /// The group a reference is filed under.
@@ -71,6 +72,25 @@ pub struct SkillOptions {
     /// replaces it.
     #[serde(default)]
     pub extras: Option<BTreeMap<String, String>>,
+    /// Each operation's "Example request" (default [`ExampleRequest::Auto`]).
+    #[serde(default)]
+    pub example_request: Option<ExampleRequest>,
+}
+
+/// Where an operation's "Example request" comes from.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum ExampleRequest {
+    /// The first request example the references carry (a shell / curl tab
+    /// when there is one), else a synthesized curl request.
+    #[default]
+    Auto,
+    /// Always a synthesized curl request: the required inputs plus `limit`,
+    /// each with its example or default when it states one (`limit`: else 10)
+    /// and a typed placeholder otherwise.
+    Synthesized,
+    /// No example request.
+    None,
 }
 
 impl fmt::Debug for SkillOptions {
@@ -98,6 +118,7 @@ impl fmt::Debug for SkillOptions {
                 "extras",
                 &self.extras.as_ref().map(|e| e.keys().collect::<Vec<_>>()),
             )
+            .field("example_request", &self.example_request)
             .finish()
     }
 }
@@ -142,6 +163,7 @@ pub fn skill_files(references: &[Value], options: SkillOptions) -> BTreeMap<Stri
         .as_ref()
         .and_then(|r| r.per_operation)
         .unwrap_or(false);
+    let example_mode = options.example_request.unwrap_or_default();
     let at = |file: &str| -> String {
         if dir.is_empty() {
             file.to_string()
@@ -204,11 +226,14 @@ pub fn skill_files(references: &[Value], options: SkillOptions) -> BTreeMap<Stri
         if per_operation {
             for (reference, file) in group.operations.iter().zip(&group.files) {
                 let mut blocks = vec![comment(&header(&group.name))];
-                blocks.extend(operation_blocks(reference, 1));
+                blocks.extend(operation_blocks(reference, 1, example_mode));
                 files.insert(at(file), blocks.join("\n\n") + "\n");
             }
         } else {
-            files.insert(at(&group.file), group_md(group, &header(&group.name)));
+            files.insert(
+                at(&group.file),
+                group_md(group, &header(&group.name), example_mode),
+            );
         }
     }
     for (path, contents) in options.extras.iter().flatten() {
@@ -392,17 +417,17 @@ fn operation_id(reference: &Value) -> String {
 // a group's reference file
 // ---------------------------------------------------------------------------
 
-fn group_md(group: &Group<'_>, header: &str) -> String {
+fn group_md(group: &Group<'_>, header: &str, example_mode: ExampleRequest) -> String {
     let mut blocks = vec![comment(header), format!("# {}", collapse(&group.name))];
     for reference in &group.operations {
-        blocks.extend(operation_blocks(reference, 2));
+        blocks.extend(operation_blocks(reference, 2, example_mode));
     }
     blocks.join("\n\n") + "\n"
 }
 
 /// An operation's blocks, its heading at `level` (2 in a group's file, 1 in
 /// its own) and its sections one level below.
-fn operation_blocks(reference: &Value, level: usize) -> Vec<String> {
+fn operation_blocks(reference: &Value, level: usize, example_mode: ExampleRequest) -> Vec<String> {
     let h = "#".repeat(level);
     let sub = "#".repeat(level + 1);
     let method = operation_method(reference);
@@ -477,11 +502,27 @@ fn operation_blocks(reference: &Value, level: usize) -> Vec<String> {
         }
         blocks.push(format!("{sub} Responses"));
         blocks.push(lines.join("\n"));
+        // Each response's fields, one level deep, like the request body's.
+        for variant in response_variants(reference) {
+            if let Some(fields) = response_fields(variant) {
+                blocks.push(format!("{sub}# {}", response_heading(variant)));
+                blocks.push(fields);
+            }
+        }
     }
 
-    if let Some((code, language)) = example_request(reference) {
+    let example = match example_mode {
+        ExampleRequest::None => None,
+        ExampleRequest::Auto => Some(
+            example_request(reference)
+                .map(|(code, language)| (code.to_string(), language.to_string()))
+                .unwrap_or_else(|| synthesized_request(reference)),
+        ),
+        ExampleRequest::Synthesized => Some(synthesized_request(reference)),
+    };
+    if let Some((code, language)) = example {
         blocks.push(format!("{sub} Example request"));
-        blocks.push(code_block(code, language));
+        blocks.push(code_block(&code, &language));
     }
 
     blocks
@@ -576,11 +617,11 @@ fn describe(raw: &Value) -> String {
         ("maximum", "Maximum"),
     ] {
         if let Some(v) = meta_value(meta, name) {
-            facts.push(format!("{label}: {}.", inline_code(&value_text(v))));
+            facts.push(format!("{label}: {}.", code_value(v)));
         }
     }
     if let Some(example) = first_example(&prop) {
-        facts.push(format!("Example: {}.", inline_code(&value_text(&example))));
+        facts.push(format!("Example: {}.", code_value(&example)));
     }
     if !description.is_empty() {
         // A sentence of its own before the facts that follow it.
@@ -597,9 +638,15 @@ fn describe(raw: &Value) -> String {
 fn enum_values(prop: &Value) -> String {
     array_of(prop, "properties")
         .iter()
-        .map(|v| inline_code(str_of(v, "name").unwrap_or("")))
+        .map(|v| code_value(&Value::String(str_of(v, "name").unwrap_or("").to_string())))
         .collect::<Vec<_>>()
         .join(", ")
+}
+
+/// A value as inline code; the empty string reads `""`.
+fn code_value(value: &Value) -> String {
+    let text = value_text(value);
+    inline_code(if text.is_empty() { "\"\"" } else { &text })
 }
 
 fn first_example(prop: &Value) -> Option<Value> {
@@ -786,6 +833,282 @@ fn example_request(reference: &Value) -> Option<(&str, &str)> {
     ))
 }
 
+/// `200 — \`application/json\``: a response's status and content type.
+fn response_heading(variant: &Value) -> String {
+    let status = meta_value(variant.get("meta"), "status")
+        .and_then(|v| v.as_str())
+        .filter(|s| !s.is_empty())
+        .unwrap_or_else(|| str_of(variant, "title").unwrap_or(""));
+    let name = collapse(status);
+    let content_type = variant_content_type(variant);
+    if content_type.is_empty() {
+        name
+    } else {
+        format!("{name} — {}", inline_code(&content_type))
+    }
+}
+
+/// A response's fields (name, type, description), each with its object
+/// children one level down — the root object's properties, or an array
+/// root's item properties as `[].name`.
+fn response_fields(variant: &Value) -> Option<String> {
+    let named = |props: &[Value]| -> Vec<Value> {
+        props
+            .iter()
+            .filter(|p| truthy(p.get("name")))
+            .cloned()
+            .collect()
+    };
+    let mut props = named(array_of(variant, "properties"));
+    let mut prefix = "";
+    if props.is_empty() {
+        if let Some(root) = object_at(variant, "rootProperty") {
+            let root = effective_property(root);
+            if str_of(&root, "type") == Some("$$array") {
+                props = array_item(&root)
+                    .map(|item| named(object_children(&effective_property(&item))))
+                    .unwrap_or_default();
+                prefix = "[].";
+            } else {
+                props = named(object_children(&root));
+            }
+        }
+    }
+    if props.is_empty() {
+        return None;
+    }
+    let field = |name: &str, prop: &Value| {
+        row(&[
+            cell(&inline_code(name)),
+            cell(&type_label(prop)),
+            cell(&describe(prop)),
+        ])
+    };
+    let mut lines = vec![table_header(&["Name", "Type", "Description"])];
+    for prop in &props {
+        let name = format!("{prefix}{}", str_of(prop, "name").unwrap_or(""));
+        lines.push(field(&name, prop));
+        let eff = effective_property(prop);
+        let (children, joiner): (Vec<Value>, &str) = if str_of(&eff, "type") == Some("$$array") {
+            let children = array_item(&eff)
+                .map(|item| object_children(&effective_property(&item)).to_vec())
+                .unwrap_or_default();
+            (children, "[].")
+        } else {
+            (object_children(&eff).to_vec(), ".")
+        };
+        for child in &children {
+            let child_name = str_of(child, "name").unwrap_or("");
+            if !child_name.is_empty() {
+                lines.push(field(&format!("{name}{joiner}{child_name}"), child));
+            }
+        }
+    }
+    Some(lines.join("\n"))
+}
+
+// ---------------------------------------------------------------------------
+// the synthesized example request
+// ---------------------------------------------------------------------------
+
+/// How deep a synthesized body spells objects and arrays out.
+const SAMPLE_DEPTH: usize = 3;
+/// `limit` when it states no example or default.
+const SAMPLE_LIMIT: u64 = 10;
+
+/// A curl request sending only the required inputs plus `limit`.
+fn synthesized_request(reference: &Value) -> (String, String) {
+    let mut url = operation_full_path(reference).unwrap_or_else(|| operation_path(reference));
+    for prop in definition_properties(reference, "$rest.param.path") {
+        let name = str_of(prop, "name").unwrap_or("");
+        if !name.is_empty() {
+            url = url.replace(&format!("{{{name}}}"), &url_text(&param_text(prop)));
+        }
+    }
+    let mut query: Vec<String> = Vec::new();
+    for prop in definition_properties(reference, "$rest.param.query") {
+        let name = str_of(prop, "name").unwrap_or("");
+        if name.is_empty() || (!is_required(prop) && name != "limit") {
+            continue;
+        }
+        let value = if name == "limit" {
+            limit_value(prop)
+        } else {
+            stated_value(&effective_property(prop))
+                .unwrap_or_else(|| Value::String(format!("<{name}>")))
+        };
+        let items = match value {
+            Value::Array(items) => items,
+            other => vec![other],
+        };
+        for item in items {
+            query.push(format!(
+                "{}={}",
+                url_text(name),
+                url_text(&value_text(&item))
+            ));
+        }
+    }
+    if !query.is_empty() {
+        url.push('?');
+        url.push_str(&query.join("&"));
+    }
+
+    let mut lines = vec![
+        format!("curl --request {}", operation_method(reference)),
+        format!("--url '{url}'"),
+    ];
+    for prop in definition_properties(reference, "$rest.param.header") {
+        let name = str_of(prop, "name").unwrap_or("");
+        if !name.is_empty() && is_required(prop) {
+            lines.push(format!(
+                "--header '{}'",
+                shell_text(&format!("{name}: {}", param_text(prop)))
+            ));
+        }
+    }
+    if let Some(body) = request_body(reference, false) {
+        if body.required && is_json_content_type(&body.content_type) {
+            let data = match body.root_property {
+                Some(root) => sample_value(root, "body", 1),
+                None => Value::Object(sample_object(&body.properties, 1, true)),
+            };
+            lines.push(format!(
+                "--header '{}'",
+                shell_text(&format!("content-type: {}", body.content_type))
+            ));
+            lines.push(format!(
+                "--data '{}'",
+                shell_text(&serde_json::to_string_pretty(&data).unwrap_or_default())
+            ));
+        }
+    }
+    (lines.join(" \\\n     "), "shell".to_string())
+}
+
+/// A parameter's value as text: what it states, else `<name>`.
+fn param_text(prop: &Value) -> String {
+    match stated_value(&effective_property(prop)) {
+        Some(v) => value_text(&v),
+        None => format!("<{}>", str_of(prop, "name").unwrap_or("")),
+    }
+}
+
+fn limit_value(prop: &Value) -> Value {
+    stated_value(&effective_property(prop)).unwrap_or_else(|| Value::from(SAMPLE_LIMIT))
+}
+
+/// What a property states as its value: its first example, else its default.
+/// A text example or default of an object or array is not used.
+fn stated_value(prop: &Value) -> Option<Value> {
+    let ty = str_of(prop, "type");
+    let structured =
+        ty == Some("object") || ty == Some("$$array") || !object_children(prop).is_empty();
+    if let Some(example) = first_example(prop) {
+        if !(structured && example.is_string()) {
+            return Some(example);
+        }
+    }
+    match meta_value(prop.get("meta"), "defaults") {
+        Some(v) if !(structured && v.is_string()) => Some(v.clone()),
+        _ => None,
+    }
+}
+
+/// A value for a property: what it states, else the first enum value or
+/// union alternative, a one-item array, an object of its required
+/// properties, or a typed placeholder.
+fn sample_value(raw: &Value, name: &str, depth: usize) -> Value {
+    let prop = effective_property(raw);
+    if let Some(stated) = stated_value(&prop) {
+        return stated;
+    }
+    match str_of(&prop, "type").unwrap_or("") {
+        "$$enum" => {
+            return match array_of(&prop, "properties").first() {
+                Some(first) => {
+                    enum_value(str_of(first, "name").unwrap_or(""), &enum_base_type(&prop))
+                }
+                None => Value::Null,
+            };
+        }
+        "$$array" => {
+            return match array_item(&prop) {
+                Some(item) if depth < SAMPLE_DEPTH => {
+                    Value::Array(vec![sample_value(&item, name, depth + 1)])
+                }
+                _ => Value::Array(vec![]),
+            };
+        }
+        "$$union" | "$$xor" => {
+            return match array_of(&prop, "properties").first() {
+                Some(first) => sample_value(first, name, depth),
+                None => Value::Null,
+            };
+        }
+        _ => {}
+    }
+    let children = object_children(&prop);
+    let ty = str_of(&prop, "type").unwrap_or("");
+    if !children.is_empty() || ty == "object" {
+        if depth < SAMPLE_DEPTH {
+            let children: Vec<&Value> = children.iter().collect();
+            return Value::Object(sample_object(&children, depth + 1, false));
+        }
+        return Value::Object(Map::new());
+    }
+    match ty {
+        "integer" | "number" => Value::from(0),
+        "boolean" => Value::Bool(false),
+        "null" => Value::Null,
+        _ => Value::String(format!(
+            "<{}>",
+            if name.is_empty() { "value" } else { name }
+        )),
+    }
+}
+
+/// An object of the required properties (and `limit`, at the top level).
+fn sample_object(props: &[&Value], depth: usize, with_limit: bool) -> Map<String, Value> {
+    let mut out = Map::new();
+    for prop in props {
+        let name = str_of(prop, "name").unwrap_or("");
+        if name.is_empty() || out.contains_key(name) {
+            continue;
+        }
+        if with_limit && name == "limit" {
+            out.insert(name.to_string(), limit_value(prop));
+        } else if is_required(prop) {
+            out.insert(name.to_string(), sample_value(prop, name, depth));
+        }
+    }
+    js_ordered(out)
+}
+
+/// Percent-encodes what would break the URL or its single quotes.
+fn url_text(value: &str) -> String {
+    let mut out = String::with_capacity(value.len());
+    for c in value.chars() {
+        match c {
+            ' ' => out.push_str("%20"),
+            '"' => out.push_str("%22"),
+            '#' => out.push_str("%23"),
+            '%' => out.push_str("%25"),
+            '&' => out.push_str("%26"),
+            '\'' => out.push_str("%27"),
+            '+' => out.push_str("%2B"),
+            '?' => out.push_str("%3F"),
+            other => out.push(other),
+        }
+    }
+    out
+}
+
+/// Text inside a single-quoted shell string.
+fn shell_text(value: &str) -> String {
+    value.replace('\'', "'\\''")
+}
+
 // ---------------------------------------------------------------------------
 // markdown and YAML text (src/skill/markdown.ts)
 // ---------------------------------------------------------------------------
@@ -952,6 +1275,19 @@ mod tests {
         assert_eq!(yaml_scalar("- item"), "\"- item\"");
         assert_eq!(yaml_scalar("ends with:"), "\"ends with:\"");
         assert_eq!(yaml_scalar("say \"hi\""), "say \"hi\"");
+    }
+
+    #[test]
+    fn empty_values_render_as_quoted_strings() {
+        assert_eq!(code_value(&Value::String(String::new())), "`\"\"`");
+        assert_eq!(code_value(&Value::Null), "`null`");
+        assert_eq!(code_value(&Value::from(20)), "`20`");
+    }
+
+    #[test]
+    fn shell_and_url_text_escape_quotes() {
+        assert_eq!(shell_text("it's"), "it'\\''s");
+        assert_eq!(url_text("rex's & co?"), "rex%27s%20%26%20co%3F");
     }
 
     #[test]

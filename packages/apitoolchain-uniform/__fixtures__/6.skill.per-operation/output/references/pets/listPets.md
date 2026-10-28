@@ -28,6 +28,26 @@ Use `cursor` from a previous page to continue:
 | 200 | `application/json` | PetList | A page of pets. |
 | 400 | `application/json` | Error | The filters are invalid. |
 
+### 200 — `application/json`
+
+| Name | Type | Description |
+|---|---|---|
+| `data` | array of Pet |  |
+| `data[].id` | string | Unique identifier for the pet. |
+| `data[].name` | string | The pet's name. |
+| `data[].status` | string | Where the pet is in the sale. One of: `available`, `pending`, `sold`. |
+| `data[].tags` | array of string |  |
+| `data[].owner` | Owner | Who looks after the pet. |
+| `has_more` | boolean | Whether another page follows. |
+| `next_cursor` | string or null | Pass as `cursor` to fetch the next page. |
+
+### 400 — `application/json`
+
+| Name | Type | Description |
+|---|---|---|
+| `code` | string | A machine-readable error code. |
+| `message` | string | A human-readable message. |
+
 ## Example request
 
 ```shell

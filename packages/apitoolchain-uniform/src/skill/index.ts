@@ -12,7 +12,9 @@ import {
     definitionProperties,
     effectiveProperty,
     enumBaseType,
+    enumValue,
     findMeta,
+    isJsonContentType,
     isRequired,
     isRestOperation,
     jsonSchemaType,
@@ -55,6 +57,14 @@ export interface SkillOptions {
     /** Which REST operations are documented (default: all of them). */
     include?: (ref: Reference) => boolean;
     references?: SkillReferencesOptions;
+    /** Each operation's "Example request" (default `"auto"`): `"auto"` takes
+     *  the first request example the references carry (a shell / curl tab when
+     *  there is one) and synthesizes a curl request when there is none;
+     *  `"synthesized"` always synthesizes it; `"none"` leaves it out. A
+     *  synthesized request sends only the required inputs plus `limit`, each
+     *  with its example or default when it states one (`limit`: else 10) and a
+     *  typed placeholder otherwise (`<name>`, `0`, `false`). */
+    exampleRequest?: "auto" | "synthesized" | "none";
     /** Hand-written files to ship with the skill, by path relative to SKILL.md,
      *  byte for byte. SKILL.md lists them; one at a generated path replaces it. */
     extras?: Record<string, string>;
@@ -73,6 +83,7 @@ export function skillFiles(references: Reference[], options: SkillOptions): Map<
     const dir = (options.references?.dir ?? "references").replace(/^(\.\/)+/, "").replace(/^\/+|\/+$/g, "");
     const header = options.references?.header ?? (() => DEFAULT_SKILL_HEADER);
     const perOperation = options.references?.perOperation === true;
+    const exampleMode = options.exampleRequest ?? "auto";
     const at = (file: string) => (dir ? `${dir}/${file}` : file);
 
     // Operations by group, groups in order of first appearance.
@@ -101,11 +112,11 @@ export function skillFiles(references: Reference[], options: SkillOptions): Map<
     for (const group of groups) {
         if (perOperation) {
             group.operations.forEach((ref, i) => {
-                const blocks = [comment(header(group.name)), ...operationBlocks(ref, 1)];
+                const blocks = [comment(header(group.name)), ...operationBlocks(ref, 1, exampleMode)];
                 files.set(at(group.files[i]), blocks.join("\n\n") + "\n");
             });
         } else {
-            files.set(at(group.file), groupMd(group, header(group.name)));
+            files.set(at(group.file), groupMd(group, header(group.name), exampleMode));
         }
     }
     const extras = options.extras || {};
@@ -237,17 +248,19 @@ function operationId(ref: Reference): string {
 // a group's reference file
 // ---------------------------------------------------------------------------
 
-function groupMd(group: Group, header: string): string {
+type ExampleMode = NonNullable<SkillOptions["exampleRequest"]>;
+
+function groupMd(group: Group, header: string, exampleMode: ExampleMode): string {
     const blocks: string[] = [comment(header), `# ${collapse(group.name)}`];
     for (const ref of group.operations) {
-        blocks.push(...operationBlocks(ref, 2));
+        blocks.push(...operationBlocks(ref, 2, exampleMode));
     }
     return blocks.join("\n\n") + "\n";
 }
 
 /** An operation's blocks, its heading at `level` (2 in a group's file, 1 in
  *  its own) and its sections one level below. */
-function operationBlocks(ref: Reference, level: number): string[] {
+function operationBlocks(ref: Reference, level: number, exampleMode: ExampleMode): string[] {
     const h = "#".repeat(level);
     const sub = "#".repeat(level + 1);
     const method = operationMethod(ref);
@@ -307,9 +320,19 @@ function operationBlocks(ref: Reference, level: number): string[] {
             lines.push(responseRow(variant));
         }
         blocks.push(`${sub} Responses`, lines.join("\n"));
+        // Each response's fields, one level deep, like the request body's.
+        for (const variant of variants) {
+            const fields = responseFields(variant);
+            if (fields) {
+                blocks.push(`${sub}# ${responseHeading(variant)}`, fields);
+            }
+        }
     }
 
-    const example = exampleRequest(ref);
+    const example =
+        exampleMode === "none"
+            ? null
+            : (exampleMode === "auto" ? exampleRequest(ref) : null) ?? synthesizedRequest(ref);
     if (example) {
         blocks.push(`${sub} Example request`, codeBlock(example.code, example.language));
     }
@@ -378,19 +401,19 @@ function describe(raw: DefinitionProperty): string {
     }
     const defaults = findMeta(prop.meta, "defaults");
     if (defaults && "value" in defaults) {
-        facts.push(`Default: ${inlineCode(valueText(defaults.value))}.`);
+        facts.push(`Default: ${codeValue(defaults.value)}.`);
     }
     const minimum = findMeta(prop.meta, "minimum");
     if (minimum && "value" in minimum) {
-        facts.push(`Minimum: ${inlineCode(valueText(minimum.value))}.`);
+        facts.push(`Minimum: ${codeValue(minimum.value)}.`);
     }
     const maximum = findMeta(prop.meta, "maximum");
     if (maximum && "value" in maximum) {
-        facts.push(`Maximum: ${inlineCode(valueText(maximum.value))}.`);
+        facts.push(`Maximum: ${codeValue(maximum.value)}.`);
     }
     const example = firstExample(prop);
     if (example !== undefined) {
-        facts.push(`Example: ${inlineCode(valueText(example))}.`);
+        facts.push(`Example: ${codeValue(example)}.`);
     }
     if (description) {
         // A sentence of its own before the facts that follow it.
@@ -401,7 +424,7 @@ function describe(raw: DefinitionProperty): string {
 }
 
 function enumValues(prop: DefinitionProperty): string {
-    return (prop.properties || []).map((value) => inlineCode(String(value.name ?? ""))).join(", ");
+    return (prop.properties || []).map((value) => codeValue(String(value.name ?? ""))).join(", ");
 }
 
 /** The first example: the `examples` meta's, else the `example` meta, else
@@ -424,6 +447,13 @@ function firstExample(prop: DefinitionProperty): unknown {
 /** A value as text: strings as they are, everything else as JSON. */
 function valueText(value: unknown): string {
     return typeof value === "string" ? value : JSON.stringify(value) ?? "null";
+}
+
+/** A value as inline code; the empty string reads `""` (an empty code span
+ *  does not render). */
+function codeValue(value: unknown): string {
+    const text = valueText(value);
+    return inlineCode(text === "" ? '""' : text);
 }
 
 /** A short type: `string`, `array of Pet`, `Card or Transfer`, `… or null`. */
@@ -517,4 +547,213 @@ function exampleRequest(ref: Reference): { code: string; language: string } | nu
         tabs.find((t) => SHELL_LANGUAGES.has((t.language || "").toLowerCase()) || /curl|shell/i.test(t.title || "")) ||
         tabs[0];
     return { code: tab.code || "", language: tab.language || "" };
+}
+
+/** `200 — \`application/json\``: a response's status and content type. */
+function responseHeading(variant: DefinitionVariant): string {
+    const status = findMeta(variant.meta, "status")?.value;
+    const contentType = variantContentType(variant);
+    const name = collapse(typeof status === "string" && status ? status : variant.title || "");
+    return contentType ? `${name} — ${inlineCode(contentType)}` : name;
+}
+
+/** A response's fields (name, type, description), each with its object
+ *  children one level down — the root object's properties, or an array
+ *  root's item properties as `[].name`. `null` when there are none. */
+function responseFields(variant: DefinitionVariant): string | null {
+    let props = (variant.properties || []).filter((p) => p.name);
+    let prefix = "";
+    if (!props.length && variant.rootProperty) {
+        const root = effectiveProperty(variant.rootProperty);
+        if (root.type === "$$array") {
+            const item = arrayItem(root);
+            props = item ? objectChildren(effectiveProperty(item)).filter((p) => p.name) : [];
+            prefix = "[].";
+        } else {
+            props = objectChildren(root).filter((p) => p.name);
+        }
+    }
+    if (!props.length) {
+        return null;
+    }
+    const lines = [tableHeader(["Name", "Type", "Description"])];
+    const field = (name: string, prop: DefinitionProperty) =>
+        row([cell(inlineCode(name)), cell(typeLabel(prop)), cell(describe(prop))]);
+    for (const prop of props) {
+        const name = prefix + prop.name;
+        lines.push(field(name, prop));
+        const eff = effectiveProperty(prop);
+        let children = objectChildren(eff);
+        let joiner = ".";
+        if (eff.type === "$$array") {
+            const item = arrayItem(eff);
+            children = item ? objectChildren(effectiveProperty(item)) : [];
+            joiner = "[].";
+        }
+        for (const child of children) {
+            if (child.name) {
+                lines.push(field(name + joiner + child.name, child));
+            }
+        }
+    }
+    return lines.join("\n");
+}
+
+// ---------------------------------------------------------------------------
+// the synthesized example request
+// ---------------------------------------------------------------------------
+
+/** How deep a synthesized body spells objects and arrays out. */
+const SAMPLE_DEPTH = 3;
+/** `limit` when it states no example or default. */
+const SAMPLE_LIMIT = 10;
+
+/** A curl request sending only the required inputs plus `limit`. */
+function synthesizedRequest(ref: Reference): { code: string; language: string } {
+    const ctx = restContext(ref);
+    let url = typeof ctx.fullPath === "string" && ctx.fullPath ? ctx.fullPath : operationPath(ref);
+    for (const prop of definitionProperties(ref, "$rest.param.path")) {
+        if (prop.name) {
+            url = url.split(`{${prop.name}}`).join(urlText(paramText(prop)));
+        }
+    }
+    const query: string[] = [];
+    for (const prop of definitionProperties(ref, "$rest.param.query")) {
+        if (!prop.name || (!isRequired(prop) && prop.name !== "limit")) {
+            continue;
+        }
+        const value = prop.name === "limit" ? limitValue(prop) : (statedValue(effectiveProperty(prop)) ?? `<${prop.name}>`);
+        for (const item of Array.isArray(value) ? value : [value]) {
+            query.push(`${urlText(prop.name)}=${urlText(valueText(item))}`);
+        }
+    }
+    if (query.length) {
+        url += "?" + query.join("&");
+    }
+
+    const lines = [`curl --request ${operationMethod(ref)}`, `--url '${url}'`];
+    for (const prop of definitionProperties(ref, "$rest.param.header")) {
+        if (prop.name && isRequired(prop)) {
+            lines.push(`--header '${shellText(`${prop.name}: ${paramText(prop)}`)}'`);
+        }
+    }
+    const body = requestBody(ref, false);
+    if (body && body.required && isJsonContentType(body.contentType)) {
+        const data = body.rootProperty
+            ? sampleValue(body.rootProperty, "body", 1)
+            : sampleObject(body.properties, 1, true);
+        lines.push(`--header '${shellText(`content-type: ${body.contentType}`)}'`);
+        lines.push(`--data '${shellText(JSON.stringify(data, null, 2))}'`);
+    }
+    return { code: lines.join(" \\\n     "), language: "shell" };
+}
+
+/** A parameter's value as text: what it states, else `<name>`. */
+function paramText(prop: DefinitionProperty): string {
+    const stated = statedValue(effectiveProperty(prop));
+    return stated === undefined ? `<${prop.name}>` : valueText(stated);
+}
+
+function limitValue(prop: DefinitionProperty): unknown {
+    return statedValue(effectiveProperty(prop)) ?? SAMPLE_LIMIT;
+}
+
+/** What a property states as its value: its first example, else its default.
+ *  A text example or default of an object or array (the converter writes
+ *  structured examples as JSON text) is not used. */
+function statedValue(prop: DefinitionProperty): unknown {
+    const structured = prop.type === "object" || prop.type === "$$array" || objectChildren(prop).length > 0;
+    const example = firstExample(prop);
+    if (example !== undefined && !(structured && typeof example === "string")) {
+        return example;
+    }
+    const defaults = findMeta(prop.meta, "defaults");
+    if (defaults && "value" in defaults && !(structured && typeof defaults.value === "string")) {
+        return defaults.value;
+    }
+    return undefined;
+}
+
+/** A value for a property: what it states, else the first enum value or union
+ *  alternative, a one-item array, an object of its required properties, or a
+ *  typed placeholder. */
+function sampleValue(raw: DefinitionProperty, name: string, depth: number): unknown {
+    const prop = effectiveProperty(raw);
+    const stated = statedValue(prop);
+    if (stated !== undefined) {
+        return stated;
+    }
+    switch (prop.type) {
+        case "$$enum": {
+            const first = (prop.properties || [])[0];
+            return first ? enumValue(String(first.name ?? ""), enumBaseType(prop)) : null;
+        }
+        case "$$array": {
+            const item = arrayItem(prop);
+            return item && depth < SAMPLE_DEPTH ? [sampleValue(item, name, depth + 1)] : [];
+        }
+        case "$$union":
+        case "$$xor": {
+            const first = (prop.properties || [])[0];
+            return first ? sampleValue(first, name, depth) : null;
+        }
+    }
+    const children = objectChildren(prop);
+    if (children.length || prop.type === "object") {
+        return depth < SAMPLE_DEPTH ? sampleObject(children, depth + 1, false) : {};
+    }
+    switch (prop.type) {
+        case "integer":
+        case "number":
+            return 0;
+        case "boolean":
+            return false;
+        case "null":
+            return null;
+        default:
+            return `<${name || "value"}>`;
+    }
+}
+
+/** An object of the required properties (and `limit`, at the top level). */
+function sampleObject(props: DefinitionProperty[], depth: number, withLimit: boolean): Record<string, unknown> {
+    const out: Record<string, unknown> = Object.create(null);
+    for (const prop of props) {
+        const name = prop.name;
+        if (!name || Object.prototype.hasOwnProperty.call(out, name)) {
+            continue;
+        }
+        const limit = withLimit && name === "limit";
+        if (limit) {
+            out[name] = limitValue(prop);
+        } else if (isRequired(prop)) {
+            out[name] = sampleValue(prop, name, depth);
+        }
+    }
+    return out;
+}
+
+/** Percent-encodes what would break the URL or its single quotes. */
+function urlText(value: string): string {
+    let out = "";
+    for (const c of value) {
+        out += URL_ESCAPES[c] ?? c;
+    }
+    return out;
+}
+
+const URL_ESCAPES: Record<string, string> = {
+    " ": "%20",
+    '"': "%22",
+    "#": "%23",
+    "%": "%25",
+    "&": "%26",
+    "'": "%27",
+    "+": "%2B",
+    "?": "%3F",
+};
+
+/** Text inside a single-quoted shell string. */
+function shellText(value: string): string {
+    return value.split("'").join("'\\''");
 }

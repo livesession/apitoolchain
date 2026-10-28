@@ -18,6 +18,5 @@ Returns pet counts by status.
 
 ```shell
 curl --request GET \
-     --url https://api.example.com/v1/store/inventory \
-     --header 'accept: application/json'
+     --url 'https://api.example.com/v1/store/inventory'
 ```

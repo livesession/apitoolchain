@@ -28,6 +28,18 @@ Content type: `application/json`. Required.
 |---|---|---|---|
 | 200 | `application/json` | Pet | The updated pet. |
 
+### 200 — `application/json`
+
+| Name | Type | Description |
+|---|---|---|
+| `id` | string | Unique identifier for the pet. |
+| `name` | string | The pet's name. |
+| `status` | string | Where the pet is in the sale. One of: `available`, `pending`, `sold`. |
+| `tags` | array of string |  |
+| `owner` | Owner | Who looks after the pet. |
+| `owner.name` | string | The owner's full name. |
+| `owner.contact` | object | How to reach the owner. |
+
 ## Example request
 
 ```shell

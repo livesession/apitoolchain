@@ -30,12 +30,31 @@ Use `cursor` from a previous page to continue:
 | 200 | `application/json` | PetList | A page of pets. |
 | 400 | `application/json` | Error | The filters are invalid. |
 
+#### 200 — `application/json`
+
+| Name | Type | Description |
+|---|---|---|
+| `data` | array of Pet |  |
+| `data[].id` | string | Unique identifier for the pet. |
+| `data[].name` | string | The pet's name. |
+| `data[].status` | string | Where the pet is in the sale. One of: `available`, `pending`, `sold`. |
+| `data[].tags` | array of string |  |
+| `data[].owner` | Owner | Who looks after the pet. |
+| `has_more` | boolean | Whether another page follows. |
+| `next_cursor` | string or null | Pass as `cursor` to fetch the next page. |
+
+#### 400 — `application/json`
+
+| Name | Type | Description |
+|---|---|---|
+| `code` | string | A machine-readable error code. |
+| `message` | string | A human-readable message. |
+
 ### Example request
 
 ```shell
 curl --request GET \
-     --url https://api.example.com/v1/pets \
-     --header 'accept: application/json'
+     --url 'https://api.example.com/v1/pets?limit=20'
 ```
 
 ## `createPet` — Create pet
@@ -68,32 +87,34 @@ Content type: `application/json`. Required.
 | 201 | `application/json` | Pet | The pet that was created. |
 | 422 | `application/json` | Error | The pet is invalid. |
 
+#### 201 — `application/json`
+
+| Name | Type | Description |
+|---|---|---|
+| `id` | string | Unique identifier for the pet. |
+| `name` | string | The pet's name. |
+| `status` | string | Where the pet is in the sale. One of: `available`, `pending`, `sold`. |
+| `tags` | array of string |  |
+| `owner` | Owner | Who looks after the pet. |
+| `owner.name` | string | The owner's full name. |
+| `owner.contact` | object | How to reach the owner. |
+
+#### 422 — `application/json`
+
+| Name | Type | Description |
+|---|---|---|
+| `code` | string | A machine-readable error code. |
+| `message` | string | A human-readable message. |
+
 ### Example request
 
 ```shell
 curl --request POST \
-     --url https://api.example.com/v1/pets \
-     --header 'accept: application/json' \
+     --url 'https://api.example.com/v1/pets' \
      --header 'content-type: application/json' \
-     --data '
-{
-  "name": "Rex",
-  "status": "available",
-  "tags": [
-    "string"
-  ],
-  "owner": {
-    "name": "string",
-    "contact": {
-      "email": "string",
-      "phone": "string"
-    }
-  },
-  "vaccinated": false,
-  "priority": 1,
-  "size": "small"
-}
-'
+     --data '{
+  "name": "Rex"
+}'
 ```
 
 ## `searchPets` — Search pets
@@ -120,25 +141,29 @@ Content type: `application/json`. Required.
 |---|---|---|---|
 | 200 | `application/json` | PetList | The matching pets. |
 
+#### 200 — `application/json`
+
+| Name | Type | Description |
+|---|---|---|
+| `data` | array of Pet |  |
+| `data[].id` | string | Unique identifier for the pet. |
+| `data[].name` | string | The pet's name. |
+| `data[].status` | string | Where the pet is in the sale. One of: `available`, `pending`, `sold`. |
+| `data[].tags` | array of string |  |
+| `data[].owner` | Owner | Who looks after the pet. |
+| `has_more` | boolean | Whether another page follows. |
+| `next_cursor` | string or null | Pass as `cursor` to fetch the next page. |
+
 ### Example request
 
 ```shell
 curl --request POST \
-     --url https://api.example.com/v1/pets/search \
-     --header 'accept: application/json' \
+     --url 'https://api.example.com/v1/pets/search' \
      --header 'content-type: application/json' \
-     --data '
-{
+     --data '{
   "query": "rex",
-  "filters": {
-    "status": "available",
-    "tags": [
-      "string"
-    ]
-  },
   "limit": 100
-}
-'
+}'
 ```
 
 ## `getPet` — Retrieve pet
@@ -160,10 +185,30 @@ Returns one pet.
 | 200 | `application/json` | Pet | The pet. |
 | 404 | `application/json` | Error | No pet has this ID. |
 
+#### 200 — `application/json`
+
+| Name | Type | Description |
+|---|---|---|
+| `id` | string | Unique identifier for the pet. |
+| `name` | string | The pet's name. |
+| `status` | string | Where the pet is in the sale. One of: `available`, `pending`, `sold`. |
+| `tags` | array of string |  |
+| `owner` | Owner | Who looks after the pet. |
+| `owner.name` | string | The owner's full name. |
+| `owner.contact` | object | How to reach the owner. |
+
+#### 404 — `application/json`
+
+| Name | Type | Description |
+|---|---|---|
+| `code` | string | A machine-readable error code. |
+| `message` | string | A human-readable message. |
+
 ### Example request
 
-```javascript
-const pet = await client.pets.retrieve("pet_123");
+```shell
+curl --request GET \
+     --url 'https://api.example.com/v1/pets/pet_123'
 ```
 
 ## `updatePet` — Update pet
@@ -194,20 +239,25 @@ Content type: `application/json`. Required.
 |---|---|---|---|
 | 200 | `application/json` | Pet | The updated pet. |
 
+#### 200 — `application/json`
+
+| Name | Type | Description |
+|---|---|---|
+| `id` | string | Unique identifier for the pet. |
+| `name` | string | The pet's name. |
+| `status` | string | Where the pet is in the sale. One of: `available`, `pending`, `sold`. |
+| `tags` | array of string |  |
+| `owner` | Owner | Who looks after the pet. |
+| `owner.name` | string | The owner's full name. |
+| `owner.contact` | object | How to reach the owner. |
+
 ### Example request
 
 ```shell
 curl --request PATCH \
-     --url https://api.example.com/v1/pets/string \
-     --header 'accept: application/json' \
+     --url 'https://api.example.com/v1/pets/<petId>' \
      --header 'content-type: application/json' \
-     --data '
-{
-  "name": "string",
-  "status": "available",
-  "weight": 0
-}
-'
+     --data '{}'
 ```
 
 ## `deletePet` — Delete pet
@@ -229,12 +279,18 @@ Deletes a pet for good.
 | 204 | — | — | The pet was deleted. |
 | 404 | `application/json` | Error | No pet has this ID. |
 
+#### 404 — `application/json`
+
+| Name | Type | Description |
+|---|---|---|
+| `code` | string | A machine-readable error code. |
+| `message` | string | A human-readable message. |
+
 ### Example request
 
 ```shell
 curl --request DELETE \
-     --url https://api.example.com/v1/pets/string \
-     --header 'accept: application/json'
+     --url 'https://api.example.com/v1/pets/<petId>'
 ```
 
 ## `replacePetTags` — Replace pet tags
@@ -263,14 +319,25 @@ Content type: `application/json`. Required.
 |---|---|---|---|
 | 200 | `application/json` | Pet | The pet with its new tags. |
 
+#### 200 — `application/json`
+
+| Name | Type | Description |
+|---|---|---|
+| `id` | string | Unique identifier for the pet. |
+| `name` | string | The pet's name. |
+| `status` | string | Where the pet is in the sale. One of: `available`, `pending`, `sold`. |
+| `tags` | array of string |  |
+| `owner` | Owner | Who looks after the pet. |
+| `owner.name` | string | The owner's full name. |
+| `owner.contact` | object | How to reach the owner. |
+
 ### Example request
 
 ```shell
 curl --request PUT \
-     --url https://api.example.com/v1/pets/string/tags \
-     --header 'accept: application/json' \
+     --url 'https://api.example.com/v1/pets/<petId>/tags' \
      --header 'content-type: application/json' \
-     --data '["string"]'
+     --data '[]'
 ```
 
 ## `listOwnerPets` — List owner pets
@@ -296,7 +363,7 @@ after. Pets come sorted by name.
 
 ```shell
 curl --request GET \
-     --url https://api.example.com/v1/owners/string/pets
+     --url 'https://api.example.com/v1/owners/<name>/pets'
 ```
 
 ## `uploadPetPhoto` — Upload pet photo
@@ -330,8 +397,5 @@ Content type: `multipart/form-data`. Required.
 
 ```shell
 curl --request POST \
-     --url https://api.example.com/v1/pets/string/photo \
-     --header 'content-type: multipart/form-data' \
-     --form file=string \
-     --form caption=string
+     --url 'https://api.example.com/v1/pets/<petId>/photo'
 ```

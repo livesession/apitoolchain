@@ -146,7 +146,13 @@ for (const [path, contents] of files) {
 Each group file holds, per operation, `## <canonical> — <title>`, the `METHOD path` line,
 the description, tables of the path/query/header/cookie parameters and the request body
 (nested objects one level down as `parent.child`), the responses (status, content type,
-type, description) and one example request — a curl one when the references carry it.
+type, description — then each response's fields, one level deep) and one example request.
+`exampleRequest` picks it: `"auto"` (the default) takes the first request example the
+references carry — a curl one when there is one — and synthesizes a curl request when
+there is none; `"synthesized"` always synthesizes it; `"none"` leaves it out. A
+synthesized request sends only the required inputs plus `limit`, each with its example or
+default when it states one (`limit`: else 10) and a typed placeholder otherwise (`<name>`,
+`0`, `false`) — so optional aliases of a required input stay out of it.
 `groupBy` (default `context.group[0]`, else `general`), `include`, `title`,
 `references.dir` (default `references`) and `references.header` (the generated-file
 comment) adjust the output; `intro` and `extras` are kept byte for byte.

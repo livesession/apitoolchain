@@ -30,6 +30,25 @@ Content type: `application/json`. Required.
 | 201 | `application/json` | Pet | The pet that was created. |
 | 422 | `application/json` | Error | The pet is invalid. |
 
+### 201 — `application/json`
+
+| Name | Type | Description |
+|---|---|---|
+| `id` | string | Unique identifier for the pet. |
+| `name` | string | The pet's name. |
+| `status` | string | Where the pet is in the sale. One of: `available`, `pending`, `sold`. |
+| `tags` | array of string |  |
+| `owner` | Owner | Who looks after the pet. |
+| `owner.name` | string | The owner's full name. |
+| `owner.contact` | object | How to reach the owner. |
+
+### 422 — `application/json`
+
+| Name | Type | Description |
+|---|---|---|
+| `code` | string | A machine-readable error code. |
+| `message` | string | A human-readable message. |
+
 ## Example request
 
 ```shell

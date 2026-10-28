@@ -30,6 +30,26 @@ Use `cursor` from a previous page to continue:
 | 200 | `application/json` | PetList | A page of pets. |
 | 400 | `application/json` | Error | The filters are invalid. |
 
+#### 200 — `application/json`
+
+| Name | Type | Description |
+|---|---|---|
+| `data` | array of Pet |  |
+| `data[].id` | string | Unique identifier for the pet. |
+| `data[].name` | string | The pet's name. |
+| `data[].status` | string | Where the pet is in the sale. One of: `available`, `pending`, `sold`. |
+| `data[].tags` | array of string |  |
+| `data[].owner` | Owner | Who looks after the pet. |
+| `has_more` | boolean | Whether another page follows. |
+| `next_cursor` | string or null | Pass as `cursor` to fetch the next page. |
+
+#### 400 — `application/json`
+
+| Name | Type | Description |
+|---|---|---|
+| `code` | string | A machine-readable error code. |
+| `message` | string | A human-readable message. |
+
 ### Example request
 
 ```shell
@@ -67,6 +87,25 @@ Content type: `application/json`. Required.
 |---|---|---|---|
 | 201 | `application/json` | Pet | The pet that was created. |
 | 422 | `application/json` | Error | The pet is invalid. |
+
+#### 201 — `application/json`
+
+| Name | Type | Description |
+|---|---|---|
+| `id` | string | Unique identifier for the pet. |
+| `name` | string | The pet's name. |
+| `status` | string | Where the pet is in the sale. One of: `available`, `pending`, `sold`. |
+| `tags` | array of string |  |
+| `owner` | Owner | Who looks after the pet. |
+| `owner.name` | string | The owner's full name. |
+| `owner.contact` | object | How to reach the owner. |
+
+#### 422 — `application/json`
+
+| Name | Type | Description |
+|---|---|---|
+| `code` | string | A machine-readable error code. |
+| `message` | string | A human-readable message. |
 
 ### Example request
 
@@ -120,6 +159,19 @@ Content type: `application/json`. Required.
 |---|---|---|---|
 | 200 | `application/json` | PetList | The matching pets. |
 
+#### 200 — `application/json`
+
+| Name | Type | Description |
+|---|---|---|
+| `data` | array of Pet |  |
+| `data[].id` | string | Unique identifier for the pet. |
+| `data[].name` | string | The pet's name. |
+| `data[].status` | string | Where the pet is in the sale. One of: `available`, `pending`, `sold`. |
+| `data[].tags` | array of string |  |
+| `data[].owner` | Owner | Who looks after the pet. |
+| `has_more` | boolean | Whether another page follows. |
+| `next_cursor` | string or null | Pass as `cursor` to fetch the next page. |
+
 ### Example request
 
 ```shell
@@ -160,6 +212,25 @@ Returns one pet.
 | 200 | `application/json` | Pet | The pet. |
 | 404 | `application/json` | Error | No pet has this ID. |
 
+#### 200 — `application/json`
+
+| Name | Type | Description |
+|---|---|---|
+| `id` | string | Unique identifier for the pet. |
+| `name` | string | The pet's name. |
+| `status` | string | Where the pet is in the sale. One of: `available`, `pending`, `sold`. |
+| `tags` | array of string |  |
+| `owner` | Owner | Who looks after the pet. |
+| `owner.name` | string | The owner's full name. |
+| `owner.contact` | object | How to reach the owner. |
+
+#### 404 — `application/json`
+
+| Name | Type | Description |
+|---|---|---|
+| `code` | string | A machine-readable error code. |
+| `message` | string | A human-readable message. |
+
 ### Example request
 
 ```javascript
@@ -193,6 +264,18 @@ Content type: `application/json`. Required.
 | Status | Content type | Type | Description |
 |---|---|---|---|
 | 200 | `application/json` | Pet | The updated pet. |
+
+#### 200 — `application/json`
+
+| Name | Type | Description |
+|---|---|---|
+| `id` | string | Unique identifier for the pet. |
+| `name` | string | The pet's name. |
+| `status` | string | Where the pet is in the sale. One of: `available`, `pending`, `sold`. |
+| `tags` | array of string |  |
+| `owner` | Owner | Who looks after the pet. |
+| `owner.name` | string | The owner's full name. |
+| `owner.contact` | object | How to reach the owner. |
 
 ### Example request
 
@@ -229,6 +312,13 @@ Deletes a pet for good.
 | 204 | — | — | The pet was deleted. |
 | 404 | `application/json` | Error | No pet has this ID. |
 
+#### 404 — `application/json`
+
+| Name | Type | Description |
+|---|---|---|
+| `code` | string | A machine-readable error code. |
+| `message` | string | A human-readable message. |
+
 ### Example request
 
 ```shell
@@ -262,6 +352,18 @@ Content type: `application/json`. Required.
 | Status | Content type | Type | Description |
 |---|---|---|---|
 | 200 | `application/json` | Pet | The pet with its new tags. |
+
+#### 200 — `application/json`
+
+| Name | Type | Description |
+|---|---|---|
+| `id` | string | Unique identifier for the pet. |
+| `name` | string | The pet's name. |
+| `status` | string | Where the pet is in the sale. One of: `available`, `pending`, `sold`. |
+| `tags` | array of string |  |
+| `owner` | Owner | Who looks after the pet. |
+| `owner.name` | string | The owner's full name. |
+| `owner.contact` | object | How to reach the owner. |
 
 ### Example request
 

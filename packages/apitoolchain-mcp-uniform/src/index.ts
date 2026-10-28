@@ -16,7 +16,7 @@ import { native } from "./native";
 // so it lives outside impl-js and survives the reap.
 import { resolveMcpSurface, type McpUrlToReferencesOptions } from "./transport";
 export type { McpTool, McpResource, JsonSchemaObject } from "./types";
-export { MCP_PROTOCOL_VERSION } from "./transport";
+export { MCP_PROTOCOL_VERSION, MCP_TIMEOUT_MS, McpRpcError } from "./transport";
 export type { McpFetcher, McpFetchResponse, McpUrlToReferencesOptions } from "./transport";
 
 export async function mcpUrlToReferences(

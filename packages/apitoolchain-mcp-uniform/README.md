@@ -30,10 +30,22 @@ A URL is read over [streamable HTTP](https://modelcontextprotocol.io/specificati
    one, `Mcp-Session-Id`;
 3. a `DELETE` that ends the session, when there is one.
 
-Answers may be plain JSON or a `text/event-stream`; the response is matched by its id.
-A server that refuses `initialize` (an HTTP error or a JSON-RPC error) is read without the
-handshake headers, the way earlier versions read every server.
+Answers may be plain JSON or a `text/event-stream`; the response is matched by its id, and an
+event stream is read only up to the event that carries it (a server may leave the stream open).
+Every request — the `DELETE` included — is abandoned after `timeoutMs` (default 30 s).
+
+Failures are not silent:
+
+- a server whose `initialize` is unknown to it (HTTP 404, 405 or 501, or the JSON-RPC errors
+  -32601 / -32600) is read without the handshake headers, the way earlier versions read every
+  server;
+- a network failure, a timeout or a 5xx on `initialize` is tried once more, then thrown;
+  a 401, a 403 or any other error is thrown at once;
+- a list the server does not offer (left out of its capabilities, or answered as an unknown
+  method) is empty; any other failure of a list is thrown (`McpRpcError`, with the HTTP
+  `status` and the JSON-RPC `code`), and a failure on a later page names the cursor.
 
 Every request carries `Accept: application/json, text/event-stream`, the bearer token and
-the extra `headers`. `fetcher` replaces the network call (tests inject one); it answers
-`{ ok, status, json(), text?(), headers? }` — a `fetch` `Response` fits.
+the extra `headers`. `fetcher` replaces the network call (tests inject one); it receives
+`{ method, headers, body, signal }` and answers `{ ok, status, json(), text?(), headers?, body? }`
+— a `fetch` `Response` fits.

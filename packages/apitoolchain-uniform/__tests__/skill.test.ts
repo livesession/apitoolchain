@@ -87,6 +87,21 @@ describe("skillFiles per operation", () => {
             "references/things-stuff/up.md",
         ]);
     });
+
+    it("links code labels without escaping inside the code span", () => {
+        const op = {
+            title: "t",
+            canonical: "things[0]",
+            description: "",
+            category: "rest",
+            type: "rest_get",
+            context: {method: "get", path: "/x", group: ["g"]},
+            definitions: [],
+            examples: {groups: []},
+        } as unknown as Reference;
+        const files = skillFiles([op], {name: "x", description: "y", references: {perOperation: true}});
+        expect(files.get("references/index.md")).toContain("| [`things[0]`](g/things-0.md) |");
+    });
 });
 
 describe("skill markdown helpers", () => {

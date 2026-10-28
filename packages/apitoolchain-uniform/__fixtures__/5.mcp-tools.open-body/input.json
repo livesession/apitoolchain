@@ -1,0 +1,279 @@
+[
+  {
+    "title": "createNote",
+    "canonical": "createNote",
+    "description": "Creates a note. Fields beyond these are stored as given.",
+    "type": "rest_post",
+    "category": "rest",
+    "context": {
+      "method": "post",
+      "path": "/notes",
+      "group": [
+        "notes"
+      ],
+      "fullPath": "https://api.example.com/v1/notes"
+    },
+    "examples": {
+      "groups": []
+    },
+    "definitions": [
+      {
+        "title": "Request body",
+        "type": "$rest.request.body",
+        "properties": [],
+        "meta": [
+          {
+            "name": "required",
+            "value": "true"
+          }
+        ],
+        "variants": [
+          {
+            "title": "application/json",
+            "description": "",
+            "properties": [
+              {
+                "name": "title",
+                "type": "string",
+                "description": "The title.",
+                "meta": [
+                  {
+                    "name": "required",
+                    "value": "true"
+                  }
+                ]
+              }
+            ],
+            "meta": [
+              {
+                "name": "contentType",
+                "value": "application/json"
+              },
+              {
+                "name": "additionalProperties",
+                "value": true
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "title": "labelNote",
+    "canonical": "labelNote",
+    "description": "Sets the labels of a note. Every extra field must be a string.",
+    "type": "rest_put",
+    "category": "rest",
+    "context": {
+      "method": "put",
+      "path": "/notes/{id}/labels",
+      "group": [
+        "notes"
+      ],
+      "fullPath": "https://api.example.com/v1/notes/{id}/labels"
+    },
+    "examples": {
+      "groups": []
+    },
+    "definitions": [
+      {
+        "title": "Path parameters",
+        "type": "$rest.param.path",
+        "properties": [
+          {
+            "name": "id",
+            "type": "string",
+            "description": "The note ID.",
+            "meta": [
+              {
+                "name": "required",
+                "value": "true"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Request body",
+        "type": "$rest.request.body",
+        "properties": [],
+        "meta": [
+          {
+            "name": "required",
+            "value": "true"
+          }
+        ],
+        "variants": [
+          {
+            "title": "application/json",
+            "description": "",
+            "properties": [
+              {
+                "name": "id",
+                "type": "string",
+                "description": "A label set ID.",
+                "meta": []
+              },
+              {
+                "name": "color",
+                "type": "string",
+                "description": "",
+                "meta": []
+              }
+            ],
+            "meta": [
+              {
+                "name": "contentType",
+                "value": "application/json"
+              },
+              {
+                "name": "additionalProperties",
+                "value": {
+                  "type": "string"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "title": "patchNote",
+    "canonical": "patchNote",
+    "description": "Merges fields into a note.",
+    "type": "rest_patch",
+    "category": "rest",
+    "context": {
+      "method": "patch",
+      "path": "/notes/{id}",
+      "group": [
+        "notes"
+      ],
+      "fullPath": "https://api.example.com/v1/notes/{id}"
+    },
+    "examples": {
+      "groups": []
+    },
+    "definitions": [
+      {
+        "title": "Path parameters",
+        "type": "$rest.param.path",
+        "properties": [
+          {
+            "name": "id",
+            "type": "string",
+            "description": "The note ID.",
+            "meta": [
+              {
+                "name": "required",
+                "value": "true"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Request body",
+        "type": "$rest.request.body",
+        "properties": [],
+        "meta": [
+          {
+            "name": "required",
+            "value": "true"
+          }
+        ],
+        "variants": [
+          {
+            "title": "application/json",
+            "description": "",
+            "properties": [],
+            "meta": [
+              {
+                "name": "contentType",
+                "value": "application/json"
+              },
+              {
+                "name": "additionalProperties",
+                "value": true
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "title": "closeNote",
+    "canonical": "closeNote",
+    "description": "Closes a note. Unknown fields are rejected.",
+    "type": "rest_post",
+    "category": "rest",
+    "context": {
+      "method": "post",
+      "path": "/notes/{id}/close",
+      "group": [
+        "notes"
+      ],
+      "fullPath": "https://api.example.com/v1/notes/{id}/close"
+    },
+    "examples": {
+      "groups": []
+    },
+    "definitions": [
+      {
+        "title": "Path parameters",
+        "type": "$rest.param.path",
+        "properties": [
+          {
+            "name": "id",
+            "type": "string",
+            "description": "The note ID.",
+            "meta": [
+              {
+                "name": "required",
+                "value": "true"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Request body",
+        "type": "$rest.request.body",
+        "properties": [],
+        "meta": [
+          {
+            "name": "required",
+            "value": "true"
+          }
+        ],
+        "variants": [
+          {
+            "title": "application/json",
+            "description": "",
+            "properties": [
+              {
+                "name": "reason",
+                "type": "string",
+                "description": "Why.",
+                "meta": []
+              }
+            ],
+            "meta": [
+              {
+                "name": "contentType",
+                "value": "application/json"
+              },
+              {
+                "name": "additionalProperties",
+                "value": false
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]

@@ -10,7 +10,8 @@ use std::collections::HashSet;
 use std::fmt;
 use std::sync::Arc;
 
-use serde::{Deserialize, Serialize};
+use serde::de::{MapAccess, Visitor};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::{Map, Value};
 
 use crate::operations::{
@@ -44,6 +45,71 @@ pub enum McpToolBody {
     Json,
 }
 
+/// Where a renamed input goes on the HTTP request.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum McpInputLocation {
+    Path,
+    Query,
+    Body,
+}
+
+impl McpInputLocation {
+    fn as_str(self) -> &'static str {
+        match self {
+            McpInputLocation::Path => "path",
+            McpInputLocation::Query => "query",
+            McpInputLocation::Body => "body",
+        }
+    }
+}
+
+/// A renamed input: where it goes and under which name.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct McpToolInput {
+    #[serde(rename = "in")]
+    pub location: McpInputLocation,
+    pub name: String,
+}
+
+/// The renamed inputs by input name, in the order they were emitted (a JSON
+/// object on the wire).
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
+pub struct McpToolInputs(pub Vec<(String, McpToolInput)>);
+
+impl McpToolInputs {
+    /// The input's entry, when it was renamed.
+    pub fn get(&self, input: &str) -> Option<&McpToolInput> {
+        self.0.iter().find(|(k, _)| k == input).map(|(_, v)| v)
+    }
+}
+
+impl Serialize for McpToolInputs {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.collect_map(self.0.iter().map(|(k, v)| (k, v)))
+    }
+}
+
+impl<'de> Deserialize<'de> for McpToolInputs {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        struct InputsVisitor;
+        impl<'de> Visitor<'de> for InputsVisitor {
+            type Value = McpToolInputs;
+            fn expecting(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                f.write_str("a map of input names to { in, name }")
+            }
+            fn visit_map<A: MapAccess<'de>>(self, mut map: A) -> Result<Self::Value, A::Error> {
+                let mut out = Vec::new();
+                while let Some((k, v)) = map.next_entry::<String, McpToolInput>()? {
+                    out.push((k, v));
+                }
+                Ok(McpToolInputs(out))
+            }
+        }
+        deserializer.deserialize_map(InputsVisitor)
+    }
+}
+
 /// How a call maps back onto the HTTP request. Not part of the MCP tool
 /// definition: a server keeps it and strips it before listing the tool.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -55,9 +121,11 @@ pub struct McpToolBinding {
     pub path: String,
     /// The first server's URL joined with the path (the path when unknown).
     pub full_path: String,
-    /// Input properties that fill the path placeholders.
+    /// The input properties that fill the path placeholders (input names —
+    /// see `inputs` for one that was renamed).
     pub path_params: Vec<String>,
-    /// Input properties sent as the query string.
+    /// The input properties sent as the query string (input names — see
+    /// `inputs` for one that was renamed).
     pub query_params: Vec<String>,
     /// `json` when the operation takes a JSON request body (`null` otherwise).
     pub body: Option<McpToolBody>,
@@ -65,6 +133,10 @@ pub struct McpToolBinding {
     /// body's properties sit at the top level (see the TypeScript docs).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub body_property: Option<String>,
+    /// The inputs renamed in the flat layout (`<name>_query`, `<name>_body`)
+    /// mapped back to their location and name; absent when none was.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub inputs: Option<McpToolInputs>,
     /// `context.group` without empty entries.
     pub group: Vec<String>,
     /// The reference's canonical.
@@ -99,16 +171,19 @@ pub struct McpToolsOptions {
     pub tool_name: Option<ReferenceToolName>,
     /// Path, query and JSON-body properties at the top level (default `true`).
     pub flatten: Option<bool>,
-    /// Which REST operations become tools (default: all).
+    /// Which REST operations become tools. Default: every one whose request
+    /// body, if any, has a JSON variant; a predicate given here is the whole
+    /// decision (an operation it includes without a JSON body gets no body
+    /// input and `body: null`).
     #[serde(skip)]
     pub include: Option<ReferencePredicate>,
-    /// `readOnlyHint` (default: GET).
+    /// `readOnlyHint` (default: GET, HEAD, OPTIONS, TRACE).
     #[serde(skip)]
     pub read_only: Option<ReferencePredicate>,
-    /// `destructiveHint` (default: DELETE).
+    /// `destructiveHint` (default: DELETE, PUT, PATCH).
     #[serde(skip)]
     pub destructive: Option<ReferencePredicate>,
-    /// `idempotentHint` (default: GET, PUT, DELETE).
+    /// `idempotentHint` (default: GET, HEAD, OPTIONS, TRACE, PUT, DELETE).
     #[serde(skip)]
     pub idempotent: Option<ReferencePredicate>,
     /// `openWorldHint` (default: false).
@@ -119,7 +194,8 @@ pub struct McpToolsOptions {
     /// The description's first sentence cut to this many characters
     /// (default 240; 0 = no cut).
     pub description_chars: Option<usize>,
-    /// Levels of nesting spelled out below the input object (default 7).
+    /// How deep objects are spelled out (default 7): a top-level input
+    /// property is at depth 1; an object deeper than this loses its properties.
     pub max_depth: Option<usize>,
     /// Extra data carried on each tool as `extras`.
     #[serde(skip)]
@@ -146,6 +222,13 @@ impl fmt::Debug for McpToolsOptions {
 }
 
 const MAX_TOOL_NAME: usize = 128;
+const SAFE_METHODS: &[&str] = &["GET", "HEAD", "OPTIONS", "TRACE"];
+const DESTRUCTIVE_METHODS: &[&str] = &["DELETE", "PUT", "PATCH"];
+
+/// A request body without a JSON variant (form, multipart, binary only).
+fn only_non_json_body(reference: &Value) -> bool {
+    request_body(reference, false).is_some() && request_body(reference, true).is_none()
+}
 const DEFAULT_DESCRIPTION_CHARS: usize = 240;
 const DEFAULT_MAX_DEPTH: usize = 7;
 
@@ -178,10 +261,12 @@ pub fn uniform_to_mcp_tools(
         if !is_rest_operation(reference) {
             continue;
         }
-        if let Some(include) = &options.include {
-            if !include(reference) {
-                continue;
-            }
+        let included = match &options.include {
+            Some(include) => include(reference),
+            None => !only_non_json_body(reference),
+        };
+        if !included {
+            continue;
         }
 
         let method = operation_method(reference);
@@ -224,11 +309,16 @@ pub fn uniform_to_mcp_tools(
             description: tool_description(reference, &method, &path, settings.description_chars),
             input_schema,
             annotations: McpToolAnnotations {
-                read_only_hint: flag(&options.read_only, method == "GET"),
-                destructive_hint: flag(&options.destructive, method == "DELETE"),
+                read_only_hint: flag(&options.read_only, SAFE_METHODS.contains(&method.as_str())),
+                destructive_hint: flag(
+                    &options.destructive,
+                    DESTRUCTIVE_METHODS.contains(&method.as_str()),
+                ),
                 idempotent_hint: flag(
                     &options.idempotent,
-                    method == "GET" || method == "PUT" || method == "DELETE",
+                    SAFE_METHODS.contains(&method.as_str())
+                        || method == "PUT"
+                        || method == "DELETE",
                 ),
                 open_world_hint: flag(&options.open_world, false),
             },
@@ -240,6 +330,7 @@ pub fn uniform_to_mcp_tools(
                 query_params: input.query_params,
                 body: input.body,
                 body_property: input.body_property,
+                inputs: input.inputs,
                 group: operation_group(reference),
                 canonical,
             },
@@ -337,17 +428,68 @@ fn first_line(value: &str) -> String {
         .to_string()
 }
 
-/// Up to the first `.`, `!` or `?` followed by a space, a tab or the end.
+/// Up to the first sentence end, else the whole line: `.`, `!` or `?`
+/// followed by the end, or by whitespace and the end or a sentence opener —
+/// and, for a period, not after an abbreviation.
 fn first_sentence(line: &str) -> String {
     let chars: Vec<char> = line.chars().collect();
     for (i, c) in chars.iter().enumerate() {
-        if matches!(c, '.' | '!' | '?')
-            && (i + 1 == chars.len() || chars[i + 1] == ' ' || chars[i + 1] == '\t')
-        {
+        if matches!(c, '.' | '!' | '?') && ends_sentence(&chars, i) {
             return chars[..=i].iter().collect();
         }
     }
     line.to_string()
+}
+
+/// Words whose period is not a sentence end (compared lower-case).
+const ABBREVIATIONS: &[&str] = &[
+    "approx", "ca", "cf", "excl", "fig", "incl", "no", "nr", "vs",
+];
+const SENTENCE_OPENERS: &str = "\"'\u{201C}\u{2018}([`";
+
+fn is_blank(c: Option<&char>) -> bool {
+    matches!(c, Some(' ' | '\t'))
+}
+
+fn ends_sentence(chars: &[char], i: usize) -> bool {
+    let mut j = i + 1;
+    if j < chars.len() {
+        if !is_blank(chars.get(j)) {
+            return false;
+        }
+        while is_blank(chars.get(j)) {
+            j += 1;
+        }
+        if j < chars.len() && !opens_sentence(chars[j]) {
+            return false;
+        }
+    }
+    if chars[i] != '.' {
+        return true;
+    }
+    let mut k = i;
+    while k > 0 && !is_blank(chars.get(k - 1)) {
+        k -= 1;
+    }
+    let word: String = chars[k..i].iter().collect();
+    let word = word.trim_start_matches(|c: char| !c.is_ascii_alphanumeric());
+    !(is_initials(word) || ABBREVIATIONS.contains(&word.to_lowercase().as_str()))
+}
+
+/// A single letter, or letters joined by periods (`e.g`, `i.e`, `U.S`):
+/// `^[A-Za-z](\.[A-Za-z])*$`.
+fn is_initials(word: &str) -> bool {
+    !word.is_empty()
+        && !word.ends_with('.')
+        && word
+            .as_bytes()
+            .chunks(2)
+            .all(|pair| pair[0].is_ascii_alphabetic() && pair.get(1).is_none_or(|b| *b == b'.'))
+}
+
+/// An uppercase letter (one with a lowercase form), a digit, a quote or a bracket.
+fn opens_sentence(c: char) -> bool {
+    c.is_ascii_digit() || SENTENCE_OPENERS.contains(c) || !c.to_lowercase().eq(std::iter::once(c))
 }
 
 /// At most `max` characters, the last one an ellipsis when cut.
@@ -369,6 +511,7 @@ struct InputBinding {
     query_params: Vec<String>,
     body: Option<McpToolBody>,
     body_property: Option<String>,
+    inputs: Option<McpToolInputs>,
 }
 
 fn input_of(reference: &Value, settings: &Settings) -> (Value, InputBinding) {
@@ -382,14 +525,17 @@ fn input_of(reference: &Value, settings: &Settings) -> (Value, InputBinding) {
     };
     let mut properties: Map<String, Value> = Map::new();
     let mut required: Vec<String> = Vec::new();
+    let mut additional_properties = Value::Bool(false);
 
     if settings.flatten {
+        let mut inputs: Vec<(String, McpToolInput)> = Vec::new();
         add_parameters(
             &path_props,
             &mut properties,
             &mut required,
             Some(&mut binding.path_params),
             settings,
+            Some((McpInputLocation::Path, &mut inputs)),
         );
         add_parameters(
             &query_props,
@@ -397,6 +543,7 @@ fn input_of(reference: &Value, settings: &Settings) -> (Value, InputBinding) {
             &mut required,
             Some(&mut binding.query_params),
             settings,
+            Some((McpInputLocation::Query, &mut inputs)),
         );
 
         if let Some(body) = &body {
@@ -408,21 +555,27 @@ fn input_of(reference: &Value, settings: &Settings) -> (Value, InputBinding) {
             let unique: HashSet<&str> = names.iter().copied().collect();
             let flattenable = body.root_property.is_none()
                 && !body.properties.is_empty()
-                && names
-                    .iter()
-                    .all(|n| !n.is_empty() && !properties.contains_key(*n))
+                && names.iter().all(|n| !n.is_empty())
                 && unique.len() == names.len();
 
             if flattenable {
-                for prop in &body.properties {
-                    let name = str_of(prop, "name").unwrap_or("").to_string();
-                    properties.insert(
-                        name.clone(),
-                        property_schema(prop, 1, settings, true, "", None),
-                    );
-                    if is_required(prop) {
-                        required.push(name);
-                    }
+                // An optional body's required properties are required only
+                // when the body is sent, so none is a required input.
+                let mut optional = Vec::new();
+                add_parameters(
+                    &body.properties,
+                    &mut properties,
+                    if body.required {
+                        &mut required
+                    } else {
+                        &mut optional
+                    },
+                    None,
+                    settings,
+                    Some((McpInputLocation::Body, &mut inputs)),
+                );
+                if let Some(open) = &body.additional_properties {
+                    additional_properties = open.clone();
                 }
             } else {
                 let key = body_key(&properties);
@@ -433,6 +586,7 @@ fn input_of(reference: &Value, settings: &Settings) -> (Value, InputBinding) {
                         &body.properties,
                         &body.description,
                         settings,
+                        body.additional_properties.as_ref(),
                     ),
                 );
                 if body.required {
@@ -440,6 +594,9 @@ fn input_of(reference: &Value, settings: &Settings) -> (Value, InputBinding) {
                 }
                 binding.body_property = Some(key);
             }
+        }
+        if !inputs.is_empty() {
+            binding.inputs = Some(McpToolInputs(inputs));
         }
     } else {
         let header_props = definition_properties(reference, "$rest.param.header");
@@ -467,11 +624,12 @@ fn input_of(reference: &Value, settings: &Settings) -> (Value, InputBinding) {
                 &mut group_required,
                 names,
                 settings,
+                None,
             );
             let has_required = !group_required.is_empty();
             properties.insert(
                 key.to_string(),
-                closed_object(group_properties, group_required),
+                closed_object(group_properties, group_required, Value::Bool(false)),
             );
             if has_required {
                 required.push(key.to_string());
@@ -485,6 +643,7 @@ fn input_of(reference: &Value, settings: &Settings) -> (Value, InputBinding) {
                     &body.properties,
                     &body.description,
                     settings,
+                    body.additional_properties.as_ref(),
                 ),
             );
             if body.required {
@@ -494,7 +653,10 @@ fn input_of(reference: &Value, settings: &Settings) -> (Value, InputBinding) {
         }
     }
 
-    (closed_object(properties, required), binding)
+    (
+        closed_object(properties, required, additional_properties),
+        binding,
+    )
 }
 
 /// `body`, else `requestBody`, else `body_2`, `body_3`… — whichever no
@@ -513,32 +675,61 @@ fn body_key(properties: &Map<String, Value>) -> String {
     format!("body_{n}")
 }
 
+/// Adds one location's properties as inputs. A name repeated within the
+/// location is skipped; a name an earlier location already took is renamed
+/// `<name>_<location>` (`_2`, `_3`… if that is taken too) and recorded in
+/// `renames` — only when given (the flat layout).
 fn add_parameters(
     props: &[&Value],
     properties: &mut Map<String, Value>,
     required: &mut Vec<String>,
     mut names: Option<&mut Vec<String>>,
     settings: &Settings,
+    mut renames: Option<(McpInputLocation, &mut Vec<(String, McpToolInput)>)>,
 ) {
+    let mut seen: HashSet<&str> = HashSet::new();
     for prop in props {
         let name = str_of(prop, "name").unwrap_or("");
-        if name.is_empty() || properties.contains_key(name) {
+        if name.is_empty() || !seen.insert(name) {
             continue;
         }
+        let mut input = name.to_string();
+        if properties.contains_key(name) {
+            let Some((location, inputs)) = renames.as_mut() else {
+                continue;
+            };
+            input = format!("{name}_{}", location.as_str());
+            let mut n = 2;
+            while properties.contains_key(&input) {
+                input = format!("{name}_{}_{n}", location.as_str());
+                n += 1;
+            }
+            inputs.push((
+                input.clone(),
+                McpToolInput {
+                    location: *location,
+                    name: name.to_string(),
+                },
+            ));
+        }
         properties.insert(
-            name.to_string(),
+            input.clone(),
             property_schema(prop, 1, settings, true, "", None),
         );
         if let Some(names) = names.as_deref_mut() {
-            names.push(name.to_string());
+            names.push(input.clone());
         }
         if is_required(prop) {
-            required.push(name.to_string());
+            required.push(input);
         }
     }
 }
 
-fn closed_object(properties: Map<String, Value>, required: Vec<String>) -> Value {
+fn closed_object(
+    properties: Map<String, Value>,
+    required: Vec<String>,
+    additional_properties: Value,
+) -> Value {
     let mut out = Map::new();
     out.insert("type".into(), Value::String("object".into()));
     out.insert("properties".into(), Value::Object(js_ordered(properties)));
@@ -548,7 +739,7 @@ fn closed_object(properties: Map<String, Value>, required: Vec<String>) -> Value
             Value::Array(required.into_iter().map(Value::String).collect()),
         );
     }
-    out.insert("additionalProperties".into(), Value::Bool(false));
+    out.insert("additionalProperties".into(), additional_properties);
     Value::Object(out)
 }
 
@@ -559,6 +750,7 @@ fn body_schema(
     props: &[&Value],
     description: &str,
     settings: &Settings,
+    additional_properties: Option<&Value>,
 ) -> Value {
     let description = unwrap_soft_breaks(description);
     let description = description.as_str();
@@ -593,6 +785,7 @@ fn body_schema(
             fields.required = Some(required);
         }
     }
+    fields.additional_properties = additional_properties.cloned();
     fields.emit()
 }
 
@@ -607,6 +800,7 @@ struct Fields {
     items: Option<Value>,
     properties: Option<Map<String, Value>>,
     required: Option<Vec<String>>,
+    additional_properties: Option<Value>,
     any_of: Option<Vec<Value>>,
     one_of: Option<Vec<Value>>,
     default: Option<Value>,
@@ -645,6 +839,9 @@ impl Fields {
                 "required".into(),
                 Value::Array(v.into_iter().map(Value::String).collect()),
             );
+        }
+        if let Some(v) = self.additional_properties {
+            out.insert("additionalProperties".into(), v);
         }
         if let Some(v) = self.any_of {
             out.insert("anyOf".into(), Value::Array(v));
@@ -708,10 +905,15 @@ fn property_schema(
                 f.ty = Some(Value::String(t.to_string()));
             }
             set_description(&mut f);
+            // A nullable enum gets a real `null` below; the converter's
+            // `"null"` child (a null member) would read as the string.
+            let nullable = meta_flag(prop.get("meta"), "nullable");
             f.enum_values = Some(
                 array_of(prop, "properties")
                     .iter()
-                    .map(|v| enum_value(str_of(v, "name").unwrap_or(""), &base))
+                    .map(|v| str_of(v, "name").unwrap_or(""))
+                    .filter(|name| !(nullable && *name == "null"))
+                    .map(|name| enum_value(name, &base))
                     .collect(),
             );
         }
@@ -752,7 +954,7 @@ fn property_schema(
                 f.ty = Some(Value::String(t.into()));
             }
             set_description(&mut f);
-            if !children.is_empty() && level < settings.max_depth {
+            if !children.is_empty() && level <= settings.max_depth {
                 let mut properties = Map::new();
                 let mut required = Vec::new();
                 for child in children {
@@ -1015,6 +1217,40 @@ mod tests {
             "At most 200 items are returned."
         );
         assert_eq!(strip_at_most("Whatnot most 2."), "Whatnot most 2.");
+    }
+
+    #[test]
+    fn abbreviations_never_end_the_first_sentence() {
+        for (line, sentence) in [
+            (
+                "Returns pets, e.g. the ones on sale. More.",
+                "Returns pets, e.g. the ones on sale.",
+            ),
+            (
+                "Uses carrier No. 5 by default. More.",
+                "Uses carrier No. 5 by default.",
+            ),
+            ("Signed by J. Doe. More.", "Signed by J. Doe."),
+            ("Returns 3 items. 2 are new.", "Returns 3 items."),
+            (
+                "Returns the item.It has no space.",
+                "Returns the item.It has no space.",
+            ),
+            ("Is it there? \"Yes\" it is.", "Is it there?"),
+        ] {
+            assert_eq!(first_sentence(line), sentence);
+        }
+    }
+
+    #[test]
+    fn inputs_roundtrip_in_order() {
+        let raw = r#"{"b_query":{"in":"query","name":"b"},"a_body":{"in":"body","name":"a"}}"#;
+        let inputs: McpToolInputs = serde_json::from_str(raw).unwrap();
+        assert_eq!(
+            inputs.get("a_body").unwrap().location,
+            McpInputLocation::Body
+        );
+        assert_eq!(serde_json::to_string(&inputs).unwrap(), raw);
     }
 
     #[test]

@@ -5,7 +5,9 @@
 // than hand-written references. Regen is explicit only (oracle-freeze rule):
 //   XYD_NATIVE=0 bun scripts/build-agent-fixture-inputs.ts
 // XYD_NATIVE=0 selects the JS converter, whose endpoint code samples are what
-// the skill emitter's "Example request" sections read.
+// the skill emitter's "Example request" sections read. (5.mcp-tools.open-body
+// is hand-written: it pins an `additionalProperties` meta the converter does
+// not emit yet.)
 import path from "node:path";
 import fs from "node:fs";
 

@@ -356,9 +356,13 @@ fn index_md(groups: &[Group<'_>], header: &str, per_operation: bool) -> String {
     ])];
     for group in groups {
         for (reference, file) in group.operations.iter().zip(&group.files) {
-            let id = inline_code(&operation_id(reference));
+            let id = operation_id(reference);
             lines.push(row(&[
-                cell(&if per_operation { link(&id, file) } else { id }),
+                cell(&if per_operation {
+                    code_link(&id, file)
+                } else {
+                    inline_code(&id)
+                }),
                 operation_method(reference),
                 cell(&inline_code(&operation_path(reference))),
                 cell(&if per_operation {
@@ -854,15 +858,23 @@ fn table_header(names: &[&str]) -> String {
 /// whitespace or parentheses.
 fn link(label: &str, target: &str) -> String {
     let text = label.replace('[', "\\[").replace(']', "\\]");
-    let href = if target
+    format!("[{text}]({})", link_target(target))
+}
+
+/// A link whose label is inline code, nothing escaped inside the code span.
+fn code_link(code: &str, target: &str) -> String {
+    format!("[{}]({})", inline_code(code), link_target(target))
+}
+
+fn link_target(target: &str) -> String {
+    if target
         .chars()
         .any(|c| is_js_whitespace(c) || c == '(' || c == ')')
     {
         format!("<{target}>")
     } else {
         target.to_string()
-    };
-    format!("[{text}]({href})")
+    }
 }
 
 /// An HTML comment whose text cannot close it early.

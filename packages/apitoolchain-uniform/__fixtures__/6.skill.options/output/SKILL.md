@@ -17,9 +17,9 @@ Read [api/errors.md](api/errors.md) when a call fails.
 
 | Group | Operations | File |
 |---|---|---|
-| pets | 7 | [api/pets.md](api/pets.md) |
+| pets | 9 | [api/pets.md](api/pets.md) |
 | Store / Inventory | 1 | [api/store-inventory.md](api/store-inventory.md) |
-| store | 4 | [api/store.md](api/store.md) |
+| store | 5 | [api/store.md](api/store.md) |
 
 Every operation in one table: [api/index.md](api/index.md).
 

@@ -26,7 +26,7 @@ import {
     text,
     variantContentType,
 } from "../operations";
-import { cell, codeBlock, collapse, comment, inlineCode, link, row, tableHeader, yamlScalar } from "./markdown";
+import { cell, codeBlock, codeLink, collapse, comment, inlineCode, link, row, tableHeader, yamlScalar } from "./markdown";
 
 export interface SkillReferencesOptions {
     /** Where the generated reference files go, relative to SKILL.md (default `references`). */
@@ -214,10 +214,10 @@ function indexMd(groups: Group[], header: string, perOperation: boolean): string
     const lines = [tableHeader(["Operation", "Method", "Path", "Group", "Title"])];
     for (const group of groups) {
         group.operations.forEach((ref, i) => {
-            const id = inlineCode(operationId(ref));
+            const id = operationId(ref);
             lines.push(
                 row([
-                    cell(perOperation ? link(id, group.files[i]) : id),
+                    cell(perOperation ? codeLink(id, group.files[i]) : inlineCode(id)),
                     operationMethod(ref),
                     cell(inlineCode(operationPath(ref))),
                     cell(perOperation ? group.name : link(group.name, group.file)),

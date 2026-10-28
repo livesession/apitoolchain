@@ -215,6 +215,11 @@ fn mcp_tools_grouped() {
 }
 
 #[test]
+fn mcp_tools_open_body() {
+    run_mcp("5.mcp-tools.open-body");
+}
+
+#[test]
 fn skill_default() {
     run_skill("6.skill.default");
 }

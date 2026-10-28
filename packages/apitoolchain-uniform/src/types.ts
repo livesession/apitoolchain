@@ -27,7 +27,10 @@ export interface Reference<
     __UNSAFE_selector?: (selector: string) => any;
 }
 
-export type DefinitionOpenAPIMeta = Meta<"contentType" | "required" | "definitionDescription">;
+/** `additionalProperties` (a request body's definition or variant): what the
+ *  body allows beyond its properties, `true` or a JSON Schema — read by the
+ *  MCP emitter to keep a flattened open body open. */
+export type DefinitionOpenAPIMeta = Meta<"contentType" | "required" | "definitionDescription" | "additionalProperties">;
 export type DefinitionTypeDocMeta = Meta<"type">;
 export type DefinitionGraphqlMeta = Meta<"type" | "graphqlName">;
 /** `sdkFlavor: "http"` — a REST definition kept alongside SDK-type definitions
@@ -83,7 +86,7 @@ export interface Definition<
     type?: "return" | DefinitionTypeREST
 }
 
-export type DefinitionVariantOpenAPIMeta = Meta<"status" | "contentType" | "definitionDescription" | "required">;
+export type DefinitionVariantOpenAPIMeta = Meta<"status" | "contentType" | "definitionDescription" | "required" | "additionalProperties">;
 export type CommonDefinitionVariantMeta = Meta<"symbolName">;
 /** The SDK-language variant selector (opensdk): one variant per language, so a
  * single toggle switches the request/response type view across all languages. */

@@ -51,12 +51,21 @@ export function tableHeader(names: string[]): string {
     return `${row(names)}\n|${names.map(() => "---").join("|")}|`;
 }
 
-/** A link to a relative path: `[path](path)`, the target in angle brackets
- *  when it holds spaces or parentheses. */
+/** A link to a relative path: `[path](path)`, brackets in the label escaped,
+ *  the target in angle brackets when it holds spaces or parentheses. */
 export function link(label: string, target: string): string {
-    const text = label.replace(/[\[\]]/g, (c) => "\\" + c);
-    const href = /[\s()]/.test(target) ? `<${target}>` : target;
-    return `[${text}](${href})`;
+    return `[${label.replace(/[\[\]]/g, (c) => "\\" + c)}](${linkTarget(target)})`;
+}
+
+/** A link whose label is inline code. Nothing inside the code span is escaped:
+ *  a backslash there would render, and a code span binds tighter than the
+ *  link's brackets. */
+export function codeLink(code: string, target: string): string {
+    return `[${inlineCode(code)}](${linkTarget(target)})`;
+}
+
+function linkTarget(target: string): string {
+    return /[\s()]/.test(target) ? `<${target}>` : target;
 }
 
 /** An HTML comment whose text cannot close it early. */

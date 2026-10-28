@@ -34,7 +34,15 @@ export interface McpToolInputSchema extends McpJsonSchema {
     type: "object";
     properties: { [name: string]: McpJsonSchema };
     required?: string[];
-    additionalProperties: false;
+    /** `false`, unless a flattened request body declares itself open
+     *  (`additionalProperties: true` or a schema), which is carried through. */
+    additionalProperties: boolean | McpJsonSchema;
+}
+
+/** Where a renamed input goes on the HTTP request, and under which name. */
+export interface McpToolInput {
+    in: "path" | "query" | "body";
+    name: string;
 }
 
 /** MCP tool annotations (hints a client may show or act on). */
@@ -54,9 +62,11 @@ export interface McpToolBinding {
     path: string;
     /** The first server's URL joined with the path (the path when unknown). */
     fullPath: string;
-    /** Input properties that fill the path placeholders. */
+    /** The input properties that fill the path placeholders (input names —
+     *  see `inputs` for one that was renamed). */
     pathParams: string[];
-    /** Input properties sent as the query string. */
+    /** The input properties sent as the query string (input names — see
+     *  `inputs` for one that was renamed). */
     queryParams: string[];
     /** `"json"` when the operation takes a JSON request body. */
     body: "json" | null;
@@ -73,6 +83,13 @@ export interface McpToolBinding {
      *  level: the body is then the object of every argument not named in
      *  `pathParams` or `queryParams`. */
     bodyProperty?: string;
+    /** The inputs renamed in the flat layout, by input name: a query parameter
+     *  or a body property that shares an earlier input's name (path
+     *  parameters first, then query parameters, then body properties) is
+     *  emitted as `<name>_query` / `<name>_body` (`_2`, `_3`… if taken), and
+     *  this maps it back — `{ id_query: { in: "query", name: "id" } }`. Absent
+     *  when nothing was renamed; an input not listed goes out under its own name. */
+    inputs?: { [input: string]: McpToolInput };
     /** `context.group` without empty entries. */
     group: string[];
     /** The reference's canonical (an OpenAPI operationId, when it has one). */
@@ -101,13 +118,19 @@ export interface McpToolsOptions {
      *  `cookies` / `requestBody`. Header and cookie parameters only appear in
      *  the grouped layout. */
     flatten?: boolean;
-    /** Which REST operations become tools (default: all of them). */
+    /** Which REST operations become tools. Default: every one whose request
+     *  body, if it has one, has a JSON variant — an operation that only takes
+     *  a form, multipart or binary body is skipped, since a tool has no way to
+     *  send it. A predicate given here is the whole decision: an operation it
+     *  includes without a JSON body becomes a tool with no body input and
+     *  `binding.body: null`. */
     include?: (ref: Reference) => boolean;
-    /** `readOnlyHint` (default: GET). */
+    /** `readOnlyHint` (default: GET, HEAD, OPTIONS, TRACE). */
     readOnly?: (ref: Reference) => boolean;
-    /** `destructiveHint` (default: DELETE). */
+    /** `destructiveHint` (default: DELETE, PUT, PATCH — they remove or
+     *  overwrite; POST only adds). */
     destructive?: (ref: Reference) => boolean;
-    /** `idempotentHint` (default: GET, PUT, DELETE). */
+    /** `idempotentHint` (default: GET, HEAD, OPTIONS, TRACE, PUT, DELETE). */
     idempotent?: (ref: Reference) => boolean;
     /** `openWorldHint` (default: false). */
     openWorld?: (ref: Reference) => boolean;
@@ -120,10 +143,15 @@ export interface McpToolsOptions {
     /** The tool description is the first sentence of the reference's
      *  description (hard-wrapped lines joined first) cut to this many
      *  characters (default 240; 0 = no cut), followed by ` — METHOD path`
-     *  (just `METHOD path` without one). */
+     *  (just `METHOD path` without one). A sentence ends at `.`, `!` or `?`
+     *  followed by the end of the line, or by whitespace and an uppercase
+     *  letter, a digit, a quote or a bracket — never at the period of an
+     *  abbreviation (`e.g.`, `i.e.`, a single initial, `No.`, `vs.`, `cf.`…). */
     descriptionChars?: number;
-    /** Levels of nesting spelled out below the input object (default 7): an
-     *  object at that depth or deeper is emitted without its properties. */
+    /** How deep objects are spelled out (default 7). A top-level input
+     *  property is at depth 1, its properties at depth 2, and so on; an object
+     *  deeper than `maxDepth` is emitted as `{ type: "object" }` (with its
+     *  description) without its properties. */
     maxDepth?: number;
     /** Extra data carried on each tool as `extras` (e.g. a documentation path). */
     extras?: (ref: Reference) => { [key: string]: unknown } | undefined | null;
@@ -132,6 +160,13 @@ export interface McpToolsOptions {
 export const MCP_TOOL_NAME_PATTERN = /^[A-Za-z0-9_-]{1,128}$/;
 
 const MAX_TOOL_NAME = 128;
+const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS", "TRACE"]);
+const DESTRUCTIVE_METHODS = new Set(["DELETE", "PUT", "PATCH"]);
+
+/** A request body without a JSON variant (form, multipart, binary only). */
+function onlyNonJsonBody(ref: Reference): boolean {
+    return requestBody(ref, false) !== null && requestBody(ref, true) === null;
+}
 const DEFAULT_DESCRIPTION_CHARS = 240;
 const DEFAULT_MAX_DEPTH = 7;
 
@@ -161,7 +196,7 @@ export function uniformToMcpTools(references: Reference[], options: McpToolsOpti
         if (!isRestOperation(ref)) {
             continue;
         }
-        if (options.include && !options.include(ref)) {
+        if (options.include ? !options.include(ref) : onlyNonJsonBody(ref)) {
             continue;
         }
 
@@ -180,11 +215,11 @@ export function uniformToMcpTools(references: Reference[], options: McpToolsOpti
             description: toolDescription(ref, method, path, settings.descriptionChars),
             inputSchema,
             annotations: {
-                readOnlyHint: options.readOnly ? !!options.readOnly(ref) : method === "GET",
-                destructiveHint: options.destructive ? !!options.destructive(ref) : method === "DELETE",
+                readOnlyHint: options.readOnly ? !!options.readOnly(ref) : SAFE_METHODS.has(method),
+                destructiveHint: options.destructive ? !!options.destructive(ref) : DESTRUCTIVE_METHODS.has(method),
                 idempotentHint: options.idempotent
                     ? !!options.idempotent(ref)
-                    : method === "GET" || method === "PUT" || method === "DELETE",
+                    : SAFE_METHODS.has(method) || method === "PUT" || method === "DELETE",
                 openWorldHint: options.openWorld ? !!options.openWorld(ref) : false,
             },
             binding: {
@@ -195,6 +230,7 @@ export function uniformToMcpTools(references: Reference[], options: McpToolsOpti
                 queryParams: binding.queryParams,
                 body: binding.body,
                 ...(binding.bodyProperty !== undefined ? { bodyProperty: binding.bodyProperty } : {}),
+                ...(binding.inputs !== undefined ? { inputs: binding.inputs } : {}),
                 group: operationGroup(ref),
                 canonical: ref.canonical || "",
             },
@@ -268,16 +304,58 @@ function firstLine(value: string): string {
     return "";
 }
 
-/** Up to the first `.`, `!` or `?` followed by a space, a tab or the end. */
+/** Up to the first sentence end (see `descriptionChars`), else the whole line. */
 function firstSentence(line: string): string {
     const chars = Array.from(line);
     for (let i = 0; i < chars.length; i++) {
         const c = chars[i];
-        if ((c === "." || c === "!" || c === "?") && (i + 1 === chars.length || chars[i + 1] === " " || chars[i + 1] === "\t")) {
+        if ((c === "." || c === "!" || c === "?") && endsSentence(chars, i)) {
             return chars.slice(0, i + 1).join("");
         }
     }
     return line;
+}
+
+/** Words whose period is not a sentence end (compared lower-case). */
+const ABBREVIATIONS = new Set(["approx", "ca", "cf", "excl", "fig", "incl", "no", "nr", "vs"]);
+/** A single letter, or letters joined by periods (`e.g`, `i.e`, `U.S`). */
+const INITIALS = /^[A-Za-z](\.[A-Za-z])*$/;
+const SENTENCE_OPENERS = "\"'\u201C\u2018([`";
+
+function isBlank(c: string | undefined): boolean {
+    return c === " " || c === "\t";
+}
+
+/** Whether the terminator at `i` ends a sentence: the end of the line, or
+ *  whitespace then the end or a sentence opener — and, for a period, not
+ *  after an abbreviation. */
+function endsSentence(chars: string[], i: number): boolean {
+    let j = i + 1;
+    if (j < chars.length) {
+        if (!isBlank(chars[j])) {
+            return false;
+        }
+        while (isBlank(chars[j])) {
+            j++;
+        }
+        if (j < chars.length && !opensSentence(chars[j])) {
+            return false;
+        }
+    }
+    if (chars[i] !== ".") {
+        return true;
+    }
+    let k = i;
+    while (k > 0 && !isBlank(chars[k - 1])) {
+        k--;
+    }
+    const word = chars.slice(k, i).join("").replace(/^[^A-Za-z0-9]+/, "");
+    return !(INITIALS.test(word) || ABBREVIATIONS.has(word.toLowerCase()));
+}
+
+/** An uppercase letter (one with a lowercase form), a digit, a quote or a bracket. */
+function opensSentence(c: string): boolean {
+    return (c >= "0" && c <= "9") || SENTENCE_OPENERS.includes(c) || c.toLowerCase() !== c;
 }
 
 /** At most `max` characters (code points), the last one an ellipsis when cut. */
@@ -298,6 +376,7 @@ interface InputBinding {
     queryParams: string[];
     body: "json" | null;
     bodyProperty?: string;
+    inputs?: { [input: string]: McpToolInput };
 }
 
 function inputOf(ref: Reference, settings: Settings): { inputSchema: McpToolInputSchema; binding: InputBinding } {
@@ -308,34 +387,53 @@ function inputOf(ref: Reference, settings: Settings): { inputSchema: McpToolInpu
     const binding: InputBinding = { pathParams: [], queryParams: [], body: body ? "json" : null };
     const properties: { [name: string]: McpJsonSchema } = {};
     const required: string[] = [];
+    let additionalProperties: boolean | McpJsonSchema = false;
 
     if (settings.flatten) {
-        addParameters(pathProps, properties, required, binding.pathParams, settings);
-        addParameters(queryProps, properties, required, binding.queryParams, settings);
+        const inputs: { [input: string]: McpToolInput } = {};
+        addParameters(pathProps, properties, required, binding.pathParams, settings, "path", inputs);
+        addParameters(queryProps, properties, required, binding.queryParams, settings, "query", inputs);
 
         if (body) {
             const names = body.properties.map((p) => p.name);
             const flattenable =
                 !body.rootProperty &&
                 body.properties.length > 0 &&
-                names.every((n) => !!n && !has(properties, n)) &&
+                names.every((n) => !!n) &&
                 new Set(names).size === names.length;
 
             if (flattenable) {
-                for (const prop of body.properties) {
-                    properties[prop.name] = propertySchema(prop, 1, settings, true);
-                    if (isRequired(prop)) {
-                        required.push(prop.name);
-                    }
+                // An optional body's required properties are required only
+                // when the body is sent, so none is a required input.
+                addParameters(
+                    body.properties,
+                    properties,
+                    body.required ? required : [],
+                    null,
+                    settings,
+                    "body",
+                    inputs
+                );
+                if (body.additionalProperties !== undefined) {
+                    additionalProperties = body.additionalProperties as boolean | McpJsonSchema;
                 }
             } else {
                 const key = bodyKey(properties);
-                properties[key] = bodySchema(body.rootProperty, body.properties, body.description, settings);
+                properties[key] = bodySchema(
+                    body.rootProperty,
+                    body.properties,
+                    body.description,
+                    settings,
+                    body.additionalProperties
+                );
                 if (body.required) {
                     required.push(key);
                 }
                 binding.bodyProperty = key;
             }
+        }
+        if (Object.keys(inputs).length) {
+            binding.inputs = inputs;
         }
     } else {
         const groups: [string, DefinitionProperty[], string[] | null][] = [
@@ -357,7 +455,13 @@ function inputOf(ref: Reference, settings: Settings): { inputSchema: McpToolInpu
             }
         }
         if (body) {
-            properties.requestBody = bodySchema(body.rootProperty, body.properties, body.description, settings);
+            properties.requestBody = bodySchema(
+                body.rootProperty,
+                body.properties,
+                body.description,
+                settings,
+                body.additionalProperties
+            );
             if (body.required) {
                 required.push("requestBody");
             }
@@ -365,7 +469,10 @@ function inputOf(ref: Reference, settings: Settings): { inputSchema: McpToolInpu
         }
     }
 
-    return { inputSchema: closedObject(properties, required) as McpToolInputSchema, binding };
+    return {
+        inputSchema: closedObject(properties, required, additionalProperties) as McpToolInputSchema,
+        binding,
+    };
 }
 
 /** `body`, else `requestBody`, else `body_2`, `body_3`… — whichever no
@@ -384,32 +491,57 @@ function bodyKey(properties: { [name: string]: McpJsonSchema }): string {
     return `body_${n}`;
 }
 
+/**
+ * Adds one location's properties as inputs. A name repeated within the
+ * location is skipped; a name an earlier location already took is renamed
+ * `<name>_<location>` (`_2`, `_3`… if that is taken too) and recorded in
+ * `inputs` — only when `location` and `inputs` are given (the flat layout).
+ */
 function addParameters(
     props: DefinitionProperty[],
     properties: { [name: string]: McpJsonSchema },
     required: string[],
     names: string[] | null,
-    settings: Settings
+    settings: Settings,
+    location?: McpToolInput["in"],
+    inputs?: { [input: string]: McpToolInput }
 ) {
+    const seen = new Set<string>();
     for (const prop of props) {
         const name = prop.name;
-        if (!name || has(properties, name)) {
+        if (!name || seen.has(name)) {
             continue;
         }
-        properties[name] = propertySchema(prop, 1, settings, true);
-        names?.push(name);
+        seen.add(name);
+        let input = name;
+        if (has(properties, name)) {
+            if (!location || !inputs) {
+                continue;
+            }
+            input = `${name}_${location}`;
+            for (let n = 2; has(properties, input); n++) {
+                input = `${name}_${location}_${n}`;
+            }
+            inputs[input] = { in: location, name };
+        }
+        properties[input] = propertySchema(prop, 1, settings, true);
+        names?.push(input);
         if (isRequired(prop)) {
-            required.push(name);
+            required.push(input);
         }
     }
 }
 
-function closedObject(properties: { [name: string]: McpJsonSchema }, required: string[]): McpJsonSchema {
+function closedObject(
+    properties: { [name: string]: McpJsonSchema },
+    required: string[],
+    additionalProperties: boolean | McpJsonSchema = false
+): McpJsonSchema {
     const out: McpJsonSchema = { type: "object", properties };
     if (required.length) {
         out.required = required;
     }
-    out.additionalProperties = false;
+    out.additionalProperties = additionalProperties;
     return out;
 }
 
@@ -419,7 +551,8 @@ function bodySchema(
     rootProperty: DefinitionProperty | undefined,
     props: DefinitionProperty[],
     description: string,
-    settings: Settings
+    settings: Settings,
+    additionalProperties?: unknown
 ): McpJsonSchema {
     description = unwrapSoftBreaks(description);
     if (rootProperty) {
@@ -446,6 +579,9 @@ function bodySchema(
             fields.required = required;
         }
     }
+    if (additionalProperties !== undefined) {
+        fields.additionalProperties = additionalProperties;
+    }
     return emit(fields);
 }
 
@@ -463,6 +599,7 @@ interface Fields {
     items?: McpJsonSchema;
     properties?: { [name: string]: McpJsonSchema };
     required?: string[];
+    additionalProperties?: unknown;
     anyOf?: McpJsonSchema[];
     oneOf?: McpJsonSchema[];
     default?: { value: unknown };
@@ -482,6 +619,7 @@ function emit(f: Fields): McpJsonSchema {
     if (f.items !== undefined) out.items = f.items;
     if (f.properties !== undefined) out.properties = f.properties;
     if (f.required !== undefined) out.required = f.required;
+    if (f.additionalProperties !== undefined) out.additionalProperties = f.additionalProperties;
     if (f.anyOf !== undefined) out.anyOf = f.anyOf;
     if (f.oneOf !== undefined) out.oneOf = f.oneOf;
     if (f.default !== undefined) out.default = f.default.value;
@@ -518,7 +656,12 @@ function propertySchema(
             const type = jsonSchemaType(base);
             if (type) f.type = type;
             if (description) f.description = description;
-            f.enum = (prop.properties || []).map((value) => enumValue(String(value.name ?? ""), base));
+            // A nullable enum gets a real `null` below; the converter's
+            // `"null"` child (a null member) would read as the string.
+            const nullable = metaFlag(prop.meta, "nullable");
+            f.enum = (prop.properties || [])
+                .filter((value) => !(nullable && value.name === "null"))
+                .map((value) => enumValue(String(value.name ?? ""), base));
             break;
         }
         case "$$array": {
@@ -550,7 +693,7 @@ function propertySchema(
             const type = jsonSchemaType(prop.type) || (children.length ? "object" : undefined);
             if (type) f.type = type;
             if (description) f.description = description;
-            if (children.length && level < settings.maxDepth) {
+            if (children.length && level <= settings.maxDepth) {
                 f.properties = {};
                 const required: string[] = [];
                 for (const child of children) {

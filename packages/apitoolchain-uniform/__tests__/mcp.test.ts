@@ -14,6 +14,7 @@ const fixtureTests = [
     {name: "5.mcp-tools.default", description: "defaults: flat inputs, method-derived annotations"},
     {name: "5.mcp-tools.options", description: "limit cap, short descriptions, depth cap, read-only POST, names, extras"},
     {name: "5.mcp-tools.grouped", description: "flatten: false groups the inputs"},
+    {name: "5.mcp-tools.open-body", description: "an open request body opens the input object"},
 ];
 
 describe("uniformToMcpTools fixtures", () => {
@@ -60,7 +61,8 @@ describe("uniformToMcpTools", () => {
     it("emits one tool per REST operation and skips everything else", () => {
         const references: Reference[] = readFixture("5.mcp-tools.default/input.json");
         const tools = uniformToMcpTools(references);
-        expect(references.length).toBe(22);
+        expect(references.length).toBe(25);
+        // uploadPetPhoto takes a multipart body only: skipped by default
         expect(tools.map((t) => t.name)).toEqual([
             "listPets",
             "createPet",
@@ -69,13 +71,90 @@ describe("uniformToMcpTools", () => {
             "updatePet",
             "deletePet",
             "replacePetTags",
+            "listOwnerPets",
             "store-inventory",
             "placeOrder",
+            "shipOrder",
             "getOrder",
             "replaceOrder",
             "cancelOrder",
             "get_health",
         ]);
+    });
+
+    it("lets include opt a non-JSON-body operation in, without a body input", () => {
+        const references: Reference[] = readFixture("5.mcp-tools.default/input.json");
+        const [photo] = uniformToMcpTools(references, {include: (ref) => ref.canonical === "uploadPetPhoto"});
+        expect(photo.binding).toMatchObject({body: null, pathParams: ["petId"]});
+        expect(Object.keys(photo.inputSchema.properties)).toEqual(["petId"]);
+    });
+
+    it("derives annotations from the method", () => {
+        const methods = ["get", "head", "options", "trace", "post", "put", "patch", "delete"];
+        const tools = uniformToMcpTools(methods.map((method) => operation({method, canonical: method})));
+        const hints = Object.fromEntries(
+            tools.map((t) => [t.name, [t.annotations.readOnlyHint, t.annotations.destructiveHint, t.annotations.idempotentHint]])
+        );
+        expect(hints).toEqual({
+            get: [true, false, true],
+            head: [true, false, true],
+            options: [true, false, true],
+            trace: [true, false, true],
+            post: [false, false, false],
+            put: [false, true, true],
+            patch: [false, true, false],
+            delete: [false, true, true],
+        });
+    });
+
+    it("renames an input that shares an earlier input's name and maps it back", () => {
+        const references: Reference[] = readFixture("5.mcp-tools.default/input.json");
+        const tools = uniformToMcpTools(references);
+        const owner = tools.find((t) => t.name === "listOwnerPets")!;
+        expect(Object.keys(owner.inputSchema.properties)).toEqual(["name", "name_query"]);
+        expect(owner.binding).toMatchObject({
+            pathParams: ["name"],
+            queryParams: ["name_query"],
+            inputs: {name_query: {in: "query", name: "name"}},
+        });
+        const order = tools.find((t) => t.name === "replaceOrder")!;
+        expect(order.binding.bodyProperty).toBeUndefined();
+        expect(order.binding.inputs).toEqual({id_body: {in: "body", name: "id"}});
+        expect(order.inputSchema.required).toEqual(["id", "id_body", "pet_id", "status"]);
+        // no rename, no map
+        expect(tools.find((t) => t.name === "getOrder")!.binding.inputs).toBeUndefined();
+    });
+
+    it("keeps an optional body's properties optional", () => {
+        const references: Reference[] = readFixture("5.mcp-tools.default/input.json");
+        const ship = uniformToMcpTools(references).find((t) => t.name === "shipOrder")!;
+        expect(Object.keys(ship.inputSchema.properties)).toEqual(["id", "carrier", "tracking"]);
+        expect(ship.inputSchema.required).toEqual(["id"]);
+    });
+
+    it("drops the string null of a nullable enum for a real null", () => {
+        const references: Reference[] = readFixture("5.mcp-tools.default/input.json");
+        const create = uniformToMcpTools(references).find((t) => t.name === "createPet")!;
+        expect(create.inputSchema.properties.size).toEqual({
+            type: ["string", "null"],
+            description: "The pet's size; null when unknown.",
+            enum: ["small", "medium", "large", null],
+        });
+    });
+
+    it("never ends the first sentence at an abbreviation", () => {
+        const cases: [string, string][] = [
+            ["Returns pets, e.g. the ones on sale. More.", "Returns pets, e.g. the ones on sale."],
+            ["Uses carrier No. 5 by default. More.", "Uses carrier No. 5 by default."],
+            ["Signed by J. Doe. More.", "Signed by J. Doe."],
+            ["Compares a vs. b and stops. More.", "Compares a vs. b and stops."],
+            ["Returns 3 items. 2 are new.", "Returns 3 items."],
+            ["Returns the item.It has no space.", "Returns the item.It has no space."],
+            ["Is it there? \"Yes\" it is.", "Is it there?"],
+            ["Ends here.", "Ends here."],
+        ];
+        const tools = uniformToMcpTools(cases.map(([description]) => operation({description})), {descriptionChars: 0});
+        expect(tools.map((t) => t.description)).toEqual(cases.map(([, sentence]) => `${sentence} — GET /things`));
     });
 
     it("slugs a canonical that is not a valid tool name and keeps names unique", () => {
@@ -189,17 +268,34 @@ describe("uniformToMcpTools", () => {
         expect(unwrapSoftBreaks("a\n  indented\n1. item\n# heading")).toBe("a\n  indented\n1. item\n# heading");
     });
 
+    it("keeps fenced code, headings and rules line for line", () => {
+        expect(unwrapSoftBreaks("Sample\n```json\n{\n  \"a\": 1\n}\n```\nAfter\nthat.")).toBe(
+            "Sample\n```json\n{\n  \"a\": 1\n}\n```\nAfter that."
+        );
+        expect(unwrapSoftBreaks("Title\n=====\nText\nmore")).toBe("Title\n=====\nText more");
+        expect(unwrapSoftBreaks("Title\n---\nText")).toBe("Title\n---\nText");
+        expect(unwrapSoftBreaks("# Head\nnext\nline")).toBe("# Head\nnext line");
+        expect(unwrapSoftBreaks("a\n***\nb")).toBe("a\n***\nb");
+        // a longer fence is closed only by one at least as long
+        expect(unwrapSoftBreaks("~~~~\nx\n~~~\ny\n~~~~\nz\nw")).toBe("~~~~\nx\n~~~\ny\n~~~~\nz w");
+        const references: Reference[] = readFixture("5.mcp-tools.default/input.json");
+        const create = uniformToMcpTools(references).find((t) => t.name === "createPet")!;
+        expect(create.inputSchema.properties.attributes.description).toBe(
+            'Free-form attributes\n====================\nStored as given, for example:\n```json\n{\n  "color": "brown",\n  "legs": 4\n}\n```\nKeys are case-sensitive.'
+        );
+    });
+
     it("nests a body that cannot be flattened under one property", () => {
-        const [collides, array] = uniformToMcpTools([
+        const [named, array] = uniformToMcpTools([
             operation({
                 method: "put",
                 definitions: [
                     {
                         title: "Path parameters",
                         type: "$rest.param.path",
-                        properties: [{name: "id", type: "string", description: "", meta: [{name: "required", value: "true"}]}],
+                        properties: [{name: "body", type: "string", description: "", meta: [{name: "required", value: "true"}]}],
                     },
-                    body([{name: "id", type: "string", description: ""}]),
+                    body([], {rootProperty: {type: "$$array", ofProperty: {name: "", type: "string"}}}),
                 ],
             } as any),
             operation({
@@ -207,8 +303,9 @@ describe("uniformToMcpTools", () => {
                 definitions: [body([], {rootProperty: {type: "$$array", ofProperty: {name: "", type: "string"}}})],
             } as any),
         ]);
-        expect(collides.binding.bodyProperty).toBe("body");
-        expect(collides.inputSchema.required).toEqual(["id", "body"]);
+        // a parameter took `body`
+        expect(named.binding.bodyProperty).toBe("requestBody");
+        expect(named.inputSchema.required).toEqual(["body", "requestBody"]);
         expect(array.inputSchema.properties.body).toEqual({type: "array", items: {type: "string"}});
         expect(array.binding).toMatchObject({body: "json", bodyProperty: "body"});
     });
@@ -222,9 +319,10 @@ describe("uniformToMcpTools", () => {
             [operation({method: "post", definitions: [body([deep(3)])]} as any)],
             {maxDepth: 2}
         );
+        // l3 at depth 1, l2 at depth 2 — both spelled out; l1 at depth 3 is not
         expect(tool.inputSchema.properties.l3).toEqual({
             type: "object",
-            properties: {l2: {type: "object"}},
+            properties: {l2: {type: "object", properties: {l1: {type: "object"}}}},
         });
     });
 

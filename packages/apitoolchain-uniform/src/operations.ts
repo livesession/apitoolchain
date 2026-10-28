@@ -110,6 +110,19 @@ export interface RequestBody {
     properties: DefinitionProperty[];
     rootProperty?: DefinitionProperty;
     required: boolean;
+    /** What the body allows beyond its properties, when it says: `true` or a
+     *  JSON Schema, from an `additionalProperties` meta on the variant (else
+     *  on the definition). */
+    additionalProperties?: unknown;
+}
+
+/** An `additionalProperties` meta that opens an object: `true` or a schema object. */
+function openness(meta: Meta[] | undefined): unknown {
+    const value = findMeta(meta, "additionalProperties")?.value;
+    if (value === true || (value !== null && typeof value === "object" && !Array.isArray(value))) {
+        return value;
+    }
+    return undefined;
 }
 
 /** The request body: its JSON variant, else (`jsonOnly` false) its first one. */
@@ -126,22 +139,26 @@ export function requestBody(ref: Reference, jsonOnly: boolean): RequestBody | nu
         if (!variant) {
             return null;
         }
+        const open = openness(variant.meta) ?? openness(def.meta);
         return {
             contentType: variantContentType(variant) || variant.title || "",
             description: text(variant.description),
             properties: variant.properties || [],
             rootProperty: variant.rootProperty,
             required,
+            ...(open !== undefined ? { additionalProperties: open } : {}),
         };
     }
     // A converter that puts the body on the definition itself (no variants).
     const contentType = findMeta(def.meta, "contentType")?.value;
+    const open = openness(def.meta);
     return {
         contentType: typeof contentType === "string" ? contentType : "application/json",
         description: text(def.description),
         properties: def.properties || [],
         rootProperty: def.rootProperty,
         required,
+        ...(open !== undefined ? { additionalProperties: open } : {}),
     };
 }
 
@@ -238,8 +255,54 @@ export function objectChildren(prop: DefinitionProperty): DefinitionProperty[] {
 
 const LIST_ITEM = /^([-*+]|[0-9]+[.)])[ \t]/;
 
+interface Fence {
+    char: string;
+    length: number;
+}
+
+/** A code fence opening: up to three spaces, then three or more backticks or
+ *  tildes. */
+function fenceOf(line: string): Fence | null {
+    let i = 0;
+    while (i < 3 && line[i] === " ") {
+        i++;
+    }
+    const char = line[i];
+    if (char !== "`" && char !== "~") {
+        return null;
+    }
+    let length = 0;
+    while (line[i + length] === char) {
+        length++;
+    }
+    return length >= 3 ? { char, length } : null;
+}
+
+/** Whether a line closes `fence`: the same character, at least as many, alone. */
+function closesFence(line: string, fence: Fence): boolean {
+    const t = line.trim();
+    return t.length >= fence.length && Array.from(t).every((c) => c === fence.char);
+}
+
+/** A setext heading underline (`===`, `---`) or a thematic break (`***`,
+ *  `___`, `- - -`). */
+function isRuleLine(line: string): boolean {
+    const t = line.trim();
+    if (t === "") {
+        return false;
+    }
+    const chars = Array.from(t);
+    if (chars.every((c) => c === "=") || chars.every((c) => c === "-")) {
+        return true;
+    }
+    return ["-", "*", "_"].some(
+        (mark) =>
+            chars.every((c) => c === mark || c === " " || c === "\t") && chars.filter((c) => c === mark).length >= 3
+    );
+}
+
 /** Whether a line opens a markdown block of its own: indented, a list item,
- *  a heading, a quote, a table row or a code fence. */
+ *  a heading, a quote, a table row, a code fence or a rule line. */
 function startsBlock(line: string): boolean {
     const first = line[0];
     return (
@@ -248,20 +311,39 @@ function startsBlock(line: string): boolean {
         first === "#" ||
         first === ">" ||
         first === "|" ||
-        line.startsWith("```") ||
+        fenceOf(line) !== null ||
+        isRuleLine(line) ||
         LIST_ITEM.test(line)
     );
 }
 
+/** Whether nothing may be joined onto a line: a heading, a table row, a code
+ *  fence or a rule line. */
+function endsBlock(line: string): boolean {
+    const first = line[0];
+    return first === "#" || first === "|" || fenceOf(line) !== null || isRuleLine(line);
+}
+
 /** Joins hard-wrapped lines (a YAML description folded at 80 columns): a
- *  single newline becomes a space, unless a line around it is blank or the
- *  next line opens a block of its own. Paragraph breaks stay. */
+ *  single newline becomes a space, unless a line around it is blank, the next
+ *  line opens a block of its own or the previous one ends one. Paragraph
+ *  breaks stay, and fenced code is kept line for line. */
 export function unwrapSoftBreaks(value: string): string {
     const lines = value.split("\n");
     let out = lines[0];
+    let fence = fenceOf(lines[0]);
     for (let i = 1; i < lines.length; i++) {
         const line = lines[i];
-        if (lines[i - 1].trim() === "" || line.trim() === "" || startsBlock(line)) {
+        if (fence) {
+            out += "\n" + line;
+            if (closesFence(line, fence)) {
+                fence = null;
+            }
+            continue;
+        }
+        fence = fenceOf(line);
+        const previous = lines[i - 1];
+        if (fence || previous.trim() === "" || line.trim() === "" || startsBlock(line) || endsBlock(previous)) {
             out += "\n" + line;
         } else {
             out = out.trimEnd() + " " + line;

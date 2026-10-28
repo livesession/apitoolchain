@@ -180,6 +180,18 @@ pub(crate) struct RequestBody<'a> {
     pub properties: Vec<&'a Value>,
     pub root_property: Option<&'a Value>,
     pub required: bool,
+    /// What the body allows beyond its properties, when it says: `true` or a
+    /// JSON Schema, from an `additionalProperties` meta on the variant (else
+    /// on the definition).
+    pub additional_properties: Option<Value>,
+}
+
+/// An `additionalProperties` meta that opens an object: `true` or a schema object.
+fn openness(meta: Option<&Value>) -> Option<Value> {
+    match meta_value(meta, "additionalProperties") {
+        Some(v @ (Value::Bool(true) | Value::Object(_))) => Some(v.clone()),
+        _ => None,
+    }
 }
 
 /// The request body: its JSON variant, else (`json_only` false) its first one.
@@ -215,6 +227,8 @@ pub(crate) fn request_body(reference: &Value, json_only: bool) -> Option<Request
             properties: array_of(variant, "properties").iter().collect(),
             root_property: object_at(variant, "rootProperty"),
             required,
+            additional_properties: openness(variant.get("meta"))
+                .or_else(|| openness(def.get("meta"))),
         });
     }
     let content_type = meta_value(def.get("meta"), "contentType")
@@ -226,6 +240,7 @@ pub(crate) fn request_body(reference: &Value, json_only: bool) -> Option<Request
         properties: array_of(def, "properties").iter().collect(),
         root_property: object_at(def, "rootProperty"),
         required,
+        additional_properties: openness(def.get("meta")),
     })
 }
 
@@ -383,10 +398,48 @@ pub(crate) fn js_ordered(map: Map<String, Value>) -> Map<String, Value> {
     out
 }
 
+/// A code fence opening: up to three spaces, then three or more backticks or
+/// tildes — `(the fence character, its run length)`.
+fn fence_of(line: &str) -> Option<(u8, usize)> {
+    let bytes = line.as_bytes();
+    let indent = bytes.iter().take(3).take_while(|b| **b == b' ').count();
+    let ch = *bytes.get(indent)?;
+    if ch != b'`' && ch != b'~' {
+        return None;
+    }
+    let length = bytes[indent..].iter().take_while(|b| **b == ch).count();
+    (length >= 3).then_some((ch, length))
+}
+
+/// Whether a line closes a fence: the same character, at least as many, alone.
+fn closes_fence(line: &str, (ch, length): (u8, usize)) -> bool {
+    let t = js_trim(line);
+    t.chars().count() >= length && t.chars().all(|c| c == ch as char)
+}
+
+/// A setext heading underline (`===`, `---`) or a thematic break (`***`,
+/// `___`, `- - -`).
+fn is_rule_line(line: &str) -> bool {
+    let t = js_trim(line);
+    if t.is_empty() {
+        return false;
+    }
+    if t.chars().all(|c| c == '=') || t.chars().all(|c| c == '-') {
+        return true;
+    }
+    ['-', '*', '_'].iter().any(|mark| {
+        t.chars().all(|c| c == *mark || c == ' ' || c == '\t')
+            && t.chars().filter(|c| c == mark).count() >= 3
+    })
+}
+
 /// Whether a line opens a markdown block of its own: indented, a list item,
-/// a heading, a quote, a table row or a code fence.
+/// a heading, a quote, a table row, a code fence or a rule line.
 fn starts_block(line: &str) -> bool {
-    if line.starts_with([' ', '\t', '#', '>', '|']) || line.starts_with("```") {
+    if line.starts_with([' ', '\t', '#', '>', '|'])
+        || fence_of(line).is_some()
+        || is_rule_line(line)
+    {
         return true;
     }
     // `^([-*+]|[0-9]+[.)])[ \t]`
@@ -405,14 +458,37 @@ fn starts_block(line: &str) -> bool {
     matches!(bytes.get(marker_end), Some(b' ' | b'\t'))
 }
 
+/// Whether nothing may be joined onto a line: a heading, a table row, a code
+/// fence or a rule line.
+fn ends_block(line: &str) -> bool {
+    line.starts_with(['#', '|']) || fence_of(line).is_some() || is_rule_line(line)
+}
+
 /// Joins hard-wrapped lines: a single newline becomes a space, unless a line
-/// around it is blank or the next line opens a block of its own.
+/// around it is blank, the next line opens a block of its own or the previous
+/// one ends one. Paragraph breaks stay, and fenced code is kept line for line.
 pub(crate) fn unwrap_soft_breaks(value: &str) -> String {
     let lines: Vec<&str> = value.split('\n').collect();
     let mut out = lines[0].to_string();
+    let mut fence = fence_of(lines[0]);
     for i in 1..lines.len() {
         let line = lines[i];
-        if js_trim(lines[i - 1]).is_empty() || js_trim(line).is_empty() || starts_block(line) {
+        if let Some(open) = fence {
+            out.push('\n');
+            out.push_str(line);
+            if closes_fence(line, open) {
+                fence = None;
+            }
+            continue;
+        }
+        fence = fence_of(line);
+        let previous = lines[i - 1];
+        if fence.is_some()
+            || js_trim(previous).is_empty()
+            || js_trim(line).is_empty()
+            || starts_block(line)
+            || ends_block(previous)
+        {
             out.push('\n');
             out.push_str(line);
         } else {
@@ -440,6 +516,28 @@ mod tests {
             "a\n  indented\n1. item\n# heading\n- dash\n10) ten"
         );
         assert_eq!(unwrap_soft_breaks("a\n1.5 kg"), "a 1.5 kg");
+    }
+
+    #[test]
+    fn fences_headings_and_rules_keep_their_lines() {
+        assert_eq!(
+            unwrap_soft_breaks("Sample\n```json\n{\n  \"a\": 1\n}\n```\nAfter\nthat."),
+            "Sample\n```json\n{\n  \"a\": 1\n}\n```\nAfter that."
+        );
+        assert_eq!(
+            unwrap_soft_breaks("Title\n=====\nText\nmore"),
+            "Title\n=====\nText more"
+        );
+        assert_eq!(unwrap_soft_breaks("Title\n---\nText"), "Title\n---\nText");
+        assert_eq!(
+            unwrap_soft_breaks("# Head\nnext\nline"),
+            "# Head\nnext line"
+        );
+        assert_eq!(unwrap_soft_breaks("a\n***\nb"), "a\n***\nb");
+        assert_eq!(
+            unwrap_soft_breaks("~~~~\nx\n~~~\ny\n~~~~\nz\nw"),
+            "~~~~\nx\n~~~\ny\n~~~~\nz w"
+        );
     }
 
     #[test]

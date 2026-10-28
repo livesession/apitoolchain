@@ -58,6 +58,8 @@ Content type: `application/json`. Required.
 | `owner.contact` | object | no | How to reach the owner. |
 | `vaccinated` | boolean | no | Default: `false`. |
 | `priority` | integer | no | Listing priority, 1 the highest. One of: `1`, `2`, `3`. |
+| `size` | string or null | no | The pet's size; null when unknown. One of: `small`, `medium`, `large`, `null`. |
+| `attributes` | object | no | Free-form attributes ==================== Stored as given, for example: ```json { "color": "brown", "legs": 4 } ``` Keys are case-sensitive. |
 
 ### Responses
 
@@ -88,7 +90,8 @@ curl --request POST \
     }
   },
   "vaccinated": false,
-  "priority": 1
+  "priority": 1,
+  "size": "small"
 }
 '
 ```
@@ -268,4 +271,67 @@ curl --request PUT \
      --header 'accept: application/json' \
      --header 'content-type: application/json' \
      --data '["string"]'
+```
+
+## `listOwnerPets` — List owner pets
+
+`GET /owners/{name}/pets`
+
+Returns the pets of one owner, e.g. the ones a shop assistant looks
+after. Pets come sorted by name.
+
+### Path parameters
+
+| Name | Type | Required | Description |
+|---|---|---|---|
+| `name` | string | yes | The owner's full name. |
+
+### Query parameters
+
+| Name | Type | Required | Description |
+|---|---|---|---|
+| `name` | string | no | Only pets with this name. |
+
+### Example request
+
+```shell
+curl --request GET \
+     --url https://api.example.com/v1/owners/string/pets
+```
+
+## `uploadPetPhoto` — Upload pet photo
+
+`POST /pets/{petId}/photo`
+
+Uploads a photo of the pet.
+
+### Path parameters
+
+| Name | Type | Required | Description |
+|---|---|---|---|
+| `petId` | string | yes | The pet's ID. |
+
+### Request body
+
+Content type: `multipart/form-data`. Required.
+
+| Name | Type | Required | Description |
+|---|---|---|---|
+| `file` | string | yes | The image. |
+| `caption` | string | no |  |
+
+### Responses
+
+| Status | Content type | Type | Description |
+|---|---|---|---|
+| 204 | — | — | The photo was stored. |
+
+### Example request
+
+```shell
+curl --request POST \
+     --url https://api.example.com/v1/pets/string/photo \
+     --header 'content-type: multipart/form-data' \
+     --form file=string \
+     --form caption=string
 ```

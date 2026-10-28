@@ -1,6 +1,8 @@
 export {
     mcpUrlToReferences,
+    MCP_PROTOCOL_VERSION,
     type McpFetcher,
+    type McpFetchResponse,
     type McpUrlToReferencesOptions,
 } from "./src";
 

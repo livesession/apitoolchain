@@ -26,12 +26,31 @@ import type {
 export type { McpTool, McpResource, JsonSchemaObject } from "./types";
 
 /**
+ * The protocol version `initialize` asks for. A server answers the version it
+ * speaks; that answer is what the later requests carry in `Mcp-Protocol-Version`.
+ */
+export const MCP_PROTOCOL_VERSION = "2025-06-18";
+
+/** What a fetcher answers. `json()` is enough for a server that answers plain
+ *  JSON; `headers` and `text()` (both present on a `fetch` Response) let the
+ *  transport keep a session (`Mcp-Session-Id`) and read an answer streamed as
+ *  server-sent events. */
+export interface McpFetchResponse {
+    ok: boolean;
+    status: number;
+    json: () => Promise<unknown>;
+    text?: () => Promise<string>;
+    headers?: { get(name: string): string | null };
+}
+
+/**
  * Minimal JSON-RPC fetcher signature. Defaults to global fetch; tests inject a stub.
+ * `body` is `""` for the `DELETE` that ends a session.
  */
 export type McpFetcher = (
     url: string,
     init: { method: string; headers: Record<string, string>; body: string },
-) => Promise<{ ok: boolean; status: number; json: () => Promise<unknown> }>;
+) => Promise<McpFetchResponse>;
 
 export interface McpUrlToReferencesOptions {
     /** Bearer token sent as `Authorization: Bearer <token>`. */
@@ -40,6 +59,10 @@ export interface McpUrlToReferencesOptions {
     headers?: Record<string, string>;
     /** Override the network call (used by tests). */
     fetcher?: McpFetcher;
+    /** The version `initialize` asks for (default {@link MCP_PROTOCOL_VERSION}). */
+    protocolVersion?: string;
+    /** `clientInfo` sent with `initialize`. */
+    clientInfo?: { name: string; version: string };
 }
 
 /**
@@ -89,16 +112,17 @@ export async function resolveMcpSurface(
             headers.Authorization = `Bearer ${options.token}`;
         }
 
-        const rpc = makeRpcClient(source, headers, options.fetcher);
-
-        const [toolsResult, resourcesResult] = await Promise.all([
-            rpc<{ tools?: McpTool[] }>("tools/list").catch(() => ({ tools: [] })),
-            rpc<{ resources?: McpResource[] }>("resources/list").catch(() => ({
-                resources: [],
-            })),
-        ]);
-        tools = toolsResult.tools || [];
-        resources = resourcesResult.resources || [];
+        const session = await openSession(source, headers, options);
+        try {
+            const [toolsResult, resourcesResult] = await Promise.all([
+                session.list<McpTool>("tools/list", "tools").catch(() => []),
+                session.list<McpResource>("resources/list", "resources").catch(() => []),
+            ]);
+            tools = toolsResult;
+            resources = resourcesResult;
+        } finally {
+            await session.close();
+        }
     } else {
         // Local manifest mode — read tools / resources from a JSON file shaped
         // like the combined output of tools/list and resources/list.
@@ -125,25 +149,157 @@ async function readLocalManifest(filePath: string): Promise<McpManifest> {
     return JSON.parse(raw) as McpManifest;
 }
 
-function makeRpcClient(
+/** Most pages a list call (`tools/list`, `resources/list`) follows through `nextCursor`. */
+const MAX_LIST_PAGES = 100;
+
+interface McpSession {
+    /** Every item of a paginated list method, following `nextCursor`. */
+    list<T>(method: string, key: string): Promise<T[]>;
+    /** Ends the session the server opened, if it opened one (best effort). */
+    close(): Promise<void>;
+}
+
+/**
+ * The streamable-HTTP lifecycle: `initialize`, then `notifications/initialized`,
+ * then every request with `Mcp-Protocol-Version` (the version the server
+ * answered) and `Mcp-Session-Id` (when the server issued one). A server that
+ * refuses `initialize` (an HTTP error or a JSON-RPC error) is read the way this
+ * transport always read servers: plain requests without the handshake headers.
+ */
+async function openSession(
     url: string,
-    headers: Record<string, string>,
-    fetcher: McpFetcher = defaultFetcher,
-) {
+    baseHeaders: Record<string, string>,
+    options: McpUrlToReferencesOptions,
+): Promise<McpSession> {
+    const fetcher = options.fetcher || defaultFetcher;
+    const headers: Record<string, string> = { ...baseHeaders };
     let nextId = 1;
-    return async function call<T>(method: string, params?: unknown): Promise<T> {
+    let sessionId = "";
+
+    async function send<T>(method: string, params?: unknown): Promise<{ result: T; response: McpFetchResponse }> {
         const id = nextId++;
-        const body = JSON.stringify({ jsonrpc: "2.0", id, method, params });
-        const res = await fetcher(url, { method: "POST", headers, body });
-        if (!res.ok) {
-            throw new Error(`MCP RPC ${method} failed: ${res.status}`);
+        const body = JSON.stringify({ jsonrpc: "2.0", id, method, ...(params === undefined ? {} : { params }) });
+        const response = await fetcher(url, { method: "POST", headers: { ...headers }, body });
+        if (!response.ok) {
+            throw new Error(`MCP RPC ${method} failed: ${response.status}`);
         }
-        const json = (await res.json()) as JsonRpcResponse<T>;
+        const json = await readResponse<T>(response, id);
         if (json.error) {
             throw new Error(`MCP RPC ${method} error: ${json.error.message}`);
         }
-        return (json.result ?? ({} as T)) as T;
+        return { result: (json.result ?? ({} as T)) as T, response };
+    }
+
+    const requested = options.protocolVersion || MCP_PROTOCOL_VERSION;
+    let initialized = false;
+    try {
+        const { result, response } = await send<{ protocolVersion?: unknown }>("initialize", {
+            protocolVersion: requested,
+            capabilities: {},
+            clientInfo: options.clientInfo || { name: "xyd-mcp-uniform", version: "0.1.0" },
+        });
+        const answered = typeof result?.protocolVersion === "string" ? result.protocolVersion : "";
+        headers["Mcp-Protocol-Version"] = answered || requested;
+        sessionId = response.headers?.get("mcp-session-id") || "";
+        if (sessionId) {
+            headers["Mcp-Session-Id"] = sessionId;
+        }
+        initialized = true;
+    } catch {
+        // Not an initialize-aware server: no handshake headers, as before.
+    }
+    if (initialized) {
+        try {
+            await fetcher(url, {
+                method: "POST",
+                headers: { ...headers },
+                body: JSON.stringify({ jsonrpc: "2.0", method: "notifications/initialized" }),
+            });
+        } catch {
+            // A notification has no answer to wait for; a failed one is not fatal.
+        }
+    }
+
+    return {
+        async list<T>(method: string, key: string): Promise<T[]> {
+            const items: T[] = [];
+            let cursor: string | undefined;
+            for (let page = 0; page < MAX_LIST_PAGES; page++) {
+                const { result } = await send<Record<string, unknown>>(method, cursor ? { cursor } : undefined);
+                const pageItems = result?.[key];
+                if (Array.isArray(pageItems)) {
+                    items.push(...(pageItems as T[]));
+                }
+                const next = result?.nextCursor;
+                if (typeof next !== "string" || !next || next === cursor) {
+                    break;
+                }
+                cursor = next;
+            }
+            return items;
+        },
+        async close() {
+            if (!sessionId) {
+                return;
+            }
+            try {
+                await fetcher(url, { method: "DELETE", headers: { ...headers }, body: "" });
+            } catch {
+                // Best effort: the server expires idle sessions on its own.
+            }
+        },
     };
+}
+
+/**
+ * The JSON-RPC response with `id`, from a plain JSON answer or from a
+ * server-sent-event stream (`Content-Type: text/event-stream`), where it may
+ * follow notifications or requests of the server's own.
+ */
+async function readResponse<T>(response: McpFetchResponse, id: number): Promise<JsonRpcResponse<T>> {
+    const contentType = response.headers?.get("content-type") || "";
+    if (!response.text) {
+        return (await response.json()) as JsonRpcResponse<T>;
+    }
+    const raw = await response.text();
+    const messages: unknown[] = [];
+    if (contentType.toLowerCase().includes("text/event-stream")) {
+        for (const data of sseData(raw)) {
+            try {
+                messages.push(JSON.parse(data));
+            } catch {
+                // A keep-alive or a non-JSON event: not ours.
+            }
+        }
+    } else {
+        const parsed = JSON.parse(raw);
+        messages.push(...(Array.isArray(parsed) ? parsed : [parsed]));
+    }
+    const answer = messages.find(
+        (m): m is JsonRpcResponse<T> =>
+            !!m && typeof m === "object" && (m as { id?: unknown }).id === id && ("result" in m || "error" in m),
+    );
+    if (!answer) {
+        throw new Error(`MCP RPC: no response with id ${id}`);
+    }
+    return answer;
+}
+
+/** The `data` of each event in a server-sent-event stream (multi-line data joined by `\n`). */
+function sseData(stream: string): string[] {
+    const out: string[] = [];
+    for (const event of stream.split(/\r?\n\r?\n/)) {
+        const lines: string[] = [];
+        for (const line of event.split(/\r?\n/)) {
+            if (line.startsWith("data:")) {
+                lines.push(line.slice(5).replace(/^ /, ""));
+            }
+        }
+        if (lines.length) {
+            out.push(lines.join("\n"));
+        }
+    }
+    return out;
 }
 
 const defaultFetcher: McpFetcher = (url, init) =>

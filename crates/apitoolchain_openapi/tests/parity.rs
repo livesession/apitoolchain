@@ -132,6 +132,7 @@ parity_case!(examples_case, "7.examples");
 parity_case!(enums, "8.enums");
 parity_case!(schema_links, "9.schema-links");
 parity_case!(schema_labels, "10.schema-labels");
+parity_case!(open_objects_null_enums, "13.open-objects-null-enums");
 
 macro_rules! xdocs_case {
     ($test:ident, $name:literal, $options:expr) => {

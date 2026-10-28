@@ -187,7 +187,7 @@ pub(crate) struct RequestBody<'a> {
 }
 
 /// An `additionalProperties` meta that opens an object: `true` or a schema object.
-fn openness(meta: Option<&Value>) -> Option<Value> {
+pub(crate) fn openness(meta: Option<&Value>) -> Option<Value> {
     match meta_value(meta, "additionalProperties") {
         Some(v @ (Value::Bool(true) | Value::Object(_))) => Some(v.clone()),
         _ => None,

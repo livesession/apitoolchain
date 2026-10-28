@@ -1,0 +1,123 @@
+# Open objects and null enum members.
+# - `additionalProperties` → an `additionalProperties` meta: `true` for `true`
+#   or a schema without a type (`{}`), else `{ type }` (with "null" added for
+#   `nullable: true`; a $ref'd schema's type); `false` and absent → no meta.
+#   It lands on request-body variants and on properties, in requests and
+#   responses alike.
+# - an enum's `null` member → no child named "null"; the enum gets the
+#   `nullable` meta instead (once, beside an explicit `nullable`). A one-value
+#   enum of `null` keeps its `const`.
+openapi: 3.0.3
+info:
+  title: Notes API
+  version: 1.0.0
+servers:
+  - url: https://api.example.com/v1
+tags:
+  - name: notes
+paths:
+  /notes:
+    post:
+      operationId: createNote
+      summary: Create note
+      description: Creates a note.
+      tags: [notes]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+              required: [title]
+              properties:
+                title:
+                  type: string
+                tags:
+                  type: object
+                  additionalProperties:
+                    type: string
+                    nullable: true
+                extra:
+                  type: object
+                  additionalProperties: {}
+                closed:
+                  type: object
+                  additionalProperties: false
+                  properties:
+                    a:
+                      type: string
+                labels:
+                  type: object
+                  additionalProperties:
+                    $ref: '#/components/schemas/Label'
+                multi:
+                  type: object
+                  additionalProperties:
+                    type: [string, integer]
+      responses:
+        '201':
+          description: The note.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Note'
+  /notes/{id}:
+    patch:
+      operationId: patchNote
+      summary: Update note
+      description: Updates a note.
+      tags: [notes]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: mood
+          in: query
+          schema:
+            type: string
+            enum: [calm, busy, null]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NotePatch'
+      responses:
+        '200':
+          description: The note.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Note'
+components:
+  schemas:
+    Label:
+      type: object
+      properties:
+        color:
+          type: string
+    NotePatch:
+      type: object
+      additionalProperties:
+        type: integer
+      properties:
+        priority:
+          type: integer
+          nullable: true
+          enum: [1, 2, null]
+    Note:
+      type: object
+      required: [id]
+      properties:
+        id:
+          type: string
+        size:
+          type: string
+          enum: [small, large, null]
+        nothing:
+          enum: [null]
+        attributes:
+          type: object
+          additionalProperties: true

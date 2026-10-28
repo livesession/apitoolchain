@@ -9,6 +9,7 @@ description: "Use when working with the Pet Store API: pets, orders and the stor
 |---|---|---|
 | pets | 9 | `references/pets/` |
 | store | 6 | `references/store/` |
+| notes | 4 | `references/notes/` |
 | general | 1 | `references/general/` |
 
 Every operation in one table: [references/index.md](references/index.md).

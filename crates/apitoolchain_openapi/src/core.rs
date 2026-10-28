@@ -295,7 +295,14 @@ pub fn schema_object_to_property(
         return Some(prop);
     }
 
-    let meta = property_meta(schema, name, required);
+    let mut meta = property_meta(schema, name, required);
+    // Last, as the TS meta builder appends it.
+    if let Some(value) = additional_properties_meta(ctx, schema) {
+        meta.push(Meta {
+            name: "additionalProperties".into(),
+            value: Some(value),
+        });
+    }
 
     // oneOf → $$xor.
     if has("oneOf") {
@@ -454,6 +461,14 @@ pub fn schema_object_to_property(
         .cloned()
         .or_else(|| schema.get("const").map(|c| vec![c.clone()]));
     if let Some(enum_values) = enum_values {
+        // A `null` member is not a value row: it makes the enum nullable (one
+        // real null for consumers), so it becomes the `nullable` meta instead
+        // of a child named "null".
+        let member_values: Vec<&Value> = enum_values.iter().filter(|v| !v.is_null()).collect();
+        let mut meta = meta;
+        if member_values.len() != enum_values.len() && !meta.iter().any(|m| m.name == "nullable") {
+            meta.push(Meta::new("nullable", "true"));
+        }
         // TS builds a synthetic {properties: {<String(v)>: {type}}} object and
         // runs the plain-properties path over it (JS object keys: last-wins,
         // string-coerced).
@@ -461,7 +476,7 @@ pub fn schema_object_to_property(
         // ascending first (Object key ordering), duplicates last-write-wins at
         // the first position.
         let mut m = serde_json::Map::new();
-        for v in &enum_values {
+        for v in &member_values {
             m.insert(json_key(v), serde_json::Value::Null);
         }
         let keys: Vec<String> = crate::util::js_object_keys(&m)
@@ -479,7 +494,6 @@ pub fn schema_object_to_property(
             })
             .collect();
 
-        let mut meta = meta;
         meta.push(Meta {
             name: "enum-type".into(),
             value: schema.get("type").cloned().map(Some).unwrap_or(None),
@@ -695,6 +709,37 @@ fn json_key(v: &Value) -> String {
         Value::Bool(b) => b.to_string(),
         Value::Number(n) => n.to_string(),
         other => other.to_string(),
+    }
+}
+
+/// The `additionalProperties` meta value of an object schema that allows keys
+/// beyond its `properties` (port of `additionalPropertiesMetaValue`): `true`
+/// for `additionalProperties: true` or a schema without a `type`, else
+/// `{ type }` — the schema's type (with `"null"` added for `nullable: true`),
+/// a looser form of it that never rejects what the schema accepts; nested
+/// shapes are not copied. `None` when the schema does not say (or says
+/// `false`).
+pub fn additional_properties_meta(ctx: &ConvCtx, schema: &Value) -> Option<Value> {
+    let additional = schema.get("additionalProperties")?;
+    if additional == &Value::Bool(true) {
+        return Some(Value::Bool(true));
+    }
+    let additional = ctx.resolve(additional);
+    let object = additional.as_object()?;
+    match object.get("type") {
+        Some(Value::String(ty)) => {
+            let nullable = object.get("nullable") == Some(&Value::Bool(true));
+            let ty = if nullable && ty != "null" {
+                serde_json::json!([ty, "null"])
+            } else {
+                Value::String(ty.clone())
+            };
+            Some(serde_json::json!({ "type": ty }))
+        }
+        Some(Value::Array(types)) if !types.is_empty() && types.iter().all(|t| t.is_string()) => {
+            Some(serde_json::json!({ "type": types }))
+        }
+        _ => Some(Value::Bool(true)),
     }
 }
 

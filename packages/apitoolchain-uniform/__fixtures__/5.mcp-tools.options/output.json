@@ -157,7 +157,8 @@
         },
         "attributes": {
           "type": "object",
-          "description": "Free-form attributes\n====================\nStored as given, for example:\n```json\n{\n  \"color\": \"brown\",\n  \"legs\": 4\n}\n```\nKeys are case-sensitive."
+          "description": "Free-form attributes\n====================\nStored as given, for example:\n```json\n{\n  \"color\": \"brown\",\n  \"legs\": 4\n}\n```\nKeys are case-sensitive.",
+          "additionalProperties": true
         }
       },
       "required": [
@@ -873,6 +874,185 @@
         "store"
       ],
       "canonical": "cancelOrder"
+    }
+  },
+  {
+    "name": "createNote",
+    "title": "createNote",
+    "description": "Creates a note. — POST /notes",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "The title."
+        }
+      },
+      "required": [
+        "title"
+      ],
+      "additionalProperties": true
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "idempotentHint": false,
+      "openWorldHint": false
+    },
+    "binding": {
+      "method": "POST",
+      "path": "/notes",
+      "fullPath": "https://api.example.com/v1/notes",
+      "layout": "flat",
+      "pathParams": [],
+      "queryParams": [],
+      "body": "json",
+      "group": [
+        "notes"
+      ],
+      "canonical": "createNote"
+    }
+  },
+  {
+    "name": "labelNote",
+    "title": "labelNote",
+    "description": "Sets the labels of a note. — PUT /notes/{id}/labels",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "The note ID."
+        },
+        "id_body": {
+          "type": "string",
+          "description": "A label set ID."
+        },
+        "color": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": true,
+      "idempotentHint": true,
+      "openWorldHint": false
+    },
+    "binding": {
+      "method": "PUT",
+      "path": "/notes/{id}/labels",
+      "fullPath": "https://api.example.com/v1/notes/{id}/labels",
+      "layout": "flat",
+      "pathParams": [
+        "id"
+      ],
+      "queryParams": [],
+      "body": "json",
+      "inputs": {
+        "id_body": {
+          "in": "body",
+          "name": "id"
+        }
+      },
+      "group": [
+        "notes"
+      ],
+      "canonical": "labelNote"
+    }
+  },
+  {
+    "name": "patchNote",
+    "title": "patchNote",
+    "description": "Merges fields into a note. — PATCH /notes/{id}",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "The note ID."
+        },
+        "body": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      },
+      "required": [
+        "id",
+        "body"
+      ],
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": true,
+      "idempotentHint": false,
+      "openWorldHint": false
+    },
+    "binding": {
+      "method": "PATCH",
+      "path": "/notes/{id}",
+      "fullPath": "https://api.example.com/v1/notes/{id}",
+      "layout": "flat",
+      "pathParams": [
+        "id"
+      ],
+      "queryParams": [],
+      "body": "json",
+      "bodyProperty": "body",
+      "group": [
+        "notes"
+      ],
+      "canonical": "patchNote"
+    }
+  },
+  {
+    "name": "closeNote",
+    "title": "closeNote",
+    "description": "Closes a note. — POST /notes/{id}/close",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "The note ID."
+        },
+        "reason": {
+          "type": "string",
+          "description": "Why."
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "idempotentHint": false,
+      "openWorldHint": false
+    },
+    "binding": {
+      "method": "POST",
+      "path": "/notes/{id}/close",
+      "fullPath": "https://api.example.com/v1/notes/{id}/close",
+      "layout": "flat",
+      "pathParams": [
+        "id"
+      ],
+      "queryParams": [],
+      "body": "json",
+      "group": [
+        "notes"
+      ],
+      "canonical": "closeNote"
     }
   }
 ]

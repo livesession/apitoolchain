@@ -16,6 +16,7 @@ import {
 
 import {oapParametersToDefinitionProperties} from "./oas-parameters";
 import {oapRequestBodyToDefinitionProperties} from "./oas-requestBody";
+import {additionalPropertiesMetaValue} from "../oas-core";
 import {oasResponseToDefinitionProperties} from "./oas-responses";
 import {
     httpMethodToUniformMethod,
@@ -194,6 +195,14 @@ function oapRequestOperationToUniformDefinition(
             meta.push({
                 name: "required",
                 value: schema.required ? "true" : "false",
+            })
+        }
+
+        const additionalProperties = additionalPropertiesMetaValue(schema)
+        if (additionalProperties !== undefined) {
+            meta.push({
+                name: "additionalProperties",
+                value: additionalProperties,
             })
         }
 

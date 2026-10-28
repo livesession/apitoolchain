@@ -728,12 +728,6 @@
                     "type": "string",
                     "description": "",
                     "meta": []
-                  },
-                  {
-                    "name": "null",
-                    "type": "string",
-                    "description": "",
-                    "meta": []
                   }
                 ],
                 "ofProperty": {
@@ -746,7 +740,12 @@
                 "name": "attributes",
                 "type": "object",
                 "description": "Free-form attributes\n====================\nStored as given, for example:\n```json\n{\n  \"color\": \"brown\",\n  \"legs\": 4\n}\n```\nKeys are\ncase-sensitive.",
-                "meta": []
+                "meta": [
+                  {
+                    "name": "additionalProperties",
+                    "value": true
+                  }
+                ]
               }
             ],
             "meta": [
@@ -4170,6 +4169,503 @@
     ]
   },
   {
+    "title": "createNote",
+    "canonical": "createNote",
+    "description": "Creates a note. Fields beyond these are stored as given.",
+    "type": "rest_post",
+    "category": "rest",
+    "context": {
+      "method": "post",
+      "path": "/notes",
+      "group": [
+        "notes"
+      ],
+      "fullPath": "https://api.example.com/v1/notes",
+      "servers": [
+        "https://api.example.com/v1"
+      ],
+      "scopes": []
+    },
+    "examples": {
+      "groups": [
+        {
+          "description": "Example request",
+          "examples": [
+            {
+              "codeblock": {
+                "tabs": [
+                  {
+                    "title": "shell",
+                    "language": "shell",
+                    "code": "curl --request POST \\\n     --url https://api.example.com/v1/notes \\\n     --header 'content-type: application/json' \\\n     --data '{\"title\":\"string\"}'"
+                  },
+                  {
+                    "title": "javascript",
+                    "language": "javascript",
+                    "code": "const options = {\n  method: 'POST',\n  headers: {'content-type': 'application/json'},\n  body: JSON.stringify({title: 'string'})\n};\n\nfetch('https://api.example.com/v1/notes', options)\n  .then(res => res.json())\n  .then(res => console.log(res))\n  .catch(err => console.error(err));"
+                  },
+                  {
+                    "title": "python",
+                    "language": "python",
+                    "code": "import requests\n\nurl = \"https://api.example.com/v1/notes\"\n\npayload = { \"title\": \"string\" }\nheaders = {\"content-type\": \"application/json\"}\n\nresponse = requests.post(url, json=payload, headers=headers)\n\nprint(response.text)"
+                  },
+                  {
+                    "title": "go",
+                    "language": "go",
+                    "code": "package main\n\nimport (\n\t\"fmt\"\n\t\"strings\"\n\t\"net/http\"\n\t\"io\"\n)\n\nfunc main() {\n\n\turl := \"https://api.example.com/v1/notes\"\n\n\tpayload := strings.NewReader(\"{\\\"title\\\":\\\"string\\\"}\")\n\n\treq, _ := http.NewRequest(\"POST\", url, payload)\n\n\treq.Header.Add(\"content-type\", \"application/json\")\n\n\tres, _ := http.DefaultClient.Do(req)\n\n\tdefer res.Body.Close()\n\tbody, _ := io.ReadAll(res.Body)\n\n\tfmt.Println(string(body))\n\n}"
+                  }
+                ]
+              }
+            }
+          ],
+          "kind": "request"
+        }
+      ]
+    },
+    "definitions": [
+      {
+        "title": "Request body",
+        "variants": [
+          {
+            "title": "application/json",
+            "description": "",
+            "properties": [
+              {
+                "name": "title",
+                "type": "string",
+                "description": "The title.",
+                "meta": [
+                  {
+                    "name": "required",
+                    "value": "true"
+                  }
+                ]
+              }
+            ],
+            "meta": [
+              {
+                "name": "contentType",
+                "value": "application/json"
+              },
+              {
+                "name": "required",
+                "value": "true"
+              },
+              {
+                "name": "additionalProperties",
+                "value": true
+              }
+            ]
+          }
+        ],
+        "properties": [],
+        "meta": [
+          {
+            "name": "required",
+            "value": "true"
+          }
+        ],
+        "type": "$rest.request.body"
+      },
+      {
+        "title": "Response",
+        "type": "return",
+        "variants": [
+          {
+            "title": "204",
+            "description": "The note was created.",
+            "properties": [],
+            "meta": [
+              {
+                "name": "status",
+                "value": "204"
+              }
+            ]
+          }
+        ],
+        "properties": []
+      }
+    ]
+  },
+  {
+    "title": "labelNote",
+    "canonical": "labelNote",
+    "description": "Sets the labels of a note. Every extra field must be a string.",
+    "type": "rest_put",
+    "category": "rest",
+    "context": {
+      "method": "put",
+      "path": "/notes/{id}/labels",
+      "group": [
+        "notes"
+      ],
+      "fullPath": "https://api.example.com/v1/notes/{id}/labels",
+      "servers": [
+        "https://api.example.com/v1"
+      ],
+      "scopes": []
+    },
+    "examples": {
+      "groups": [
+        {
+          "description": "Example request",
+          "examples": [
+            {
+              "codeblock": {
+                "tabs": [
+                  {
+                    "title": "shell",
+                    "language": "shell",
+                    "code": "curl --request PUT \\\n     --url https://api.example.com/v1/notes/string/labels \\\n     --header 'content-type: application/json' \\\n     --data '\n{\n  \"id\": \"string\",\n  \"color\": \"string\",\n  \"property1\": \"string\",\n  \"property2\": \"string\"\n}\n'"
+                  },
+                  {
+                    "title": "javascript",
+                    "language": "javascript",
+                    "code": "const options = {\n  method: 'PUT',\n  headers: {'content-type': 'application/json'},\n  body: JSON.stringify({id: 'string', color: 'string', property1: 'string', property2: 'string'})\n};\n\nfetch('https://api.example.com/v1/notes/string/labels', options)\n  .then(res => res.json())\n  .then(res => console.log(res))\n  .catch(err => console.error(err));"
+                  },
+                  {
+                    "title": "python",
+                    "language": "python",
+                    "code": "import requests\n\nurl = \"https://api.example.com/v1/notes/string/labels\"\n\npayload = {\n    \"id\": \"string\",\n    \"color\": \"string\",\n    \"property1\": \"string\",\n    \"property2\": \"string\"\n}\nheaders = {\"content-type\": \"application/json\"}\n\nresponse = requests.put(url, json=payload, headers=headers)\n\nprint(response.text)"
+                  },
+                  {
+                    "title": "go",
+                    "language": "go",
+                    "code": "package main\n\nimport (\n\t\"fmt\"\n\t\"strings\"\n\t\"net/http\"\n\t\"io\"\n)\n\nfunc main() {\n\n\turl := \"https://api.example.com/v1/notes/string/labels\"\n\n\tpayload := strings.NewReader(\"{\\\"id\\\":\\\"string\\\",\\\"color\\\":\\\"string\\\",\\\"property1\\\":\\\"string\\\",\\\"property2\\\":\\\"string\\\"}\")\n\n\treq, _ := http.NewRequest(\"PUT\", url, payload)\n\n\treq.Header.Add(\"content-type\", \"application/json\")\n\n\tres, _ := http.DefaultClient.Do(req)\n\n\tdefer res.Body.Close()\n\tbody, _ := io.ReadAll(res.Body)\n\n\tfmt.Println(string(body))\n\n}"
+                  }
+                ]
+              }
+            }
+          ],
+          "kind": "request"
+        }
+      ]
+    },
+    "definitions": [
+      {
+        "title": "Path parameters",
+        "properties": [
+          {
+            "name": "id",
+            "type": "string",
+            "description": "The note ID.",
+            "meta": [
+              {
+                "name": "required",
+                "value": "true"
+              }
+            ]
+          }
+        ],
+        "type": "$rest.param.path"
+      },
+      {
+        "title": "Request body",
+        "variants": [
+          {
+            "title": "application/json",
+            "description": "",
+            "properties": [
+              {
+                "name": "id",
+                "type": "string",
+                "description": "A label set ID.",
+                "meta": []
+              },
+              {
+                "name": "color",
+                "type": "string",
+                "description": "",
+                "meta": []
+              }
+            ],
+            "meta": [
+              {
+                "name": "contentType",
+                "value": "application/json"
+              },
+              {
+                "name": "additionalProperties",
+                "value": {
+                  "type": "string"
+                }
+              }
+            ]
+          }
+        ],
+        "properties": [],
+        "meta": [
+          {
+            "name": "required",
+            "value": "true"
+          }
+        ],
+        "type": "$rest.request.body"
+      },
+      {
+        "title": "Response",
+        "type": "return",
+        "variants": [
+          {
+            "title": "204",
+            "description": "The labels were set.",
+            "properties": [],
+            "meta": [
+              {
+                "name": "status",
+                "value": "204"
+              }
+            ]
+          }
+        ],
+        "properties": []
+      }
+    ]
+  },
+  {
+    "title": "patchNote",
+    "canonical": "patchNote",
+    "description": "Merges fields into a note.",
+    "type": "rest_patch",
+    "category": "rest",
+    "context": {
+      "method": "patch",
+      "path": "/notes/{id}",
+      "group": [
+        "notes"
+      ],
+      "fullPath": "https://api.example.com/v1/notes/{id}",
+      "servers": [
+        "https://api.example.com/v1"
+      ],
+      "scopes": []
+    },
+    "examples": {
+      "groups": [
+        {
+          "description": "Example request",
+          "examples": [
+            {
+              "codeblock": {
+                "tabs": [
+                  {
+                    "title": "shell",
+                    "language": "shell",
+                    "code": "curl --request PATCH \\\n     --url https://api.example.com/v1/notes/string \\\n     --header 'content-type: application/json'"
+                  },
+                  {
+                    "title": "javascript",
+                    "language": "javascript",
+                    "code": "const options = {method: 'PATCH', headers: {'content-type': 'application/json'}};\n\nfetch('https://api.example.com/v1/notes/string', options)\n  .then(res => res.json())\n  .then(res => console.log(res))\n  .catch(err => console.error(err));"
+                  },
+                  {
+                    "title": "python",
+                    "language": "python",
+                    "code": "import requests\n\nurl = \"https://api.example.com/v1/notes/string\"\n\nheaders = {\"content-type\": \"application/json\"}\n\nresponse = requests.patch(url, headers=headers)\n\nprint(response.text)"
+                  },
+                  {
+                    "title": "go",
+                    "language": "go",
+                    "code": "package main\n\nimport (\n\t\"fmt\"\n\t\"net/http\"\n\t\"io\"\n)\n\nfunc main() {\n\n\turl := \"https://api.example.com/v1/notes/string\"\n\n\treq, _ := http.NewRequest(\"PATCH\", url, nil)\n\n\treq.Header.Add(\"content-type\", \"application/json\")\n\n\tres, _ := http.DefaultClient.Do(req)\n\n\tdefer res.Body.Close()\n\tbody, _ := io.ReadAll(res.Body)\n\n\tfmt.Println(string(body))\n\n}"
+                  }
+                ]
+              }
+            }
+          ],
+          "kind": "request"
+        }
+      ]
+    },
+    "definitions": [
+      {
+        "title": "Path parameters",
+        "properties": [
+          {
+            "name": "id",
+            "type": "string",
+            "description": "The note ID.",
+            "meta": [
+              {
+                "name": "required",
+                "value": "true"
+              }
+            ]
+          }
+        ],
+        "type": "$rest.param.path"
+      },
+      {
+        "title": "Request body",
+        "variants": [
+          {
+            "title": "application/json",
+            "description": "",
+            "properties": [],
+            "meta": [
+              {
+                "name": "contentType",
+                "value": "application/json"
+              },
+              {
+                "name": "additionalProperties",
+                "value": true
+              }
+            ]
+          }
+        ],
+        "properties": [],
+        "meta": [
+          {
+            "name": "required",
+            "value": "true"
+          }
+        ],
+        "type": "$rest.request.body"
+      },
+      {
+        "title": "Response",
+        "type": "return",
+        "variants": [
+          {
+            "title": "204",
+            "description": "The note was updated.",
+            "properties": [],
+            "meta": [
+              {
+                "name": "status",
+                "value": "204"
+              }
+            ]
+          }
+        ],
+        "properties": []
+      }
+    ]
+  },
+  {
+    "title": "closeNote",
+    "canonical": "closeNote",
+    "description": "Closes a note. Unknown fields are rejected.",
+    "type": "rest_post",
+    "category": "rest",
+    "context": {
+      "method": "post",
+      "path": "/notes/{id}/close",
+      "group": [
+        "notes"
+      ],
+      "fullPath": "https://api.example.com/v1/notes/{id}/close",
+      "servers": [
+        "https://api.example.com/v1"
+      ],
+      "scopes": []
+    },
+    "examples": {
+      "groups": [
+        {
+          "description": "Example request",
+          "examples": [
+            {
+              "codeblock": {
+                "tabs": [
+                  {
+                    "title": "shell",
+                    "language": "shell",
+                    "code": "curl --request POST \\\n     --url https://api.example.com/v1/notes/string/close \\\n     --header 'content-type: application/json' \\\n     --data '{\"reason\":\"string\"}'"
+                  },
+                  {
+                    "title": "javascript",
+                    "language": "javascript",
+                    "code": "const options = {\n  method: 'POST',\n  headers: {'content-type': 'application/json'},\n  body: JSON.stringify({reason: 'string'})\n};\n\nfetch('https://api.example.com/v1/notes/string/close', options)\n  .then(res => res.json())\n  .then(res => console.log(res))\n  .catch(err => console.error(err));"
+                  },
+                  {
+                    "title": "python",
+                    "language": "python",
+                    "code": "import requests\n\nurl = \"https://api.example.com/v1/notes/string/close\"\n\npayload = { \"reason\": \"string\" }\nheaders = {\"content-type\": \"application/json\"}\n\nresponse = requests.post(url, json=payload, headers=headers)\n\nprint(response.text)"
+                  },
+                  {
+                    "title": "go",
+                    "language": "go",
+                    "code": "package main\n\nimport (\n\t\"fmt\"\n\t\"strings\"\n\t\"net/http\"\n\t\"io\"\n)\n\nfunc main() {\n\n\turl := \"https://api.example.com/v1/notes/string/close\"\n\n\tpayload := strings.NewReader(\"{\\\"reason\\\":\\\"string\\\"}\")\n\n\treq, _ := http.NewRequest(\"POST\", url, payload)\n\n\treq.Header.Add(\"content-type\", \"application/json\")\n\n\tres, _ := http.DefaultClient.Do(req)\n\n\tdefer res.Body.Close()\n\tbody, _ := io.ReadAll(res.Body)\n\n\tfmt.Println(string(body))\n\n}"
+                  }
+                ]
+              }
+            }
+          ],
+          "kind": "request"
+        }
+      ]
+    },
+    "definitions": [
+      {
+        "title": "Path parameters",
+        "properties": [
+          {
+            "name": "id",
+            "type": "string",
+            "description": "The note ID.",
+            "meta": [
+              {
+                "name": "required",
+                "value": "true"
+              }
+            ]
+          }
+        ],
+        "type": "$rest.param.path"
+      },
+      {
+        "title": "Request body",
+        "variants": [
+          {
+            "title": "application/json",
+            "description": "",
+            "properties": [
+              {
+                "name": "reason",
+                "type": "string",
+                "description": "Why.",
+                "meta": []
+              }
+            ],
+            "meta": [
+              {
+                "name": "contentType",
+                "value": "application/json"
+              }
+            ]
+          }
+        ],
+        "properties": [],
+        "meta": [
+          {
+            "name": "required",
+            "value": "true"
+          }
+        ],
+        "type": "$rest.request.body"
+      },
+      {
+        "title": "Response",
+        "type": "return",
+        "variants": [
+          {
+            "title": "204",
+            "description": "The note was closed.",
+            "properties": [],
+            "meta": [
+              {
+                "name": "status",
+                "value": "204"
+              }
+            ]
+          }
+        ],
+        "properties": []
+      }
+    ]
+  },
+  {
     "title": "get/health",
     "canonical": "get/health",
     "type": "rest_get",
@@ -4618,12 +5114,6 @@
                 "type": "string",
                 "description": "",
                 "meta": []
-              },
-              {
-                "name": "null",
-                "type": "string",
-                "description": "",
-                "meta": []
               }
             ],
             "ofProperty": {
@@ -4636,7 +5126,12 @@
             "name": "attributes",
             "type": "object",
             "description": "Free-form attributes\n====================\nStored as given, for example:\n```json\n{\n  \"color\": \"brown\",\n  \"legs\": 4\n}\n```\nKeys are\ncase-sensitive.",
-            "meta": []
+            "meta": [
+              {
+                "name": "additionalProperties",
+                "value": true
+              }
+            ]
           }
         ],
         "meta": [],

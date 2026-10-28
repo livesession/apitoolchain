@@ -96,7 +96,11 @@ const tests: {
             uniformPluginXDocsSidebar
         ],
         options: {operationPaths: "title"}
-    }
+    },
+    {
+        name: "13.open-objects-null-enums",
+        description: "additionalProperties meta, null enum members",
+    },
 ]
 
 // Every oracle carries the docs-metadata output (the `const` meta, `symbolDef`s
@@ -108,8 +112,9 @@ const tests: {
 // 9.schema-links rows resolves (every feature at once: the `const` meta, a
 // nested link with its label, the scalar fold, the merged rows of a composed
 // member, the response root's link — an addon carrying only some of them stays
-// gated); until then the matrix is exercised on the JS impl (XYD_NATIVE=0) and
-// the Rust core by `cargo test` (tests/parity.rs).
+// gated) and that emits 13.open-objects-null-enums' `additionalProperties`
+// meta and null-free nullable enums; until then the matrix is exercised on the
+// JS impl (XYD_NATIVE=0) and the Rust core by `cargo test` (tests/parity.rs).
 const nativeHasDocsMetadata = (() => {
     if (typeof native?.oapSchemaToReferencesFromFile !== "function") {
         return false
@@ -121,12 +126,21 @@ const nativeHasDocsMetadata = (() => {
         const row = (name: string) => rows.find(p => p.name === name)
         const getWidget = refs.find(r => r.canonical === "getWidget")
         const response = getWidget?.definitions?.find((d: any) => d.title === "Response")?.variants?.[0]
+        const open = path.join(__dirname, "..", "__fixtures__", "13.open-objects-null-enums", "input.yaml")
+        const openRefs: any[] = JSON.parse(native.oapSchemaToReferencesFromFile(open))
+        const createBody = openRefs.find(r => r.canonical === "createNote")
+            ?.definitions?.find((d: any) => d.type === "$rest.request.body")?.variants?.[0]
+        const size = openRefs.find(r => r.canonical === "objects/Note")
+            ?.definitions?.[0]?.properties?.find((p: any) => p.name === "size")
         return !!row("object")?.meta?.some((m: any) => m.name === "const")
             && row("definition")?.symbolDef?.canonical === "objects/WidgetDefinition"
             && row("definition")?.symbolDef?.label === "WidgetDefinition"
             && row("id")?.type === "string"
             && row("assembly")?.properties?.map((p: any) => p.name).join(",") === "label,id,sku"
             && response?.symbolDef?.label === "widget"
+            && !!createBody?.meta?.some((m: any) => m.name === "additionalProperties")
+            && !!size?.meta?.some((m: any) => m.name === "nullable")
+            && !size?.properties?.some((p: any) => p.name === "null")
     } catch {
         return false
     }

@@ -114,6 +114,7 @@ export async function testPluginNavigation(fixtureName: string) {
 // callbacks from the same keys:
 //   readOnly:  canonicals that are read-only besides every GET
 //   exclude:   canonicals left out (`include`)
+//   only:      the only canonicals kept (`include`)
 //   toolNames: tool names by canonical (the rest get the default)
 //   extras:    `extras` by canonical
 //   header:    the generated-file comment, `{group}` replaced by the group
@@ -128,6 +129,10 @@ function readOptionsFixture(fixtureName: string): any {
 }
 
 function excluded(fixture: any) {
+    const only: string[] | undefined = fixture.only;
+    if (only) {
+        return (ref: Reference) => only.includes(ref.canonical);
+    }
     const list: string[] | undefined = fixture.exclude;
     return list ? (ref: Reference) => !list.includes(ref.canonical) : undefined;
 }

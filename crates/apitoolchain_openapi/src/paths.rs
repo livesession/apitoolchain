@@ -201,6 +201,12 @@ fn request_definition(ctx: &ConvCtx, oap_operation: &Value) -> Definition {
                 if s.get("required").is_some() {
                     meta.push(Meta::new("required", "true"));
                 }
+                if let Some(value) = crate::core::additional_properties_meta(ctx, s) {
+                    meta.push(Meta {
+                        name: "additionalProperties".into(),
+                        value: Some(value),
+                    });
+                }
             }
 
             variants.push(DefinitionVariant {

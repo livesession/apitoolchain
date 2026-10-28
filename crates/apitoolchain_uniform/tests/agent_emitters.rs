@@ -61,6 +61,9 @@ fn strings(value: Option<&Value>) -> Option<Vec<String>> {
 }
 
 fn exclude(fixture: &Value) -> Option<ReferencePredicate> {
+    if let Some(only) = strings(fixture.get("only")) {
+        return Some(Arc::new(move |r: &Value| only.contains(&canonical(r))));
+    }
     let list = strings(fixture.get("exclude"))?;
     Some(Arc::new(move |r: &Value| !list.contains(&canonical(r))))
 }

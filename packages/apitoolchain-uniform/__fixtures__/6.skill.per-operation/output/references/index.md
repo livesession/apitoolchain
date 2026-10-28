@@ -19,4 +19,8 @@
 | [`getOrder`](store/getOrder.md) | GET | `/store/orders/{id}` | store | Retrieve order |
 | [`replaceOrder`](store/replaceOrder.md) | PUT | `/store/orders/{id}` | store | Replace order |
 | [`cancelOrder`](store/cancelOrder.md) | DELETE | `/store/orders/{id}` | store | Cancel order |
+| [`createNote`](notes/createNote.md) | POST | `/notes` | notes | createNote |
+| [`labelNote`](notes/labelNote.md) | PUT | `/notes/{id}/labels` | notes | labelNote |
+| [`patchNote`](notes/patchNote.md) | PATCH | `/notes/{id}` | notes | patchNote |
+| [`closeNote`](notes/closeNote.md) | POST | `/notes/{id}/close` | notes | closeNote |
 | [`get/health`](general/get-health.md) | GET | `/health` | general | get/health |

@@ -71,7 +71,7 @@ Content type: `application/json`. Required.
 | `owner.contact` | object | no | How to reach the owner. |
 | `vaccinated` | boolean | no | Default: `false`. |
 | `priority` | integer | no | Listing priority, 1 the highest. One of: `1`, `2`, `3`. |
-| `size` | string or null | no | The pet's size; null when unknown. One of: `small`, `medium`, `large`, `null`. |
+| `size` | string or null | no | The pet's size; null when unknown. One of: `small`, `medium`, `large`. |
 | `attributes` | object | no | Free-form attributes ==================== Stored as given, for example: ```json { "color": "brown", "legs": 4 } ``` Keys are case-sensitive. |
 
 ### Responses

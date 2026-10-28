@@ -20,6 +20,7 @@ Read [api/errors.md](api/errors.md) when a call fails.
 | pets | 9 | [api/pets.md](api/pets.md) |
 | Store / Inventory | 1 | [api/store-inventory.md](api/store-inventory.md) |
 | store | 5 | [api/store.md](api/store.md) |
+| notes | 4 | [api/notes.md](api/notes.md) |
 
 Every operation in one table: [api/index.md](api/index.md).
 

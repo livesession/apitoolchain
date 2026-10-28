@@ -27,9 +27,10 @@ export interface Reference<
     __UNSAFE_selector?: (selector: string) => any;
 }
 
-/** `additionalProperties` (a request body's definition or variant): what the
- *  body allows beyond its properties, `true` or a JSON Schema — read by the
- *  MCP emitter to keep a flattened open body open. */
+/** `additionalProperties` (a request body's variant — the OpenAPI converter
+ *  emits it there — or its definition): what the body allows beyond its
+ *  properties, `true` or a JSON Schema; the MCP emitter keeps a flattened open
+ *  body open with it. */
 export type DefinitionOpenAPIMeta = Meta<"contentType" | "required" | "definitionDescription" | "additionalProperties">;
 export type DefinitionTypeDocMeta = Meta<"type">;
 export type DefinitionGraphqlMeta = Meta<"type" | "graphqlName">;
@@ -119,7 +120,10 @@ export interface Meta<T = string> {
 /** `const`: the literal of a single-value enum or an OpenAPI 3.1 `const`
  *  (`{ name: "const", value: "widget" }`), emitted beside the `$$enum` children
  *  so a renderer can print the value inline. */
-export type DefinitionPropertyMeta = Meta<"required" | "deprecated" | "internal" | "defaults" | "nullable" | "example" | "examples" | "minimum" | "maximum" | "enum-type" | "const"> // TODO: better solution than enum-type?
+/** `additionalProperties`: an object open to keys beyond its properties —
+ *  `true`, or `{ type }` (a looser form of the value schema), as the OpenAPI
+ *  converter emits it. */
+export type DefinitionPropertyMeta = Meta<"required" | "deprecated" | "internal" | "defaults" | "nullable" | "example" | "examples" | "minimum" | "maximum" | "enum-type" | "const" | "additionalProperties"> // TODO: better solution than enum-type?
 
 export enum DEFINED_DEFINITION_PROPERTY_TYPE {
     UNION = "$$union",

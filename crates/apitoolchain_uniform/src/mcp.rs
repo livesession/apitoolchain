@@ -17,8 +17,8 @@ use serde_json::{Map, Value};
 use crate::operations::{
     array_item, array_of, definition_properties, effective_property, enum_base_type, enum_value,
     find_meta, is_required, is_rest_operation, js_ordered, js_trim, js_trim_end, json_schema_type,
-    meta_flag, meta_value, object_children, operation_full_path, operation_group, operation_method,
-    operation_path, request_body, str_of, text, unwrap_soft_breaks,
+    meta_flag, meta_value, object_children, openness, operation_full_path, operation_group,
+    operation_method, operation_path, request_body, str_of, text, unwrap_soft_breaks,
 };
 
 /// A predicate over a reference (a raw `Reference` JSON value).
@@ -991,6 +991,10 @@ fn property_schema(
                 if !required.is_empty() {
                     f.required = Some(required);
                 }
+            }
+            // An object open to more keys (the converter's `additionalProperties` meta).
+            if ty == Some("object") {
+                f.additional_properties = openness(prop.get("meta"));
             }
         }
     }

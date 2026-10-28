@@ -43,13 +43,6 @@ Use `cursor` from a previous page to continue:
 | `has_more` | boolean | Whether another page follows. |
 | `next_cursor` | string or null | Pass as `cursor` to fetch the next page. |
 
-#### 400 — `application/json`
-
-| Name | Type | Description |
-|---|---|---|
-| `code` | string | A machine-readable error code. |
-| `message` | string | A human-readable message. |
-
 ### Example request
 
 ```shell
@@ -99,13 +92,6 @@ Content type: `application/json`. Required.
 | `owner` | Owner | Who looks after the pet. |
 | `owner.name` | string | The owner's full name. |
 | `owner.contact` | object | How to reach the owner. |
-
-#### 422 — `application/json`
-
-| Name | Type | Description |
-|---|---|---|
-| `code` | string | A machine-readable error code. |
-| `message` | string | A human-readable message. |
 
 ### Example request
 
@@ -224,13 +210,6 @@ Returns one pet.
 | `owner.name` | string | The owner's full name. |
 | `owner.contact` | object | How to reach the owner. |
 
-#### 404 — `application/json`
-
-| Name | Type | Description |
-|---|---|---|
-| `code` | string | A machine-readable error code. |
-| `message` | string | A human-readable message. |
-
 ### Example request
 
 ```javascript
@@ -311,13 +290,6 @@ Deletes a pet for good.
 |---|---|---|---|
 | 204 | — | — | The pet was deleted. |
 | 404 | `application/json` | Error | No pet has this ID. |
-
-#### 404 — `application/json`
-
-| Name | Type | Description |
-|---|---|---|
-| `code` | string | A machine-readable error code. |
-| `message` | string | A human-readable message. |
 
 ### Example request
 

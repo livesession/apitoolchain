@@ -41,13 +41,6 @@ Use `cursor` from a previous page to continue:
 | `has_more` | boolean | Whether another page follows. |
 | `next_cursor` | string or null | Pass as `cursor` to fetch the next page. |
 
-### 400 — `application/json`
-
-| Name | Type | Description |
-|---|---|---|
-| `code` | string | A machine-readable error code. |
-| `message` | string | A human-readable message. |
-
 ## Example request
 
 ```shell

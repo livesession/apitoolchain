@@ -179,6 +179,32 @@ describe("skillFiles operation details", () => {
         expect(md).not.toContain("#### 204");
     });
 
+    it("tabulates the 2xx responses' fields by default, every response's or none on request", () => {
+        const withError = definitions.map((d: any) =>
+            d.type === "return"
+                ? {
+                      ...d,
+                      variants: [
+                          ...d.variants,
+                          {
+                              title: "404",
+                              description: "Not found.",
+                              meta: [{name: "status", value: "404"}, {name: "contentType", value: "application/json"}],
+                              properties: [{name: "code", type: "string", description: "An error code."}],
+                          },
+                      ],
+                  }
+                : d
+        );
+        const render = (responseFields?: "all" | "success" | "none") =>
+            skillFiles([op(withError)], {name: "x", description: "y", responseFields}).get("references/things.md")!;
+        expect(render()).toContain("#### 200 — `application/json`");
+        expect(render()).not.toContain("#### 404");
+        expect(render()).toContain("| 404 | `application/json` | object | Not found. |");
+        expect(render("all")).toContain("#### 404 — `application/json`");
+        expect(render("none")).not.toContain("#### ");
+    });
+
     it("synthesizes a request from the required inputs plus limit when none is given", () => {
         const md = skillFiles([op(definitions)], {name: "x", description: "y"}).get("references/things.md")!;
         expect(md).toContain(

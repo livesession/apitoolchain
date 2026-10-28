@@ -19,13 +19,6 @@ Deletes a pet for good.
 | 204 | — | — | The pet was deleted. |
 | 404 | `application/json` | Error | No pet has this ID. |
 
-### 404 — `application/json`
-
-| Name | Type | Description |
-|---|---|---|
-| `code` | string | A machine-readable error code. |
-| `message` | string | A human-readable message. |
-
 ## Example request
 
 ```shell

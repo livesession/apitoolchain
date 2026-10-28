@@ -146,7 +146,11 @@ for (const [path, contents] of files) {
 Each group file holds, per operation, `## <canonical> — <title>`, the `METHOD path` line,
 the description, tables of the path/query/header/cookie parameters and the request body
 (nested objects one level down as `parent.child`), the responses (status, content type,
-type, description — then each response's fields, one level deep) and one example request.
+type, description — then a response's fields, one level deep) and one example request.
+`responseFields` picks the responses whose fields are tabulated: `"success"` (the default)
+the 2xx ones, `"all"` every one, `"none"` none; the others stay one summary row each. An
+error envelope every operation shares is best described once, in a file passed as an
+extra, rather than under every operation and status.
 `exampleRequest` picks it: `"auto"` (the default) takes the first request example the
 references carry — a curl one when there is one — and synthesizes a curl request when
 there is none; `"synthesized"` always synthesizes it; `"none"` leaves it out. A

@@ -39,13 +39,6 @@ Content type: `application/json`. Required.
 | `status` | string | One of: `placed`, `approved`, `delivered`. |
 | `ship_date` | string or null |  |
 
-### 409 — `application/json`
-
-| Name | Type | Description |
-|---|---|---|
-| `code` | string | A machine-readable error code. |
-| `message` | string | A human-readable message. |
-
 ## Example request
 
 ```shell

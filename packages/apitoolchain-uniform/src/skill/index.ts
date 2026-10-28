@@ -65,6 +65,12 @@ export interface SkillOptions {
      *  with its example or default when it states one (`limit`: else 10) and a
      *  typed placeholder otherwise (`<name>`, `0`, `false`). */
     exampleRequest?: "auto" | "synthesized" | "none";
+    /** Which responses get a field table under "Responses" (default
+     *  `"success"`): `"success"` only the 2xx ones, `"all"` every response
+     *  with fields, `"none"` none. A response without a table is still one row
+     *  of the summary table. An error envelope shared by every operation is
+     *  best described once, in a hand-written file passed as an extra. */
+    responseFields?: "all" | "success" | "none";
     /** Hand-written files to ship with the skill, by path relative to SKILL.md,
      *  byte for byte. SKILL.md lists them; one at a generated path replaces it. */
     extras?: Record<string, string>;
@@ -83,7 +89,10 @@ export function skillFiles(references: Reference[], options: SkillOptions): Map<
     const dir = (options.references?.dir ?? "references").replace(/^(\.\/)+/, "").replace(/^\/+|\/+$/g, "");
     const header = options.references?.header ?? (() => DEFAULT_SKILL_HEADER);
     const perOperation = options.references?.perOperation === true;
-    const exampleMode = options.exampleRequest ?? "auto";
+    const render: Render = {
+        exampleRequest: options.exampleRequest ?? "auto",
+        responseFields: options.responseFields ?? "success",
+    };
     const at = (file: string) => (dir ? `${dir}/${file}` : file);
 
     // Operations by group, groups in order of first appearance.
@@ -112,11 +121,11 @@ export function skillFiles(references: Reference[], options: SkillOptions): Map<
     for (const group of groups) {
         if (perOperation) {
             group.operations.forEach((ref, i) => {
-                const blocks = [comment(header(group.name)), ...operationBlocks(ref, 1, exampleMode)];
+                const blocks = [comment(header(group.name)), ...operationBlocks(ref, 1, render)];
                 files.set(at(group.files[i]), blocks.join("\n\n") + "\n");
             });
         } else {
-            files.set(at(group.file), groupMd(group, header(group.name), exampleMode));
+            files.set(at(group.file), groupMd(group, header(group.name), render));
         }
     }
     const extras = options.extras || {};
@@ -248,19 +257,23 @@ function operationId(ref: Reference): string {
 // a group's reference file
 // ---------------------------------------------------------------------------
 
-type ExampleMode = NonNullable<SkillOptions["exampleRequest"]>;
+/** The per-operation rendering choices. */
+interface Render {
+    exampleRequest: NonNullable<SkillOptions["exampleRequest"]>;
+    responseFields: NonNullable<SkillOptions["responseFields"]>;
+}
 
-function groupMd(group: Group, header: string, exampleMode: ExampleMode): string {
+function groupMd(group: Group, header: string, render: Render): string {
     const blocks: string[] = [comment(header), `# ${collapse(group.name)}`];
     for (const ref of group.operations) {
-        blocks.push(...operationBlocks(ref, 2, exampleMode));
+        blocks.push(...operationBlocks(ref, 2, render));
     }
     return blocks.join("\n\n") + "\n";
 }
 
 /** An operation's blocks, its heading at `level` (2 in a group's file, 1 in
  *  its own) and its sections one level below. */
-function operationBlocks(ref: Reference, level: number, exampleMode: ExampleMode): string[] {
+function operationBlocks(ref: Reference, level: number, render: Render): string[] {
     const h = "#".repeat(level);
     const sub = "#".repeat(level + 1);
     const method = operationMethod(ref);
@@ -320,8 +333,11 @@ function operationBlocks(ref: Reference, level: number, exampleMode: ExampleMode
             lines.push(responseRow(variant));
         }
         blocks.push(`${sub} Responses`, lines.join("\n"));
-        // Each response's fields, one level deep, like the request body's.
+        // A response's fields, one level deep, like the request body's.
         for (const variant of variants) {
+            if (render.responseFields === "none" || (render.responseFields === "success" && !isSuccess(variant))) {
+                continue;
+            }
             const fields = responseFields(variant);
             if (fields) {
                 blocks.push(`${sub}# ${responseHeading(variant)}`, fields);
@@ -330,9 +346,9 @@ function operationBlocks(ref: Reference, level: number, exampleMode: ExampleMode
     }
 
     const example =
-        exampleMode === "none"
+        render.exampleRequest === "none"
             ? null
-            : (exampleMode === "auto" ? exampleRequest(ref) : null) ?? synthesizedRequest(ref);
+            : (render.exampleRequest === "auto" ? exampleRequest(ref) : null) ?? synthesizedRequest(ref);
     if (example) {
         blocks.push(`${sub} Example request`, codeBlock(example.code, example.language));
     }
@@ -549,11 +565,21 @@ function exampleRequest(ref: Reference): { code: string; language: string } | nu
     return { code: tab.code || "", language: tab.language || "" };
 }
 
+/** A response's status: its `status` meta, else its title. */
+function responseStatus(variant: DefinitionVariant): string {
+    const status = findMeta(variant.meta, "status")?.value;
+    return typeof status === "string" && status ? status : variant.title || "";
+}
+
+/** A 2xx response (`200`, `204`, `2XX`…). */
+function isSuccess(variant: DefinitionVariant): boolean {
+    return responseStatus(variant).trim().startsWith("2");
+}
+
 /** `200 — \`application/json\``: a response's status and content type. */
 function responseHeading(variant: DefinitionVariant): string {
-    const status = findMeta(variant.meta, "status")?.value;
     const contentType = variantContentType(variant);
-    const name = collapse(typeof status === "string" && status ? status : variant.title || "");
+    const name = collapse(responseStatus(variant));
     return contentType ? `${name} — ${inlineCode(contentType)}` : name;
 }
 

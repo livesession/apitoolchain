@@ -31,13 +31,6 @@ Returns one pet.
 | `owner.name` | string | The owner's full name. |
 | `owner.contact` | object | How to reach the owner. |
 
-### 404 — `application/json`
-
-| Name | Type | Description |
-|---|---|---|
-| `code` | string | A machine-readable error code. |
-| `message` | string | A human-readable message. |
-
 ## Example request
 
 ```javascript

@@ -42,13 +42,6 @@ Content type: `application/json`. Required.
 | `owner.name` | string | The owner's full name. |
 | `owner.contact` | object | How to reach the owner. |
 
-### 422 — `application/json`
-
-| Name | Type | Description |
-|---|---|---|
-| `code` | string | A machine-readable error code. |
-| `message` | string | A human-readable message. |
-
 ## Example request
 
 ```shell

@@ -11,7 +11,8 @@
       "api/errors.md": "# Errors\n\nEvery error answers `{ \"code\", \"message\" }`.\n",
       "guides/pagination.md": "# Pagination\n\nPass `next_cursor` back as `cursor`.\n"
     },
-    "exampleRequest": "synthesized"
+    "exampleRequest": "synthesized",
+    "responseFields": "all"
   },
   "header": "Generated from openapi.yaml ({group}) -- regenerate, do not edit -->",
   "exclude": [

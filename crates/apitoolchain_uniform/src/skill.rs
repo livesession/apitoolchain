@@ -75,6 +75,31 @@ pub struct SkillOptions {
     /// Each operation's "Example request" (default [`ExampleRequest::Auto`]).
     #[serde(default)]
     pub example_request: Option<ExampleRequest>,
+    /// Which responses get a field table (default [`ResponseFields::Success`]).
+    #[serde(default)]
+    pub response_fields: Option<ResponseFields>,
+}
+
+/// Which responses get a field table under "Responses"; the others are one
+/// row of the summary table each. An error envelope shared by every operation
+/// is best described once, in a hand-written file passed as an extra.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum ResponseFields {
+    /// Every response with fields.
+    All,
+    /// The 2xx responses only.
+    #[default]
+    Success,
+    /// None.
+    None,
+}
+
+/// The per-operation rendering choices.
+#[derive(Clone, Copy)]
+struct Render {
+    example_request: ExampleRequest,
+    response_fields: ResponseFields,
 }
 
 /// Where an operation's "Example request" comes from.
@@ -119,6 +144,7 @@ impl fmt::Debug for SkillOptions {
                 &self.extras.as_ref().map(|e| e.keys().collect::<Vec<_>>()),
             )
             .field("example_request", &self.example_request)
+            .field("response_fields", &self.response_fields)
             .finish()
     }
 }
@@ -163,7 +189,10 @@ pub fn skill_files(references: &[Value], options: SkillOptions) -> BTreeMap<Stri
         .as_ref()
         .and_then(|r| r.per_operation)
         .unwrap_or(false);
-    let example_mode = options.example_request.unwrap_or_default();
+    let render = Render {
+        example_request: options.example_request.unwrap_or_default(),
+        response_fields: options.response_fields.unwrap_or_default(),
+    };
     let at = |file: &str| -> String {
         if dir.is_empty() {
             file.to_string()
@@ -226,13 +255,13 @@ pub fn skill_files(references: &[Value], options: SkillOptions) -> BTreeMap<Stri
         if per_operation {
             for (reference, file) in group.operations.iter().zip(&group.files) {
                 let mut blocks = vec![comment(&header(&group.name))];
-                blocks.extend(operation_blocks(reference, 1, example_mode));
+                blocks.extend(operation_blocks(reference, 1, render));
                 files.insert(at(file), blocks.join("\n\n") + "\n");
             }
         } else {
             files.insert(
                 at(&group.file),
-                group_md(group, &header(&group.name), example_mode),
+                group_md(group, &header(&group.name), render),
             );
         }
     }
@@ -417,17 +446,17 @@ fn operation_id(reference: &Value) -> String {
 // a group's reference file
 // ---------------------------------------------------------------------------
 
-fn group_md(group: &Group<'_>, header: &str, example_mode: ExampleRequest) -> String {
+fn group_md(group: &Group<'_>, header: &str, render: Render) -> String {
     let mut blocks = vec![comment(header), format!("# {}", collapse(&group.name))];
     for reference in &group.operations {
-        blocks.extend(operation_blocks(reference, 2, example_mode));
+        blocks.extend(operation_blocks(reference, 2, render));
     }
     blocks.join("\n\n") + "\n"
 }
 
 /// An operation's blocks, its heading at `level` (2 in a group's file, 1 in
 /// its own) and its sections one level below.
-fn operation_blocks(reference: &Value, level: usize, example_mode: ExampleRequest) -> Vec<String> {
+fn operation_blocks(reference: &Value, level: usize, render: Render) -> Vec<String> {
     let h = "#".repeat(level);
     let sub = "#".repeat(level + 1);
     let method = operation_method(reference);
@@ -502,8 +531,16 @@ fn operation_blocks(reference: &Value, level: usize, example_mode: ExampleReques
         }
         blocks.push(format!("{sub} Responses"));
         blocks.push(lines.join("\n"));
-        // Each response's fields, one level deep, like the request body's.
+        // A response's fields, one level deep, like the request body's.
         for variant in response_variants(reference) {
+            let shown = match render.response_fields {
+                ResponseFields::All => true,
+                ResponseFields::Success => is_success(variant),
+                ResponseFields::None => false,
+            };
+            if !shown {
+                continue;
+            }
             if let Some(fields) = response_fields(variant) {
                 blocks.push(format!("{sub}# {}", response_heading(variant)));
                 blocks.push(fields);
@@ -511,7 +548,7 @@ fn operation_blocks(reference: &Value, level: usize, example_mode: ExampleReques
         }
     }
 
-    let example = match example_mode {
+    let example = match render.example_request {
         ExampleRequest::None => None,
         ExampleRequest::Auto => Some(
             example_request(reference)
@@ -833,13 +870,22 @@ fn example_request(reference: &Value) -> Option<(&str, &str)> {
     ))
 }
 
-/// `200 — \`application/json\``: a response's status and content type.
-fn response_heading(variant: &Value) -> String {
-    let status = meta_value(variant.get("meta"), "status")
+/// A response's status: its `status` meta, else its title.
+fn response_status(variant: &Value) -> &str {
+    meta_value(variant.get("meta"), "status")
         .and_then(|v| v.as_str())
         .filter(|s| !s.is_empty())
-        .unwrap_or_else(|| str_of(variant, "title").unwrap_or(""));
-    let name = collapse(status);
+        .unwrap_or_else(|| str_of(variant, "title").unwrap_or(""))
+}
+
+/// A 2xx response (`200`, `204`, `2XX`…).
+fn is_success(variant: &Value) -> bool {
+    js_trim(response_status(variant)).starts_with('2')
+}
+
+/// `200 — \`application/json\``: a response's status and content type.
+fn response_heading(variant: &Value) -> String {
+    let name = collapse(response_status(variant));
     let content_type = variant_content_type(variant);
     if content_type.is_empty() {
         name

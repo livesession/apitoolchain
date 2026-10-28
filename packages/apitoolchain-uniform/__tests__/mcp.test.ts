@@ -61,7 +61,7 @@ describe("uniformToMcpTools", () => {
     it("emits one tool per REST operation and skips everything else", () => {
         const references: Reference[] = readFixture("5.mcp-tools.default/input.json");
         const tools = uniformToMcpTools(references);
-        expect(references.length).toBe(25);
+        expect(references.length).toBe(29);
         // uploadPetPhoto takes a multipart body only: skipped by default
         expect(tools.map((t) => t.name)).toEqual([
             "listPets",
@@ -78,8 +78,23 @@ describe("uniformToMcpTools", () => {
             "getOrder",
             "replaceOrder",
             "cancelOrder",
+            "createNote",
+            "labelNote",
+            "patchNote",
+            "closeNote",
             "get_health",
         ]);
+    });
+
+    it("keeps an object the converter marks open open", () => {
+        const references: Reference[] = readFixture("5.mcp-tools.default/input.json");
+        const tools = uniformToMcpTools(references);
+        const create = tools.find((t) => t.name === "createPet")!;
+        expect(create.inputSchema.properties.attributes).toMatchObject({type: "object", additionalProperties: true});
+        expect(create.inputSchema.additionalProperties).toBe(false);
+        expect(tools.find((t) => t.name === "createNote")!.inputSchema.additionalProperties).toBe(true);
+        expect(tools.find((t) => t.name === "labelNote")!.inputSchema.additionalProperties).toEqual({type: "string"});
+        expect(tools.find((t) => t.name === "closeNote")!.inputSchema.additionalProperties).toBe(false);
     });
 
     it("lets include opt a non-JSON-body operation in, without a body input", () => {

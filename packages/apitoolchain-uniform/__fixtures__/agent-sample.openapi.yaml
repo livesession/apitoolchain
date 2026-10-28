@@ -19,6 +19,9 @@
 #   optional request body (shipOrder), a multipart-only body (uploadPetPhoto)
 # - abbreviations in a first sentence ("e.g.", "No.") and a nullable string
 #   enum with a null member (NewPet.size)
+# - open objects (notes): request bodies with `additionalProperties: true`, a
+#   schema, `false`, and an open body without properties (5.mcp-tools.open-body
+#   keeps just these four operations)
 openapi: 3.0.3
 info:
   title: Pet Store API
@@ -28,6 +31,7 @@ servers:
 tags:
   - name: pets
   - name: store
+  - name: notes
 paths:
   /pets:
     get:
@@ -494,6 +498,103 @@ paths:
       responses:
         '204':
           description: The order was cancelled.
+  /notes:
+    post:
+      operationId: createNote
+      description: Creates a note. Fields beyond these are stored as given.
+      tags: [notes]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+              required: [title]
+              properties:
+                title:
+                  type: string
+                  description: The title.
+      responses:
+        '204':
+          description: The note was created.
+  /notes/{id}/labels:
+    put:
+      operationId: labelNote
+      description: Sets the labels of a note. Every extra field must be a string.
+      tags: [notes]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The note ID.
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties:
+                type: string
+              properties:
+                id:
+                  type: string
+                  description: A label set ID.
+                color:
+                  type: string
+      responses:
+        '204':
+          description: The labels were set.
+  /notes/{id}:
+    patch:
+      operationId: patchNote
+      description: Merges fields into a note.
+      tags: [notes]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The note ID.
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '204':
+          description: The note was updated.
+  /notes/{id}/close:
+    post:
+      operationId: closeNote
+      description: Closes a note. Unknown fields are rejected.
+      tags: [notes]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The note ID.
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                reason:
+                  type: string
+                  description: Why.
+      responses:
+        '204':
+          description: The note was closed.
   /health:
     get:
       responses:

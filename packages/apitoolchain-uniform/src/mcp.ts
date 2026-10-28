@@ -17,6 +17,7 @@ import {
     jsonSchemaType,
     metaFlag,
     objectChildren,
+    openness,
     operationGroup,
     operationMethod,
     operationPath,
@@ -718,6 +719,11 @@ function propertySchema(
                 if (required.length) {
                     f.required = required;
                 }
+            }
+            // An object open to more keys (the converter's `additionalProperties` meta).
+            const open = type === "object" ? openness(prop.meta) : undefined;
+            if (open !== undefined) {
+                f.additionalProperties = open;
             }
         }
     }

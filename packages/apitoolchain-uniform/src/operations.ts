@@ -117,7 +117,7 @@ export interface RequestBody {
 }
 
 /** An `additionalProperties` meta that opens an object: `true` or a schema object. */
-function openness(meta: Meta[] | undefined): unknown {
+export function openness(meta: Meta[] | undefined): unknown {
     const value = findMeta(meta, "additionalProperties")?.value;
     if (value === true || (value !== null && typeof value === "object" && !Array.isArray(value))) {
         return value;

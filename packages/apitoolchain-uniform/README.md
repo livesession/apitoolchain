@@ -62,7 +62,9 @@ const tools = uniformToMcpTools(references, {
   properties) is renamed `<name>_query` / `<name>_body` (`_2`, `_3`… if taken) and mapped
   back in `binding.inputs`. The top level is closed (`additionalProperties: false`) unless
   the flattened body declares itself open: an `additionalProperties` meta (`true` or a
-  JSON Schema) on its variant or definition is carried through. An optional body's
+  JSON Schema) on its variant or definition is carried through, and an object property
+  with that meta gets it as its own `additionalProperties`. The OpenAPI converter emits
+  the meta from the document's `additionalProperties`. An optional body's
   required properties are not required inputs (they are required only when a body is
   sent). `flatten: false` groups the inputs under `pathParams`, `queryParams`, `headers`,
   `cookies` and `requestBody`, nothing renamed.
@@ -177,8 +179,7 @@ does not install it.
 
 ### Fixtures
 
-`5.mcp-tools.open-body` is hand-written: it pins the `additionalProperties` meta, which the
-OpenAPI converter does not emit yet. The other emitter fixtures convert one sample document,
+The emitter fixtures convert one sample document,
 [`__fixtures__/agent-sample.openapi.yaml`](./__fixtures__/agent-sample.openapi.yaml), with
 `@xyd-js/openapi` into each case's `input.json`
 (`XYD_NATIVE=0 bun packages/apitoolchain-openapi/scripts/build-agent-fixture-inputs.ts`).

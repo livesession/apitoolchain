@@ -316,6 +316,78 @@ one of them an `x-docs.path`. Under an `x-docs.sidebar` the entries place the
 pages themselves: an entry's own `path` wins over the page's `x-docs.path`, an
 entry without one leaves the page at it, and no collision check runs.
 
+## Tag groups and display names
+
+Two extensions other OpenAPI renderers already read (Redoc among them) shape
+the **generated navigation** — never a reference: canonicals, links, page
+paths and `context.group` (the raw tag names) stay as they are. No option
+turns them on; the document does.
+
+```yaml
+tags:
+  - name: pets
+    x-displayName: Pets         # the label of every `pets` group
+  - name: store
+    x-displayName: Store
+  - name: users
+  - name: audit
+    x-displayName: Audit log
+x-tagGroups:                    # sections over the top-level groups
+  - name: Core
+    tags: [store, pets]
+  - name: Admin
+    tags: [users]
+```
+
+With the tags in that order, the generated sidebar is
+
+```json
+[
+  { "group": "Core", "pages": [
+      { "group": "Store", "pages": [ "…/placeOrder", "…/getInventory" ] },
+      { "group": "Pets",  "pages": [ "…/listPets", "…/createPet" ] } ] },
+  { "group": "Admin", "pages": [
+      { "group": "users", "pages": [ "…/listUsers" ] } ] },
+  { "group": "Audit log", "pages": [ "…/listAuditEvents" ] },
+  { "group": "Objects", "collapsed": true, "pages": [
+      "…/objects/Money",
+      { "group": "Pets",  "pages": [ "…/objects/Pet" ] },
+      { "group": "Store", "pages": [ "…/objects/Order" ] } ] }
+]
+```
+
+**Sections** (`x-tagGroups: [{ name, tags }]`). The top-level groups are
+walked in order; a group whose name a tag group lists moves into that tag
+group's section — the first tag group listing it wins. The section takes the
+place of its first member and lists its members in the tag group's `tags`
+order; each member moves whole (under `objectsLayout: per-area`, with its
+objects sub-group). Unlike Redoc, which hides the tags in no group, a group no
+tag group lists **keeps its place** — no page is ever hidden — and the
+`Objects` group is not a tag, so it stays last. A listed name without a
+top-level group adds nothing, a tag group without members emits no section,
+and malformed entries are skipped (an entry needs a non-empty string `name` and
+a `tags` array; non-string names in `tags` are ignored; a repeated section name
+is skipped). A tag group named like a top-level group that keeps its place
+(its name or its display name) is skipped too, so no two top-level groups
+share a name. A section is a plain group entry — no flag is added: the groups
+inside it are nested groups, which a renderer that folds nested groups (xyd
+does, unless one holds the active page) shows folded.
+
+**Display names** (`x-displayName` on a tag). Every generated group whose
+name is a tag's `name` — at any depth: a section's members, a group left in
+place, the area sub-groups of `Objects` — takes that tag's display name (the
+first tag of a name decides; an empty or non-string value is ignored). A tag
+without one keeps its name; a section's own name is never relabelled; page
+entries and the other keys (`collapsed`) are untouched.
+
+Both are the navigation's second finishing pass, run after the `Objects`
+group's `collapsed` flag (which finds that group by its raw name): the Rust
+`navigation::group_by_tag_groups` — run by the fused endpoint — and the JS twin
+`groupByTagGroups(sidebar, doc)`, exported with `TAG_GROUPS_KEY` /
+`DISPLAY_NAME_KEY`; chain it as
+`groupByTagGroups(collapseObjectsGroup(sidebar, doc, references, urlPrefix, options), doc)`.
+With an `x-docs.sidebar` (the author's navigation) the pass changes nothing.
+
 ## Options
 
 `oapSchemaToReferences(doc, options)` / the Rust `Options` (JSON through the
@@ -332,10 +404,12 @@ native addon, camelCase):
 The fused endpoint (`fused::uniform_oas_pages`, `FusedInput::objects_group` /
 `FusedInput::objects_layout` / `FusedInput::operation_paths` /
 `FusedInput::objects_collapsed`) takes the same names, since it builds the
-sidebar — and runs the navigation's finishing pass that sets the flag after
-pluginNavigation (the Rust `navigation::collapse_objects_group`; the JS twin
-`collapseObjectsGroup(sidebar, doc, references, urlPrefix, options)` is what
-the fused goldens are built with). The Rust x-docs pass
+sidebar — and runs the navigation's finishing passes after pluginNavigation:
+the one that sets the flag (the Rust `navigation::collapse_objects_group`; the
+JS twin `collapseObjectsGroup(sidebar, doc, references, urlPrefix, options)`),
+then the [tag groups and display names](#tag-groups-and-display-names) (the
+Rust `navigation::group_by_tag_groups`; the JS twin `groupByTagGroups(sidebar,
+doc)`) — the JS twins, chained, are what the fused goldens are built with. The Rust x-docs pass
 (`xdocs::apply_xdocs_sidebar_with_options`) returns `Err` on a page-path
 collision; the JS plugin throws.
 

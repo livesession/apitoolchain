@@ -1,0 +1,186 @@
+{
+  "urlPrefix": "docs/api",
+  "sidebar": [
+    {
+      "group": "Core",
+      "pages": [
+        {
+          "group": "Store",
+          "pages": [
+            {
+              "virtual": ".xyd/.cache/.content/docs/api/placeOrder",
+              "page": "docs/api/placeOrder"
+            },
+            {
+              "virtual": ".xyd/.cache/.content/docs/api/getInventory",
+              "page": "docs/api/getInventory"
+            }
+          ]
+        },
+        {
+          "group": "Pets",
+          "pages": [
+            {
+              "virtual": ".xyd/.cache/.content/docs/api/listPets",
+              "page": "docs/api/listPets"
+            },
+            {
+              "virtual": ".xyd/.cache/.content/docs/api/createPet",
+              "page": "docs/api/createPet"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "group": "Audit log",
+      "pages": [
+        {
+          "virtual": ".xyd/.cache/.content/docs/api/listAuditEvents",
+          "page": "docs/api/listAuditEvents"
+        }
+      ]
+    },
+    {
+      "group": "Admin",
+      "pages": [
+        {
+          "group": "users",
+          "pages": [
+            {
+              "virtual": ".xyd/.cache/.content/docs/api/listUsers",
+              "page": "docs/api/listUsers"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "group": "Objects",
+      "collapsed": true,
+      "pages": [
+        {
+          "virtual": ".xyd/.cache/.content/docs/api/objects/Money",
+          "page": "docs/api/objects/Money"
+        },
+        {
+          "group": "Pets",
+          "pages": [
+            {
+              "virtual": ".xyd/.cache/.content/docs/api/objects/Pet",
+              "page": "docs/api/objects/Pet"
+            }
+          ]
+        },
+        {
+          "group": "Store",
+          "pages": [
+            {
+              "virtual": ".xyd/.cache/.content/docs/api/objects/Order",
+              "page": "docs/api/objects/Order"
+            }
+          ]
+        },
+        {
+          "group": "users",
+          "pages": [
+            {
+              "virtual": ".xyd/.cache/.content/docs/api/objects/User",
+              "page": "docs/api/objects/User"
+            }
+          ]
+        },
+        {
+          "group": "Reports",
+          "pages": [
+            {
+              "virtual": ".xyd/.cache/.content/docs/api/objects/Report",
+              "page": "docs/api/objects/Report"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "pageFrontMatter": {
+    "docs/api/listPets": {
+      "title": "List pets"
+    },
+    "docs/api/createPet": {
+      "title": "Create pet"
+    },
+    "docs/api/listAuditEvents": {
+      "title": "List audit events"
+    },
+    "docs/api/placeOrder": {
+      "title": "Place order"
+    },
+    "docs/api/getInventory": {
+      "title": "Retrieve inventory"
+    },
+    "docs/api/listUsers": {
+      "title": "List users"
+    },
+    "docs/api/objects/Money": {
+      "title": "Money"
+    },
+    "docs/api/objects/Pet": {
+      "title": "The pet object"
+    },
+    "docs/api/objects/Order": {
+      "title": "The order object"
+    },
+    "docs/api/objects/User": {
+      "title": "The user object"
+    },
+    "docs/api/objects/Report": {
+      "title": "The report object"
+    }
+  },
+  "pages": [
+    {
+      "pagePath": "docs/api/listPets",
+      "region": "GET /pets"
+    },
+    {
+      "pagePath": "docs/api/createPet",
+      "region": "POST /pets"
+    },
+    {
+      "pagePath": "docs/api/listAuditEvents",
+      "region": "GET /audit"
+    },
+    {
+      "pagePath": "docs/api/placeOrder",
+      "region": "POST /store/orders"
+    },
+    {
+      "pagePath": "docs/api/getInventory",
+      "region": "GET /store/inventory"
+    },
+    {
+      "pagePath": "docs/api/listUsers",
+      "region": "GET /users"
+    },
+    {
+      "pagePath": "docs/api/objects/Money",
+      "region": "/components/schemas/Money"
+    },
+    {
+      "pagePath": "docs/api/objects/Pet",
+      "region": "/components/schemas/Pet"
+    },
+    {
+      "pagePath": "docs/api/objects/Order",
+      "region": "/components/schemas/Order"
+    },
+    {
+      "pagePath": "docs/api/objects/User",
+      "region": "/components/schemas/User"
+    },
+    {
+      "pagePath": "docs/api/objects/Report",
+      "region": "/components/schemas/Report"
+    }
+  ]
+}

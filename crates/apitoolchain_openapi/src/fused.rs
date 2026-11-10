@@ -1,17 +1,18 @@
 //! The fused uniform endpoint (S6+ W3 tail): ONE call takes an OpenAPI spec
 //! source and returns everything plugin-docs' `uniformResolver` needs to emit
 //! virtual pages + sidebar — conversion, the x-docs sidebar plugin,
-//! pluginNavigation and the navigation's finishing pass (the objects group's
-//! `collapsed` flag) all run natively; references never materialize in JS and
-//! the endpoint code-sample post-pass (irrelevant to pages) never runs at
-//! boot. The JS side keeps: the urlPrefix sidebar-route match (input),
+//! pluginNavigation and the navigation's finishing passes (the objects group's
+//! `collapsed` flag, then the document's tag groups as sections and the tags'
+//! display names as labels) all run natively; references never materialize in
+//! JS and the endpoint code-sample post-pass (irrelevant to pages) never runs
+//! at boot. The JS side keeps: the urlPrefix sidebar-route match (input),
 //! compose-file merging, gray-matter frontmatter stringify + fs writes
 //! (byte-owned by JS), and sidebar wiring.
 
 use serde_json::{json, Map, Value};
 
 use crate::doc::DocCtx;
-use crate::navigation::collapse_objects_group;
+use crate::navigation::{collapse_objects_group, group_by_tag_groups};
 use crate::xdocs::{apply_xdocs_sidebar_with_options, get_xdocs_route};
 use crate::{oap_schema_to_references, read_spec, OasError, Options};
 use apitoolchain_uniform::jsrt::node_path_join;
@@ -113,10 +114,15 @@ pub fn uniform_oas_pages(input: &FusedInput) -> Result<FusedOutput, OasError> {
     let mut nav = plugin_navigation(&settings_stub, &url_prefix, &refs)
         .map_err(|e| OasError(format!("pluginNavigation: {e}")))?;
 
-    // The finishing pass over the generated navigation: the top-level objects
-    // group's `collapsed` flag (a no-op under per-area, in sidebar mode, or
-    // with `objectsCollapsed: false`).
+    // The finishing passes over the generated navigation: the top-level
+    // objects group's `collapsed` flag (a no-op under per-area, in sidebar
+    // mode, or with `objectsCollapsed: false`), then the document's tag groups
+    // (`x-tagGroups`) as sections and the tags' display names (`x-displayName`)
+    // as labels (a no-op in sidebar mode or without either extension). The
+    // first finds the objects group by its raw name, so it runs before the
+    // labels change.
     collapse_objects_group(&mut nav.sidebar, &doc, &refs, &url_prefix, &options);
+    group_by_tag_groups(&mut nav.sidebar, &doc);
 
     // Per-ref page entries — pagePath mirrors `path.join(urlPrefix,
     // ref.canonical)`; region mirrors the resolver's openapi switch.

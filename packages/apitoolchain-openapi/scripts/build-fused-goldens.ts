@@ -1,8 +1,9 @@
 // Golden generator for the FUSED uniform endpoint (S6+ W3 tail).
 // Replicates the slice of plugin-docs' uniformResolver that the Rust
 // `apitoolchain_openapi::fused::uniform_oas_pages` fuses: JS conversion →
-// x-docs sidebar plugin → pluginNavigation → the navigation's finishing pass
-// (the objects group's `collapsed` flag) → per-ref {pagePath, region}.
+// x-docs sidebar plugin → pluginNavigation → the navigation's finishing passes
+// (the objects group's `collapsed` flag, then the tag groups' sections and the
+// tags' display names) → per-ref {pagePath, region}.
 // Regen is explicit only (oracle-freeze rule):
 //   XYD_NATIVE=0 bun scripts/build-fused-goldens.ts
 // XYD_NATIVE=0 is REQUIRED for the halves that still have a JS impl: the
@@ -25,7 +26,7 @@ if (process.env.XYD_NATIVE !== "0") {
 // JS impls: the openapi shim's loader sees XYD_NATIVE=0 → the frozen converter
 // and the JS x-docs plugin. (It imports @xyd-js/uniform's DIST, a separate
 // module instance from the src imported below.)
-const { deferencedOpenAPI, oapSchemaToReferences, uniformPluginXDocsSidebar, collapseObjectsGroup } = await import("../src/index.ts");
+const { deferencedOpenAPI, oapSchemaToReferences, uniformPluginXDocsSidebar, collapseObjectsGroup, groupByTagGroups } = await import("../src/index.ts");
 // Native: pluginNavigation's only implementation. The uniform package's loader
 // (`src/native.ts`) is first imported by `src/index.ts` and evaluates once, so
 // the flag is lifted before that import — it then affects this half alone.
@@ -41,7 +42,9 @@ const URL_PREFIX = "docs/api"; // the fixed test prefix the Rust test mirrors
 // `FusedInput` for it (tests/fused.rs). 5.xdocs.objects pins the per-area
 // objects layout explicitly — the default is `grouped`, which 11.objects-layouts
 // pins; 12.page-paths pins the title-derived page paths (the default,
-// `operation-id`, is what every other case runs under).
+// `operation-id`, is what every other case runs under). 13.tag-groups needs
+// no option: its document's `x-tagGroups` / `x-displayName` drive the second
+// finishing pass.
 const cases: { name: string; options?: uniformOasOptions }[] = [
     { name: "1.basic" },
     { name: "2.more" },
@@ -51,6 +54,7 @@ const cases: { name: string; options?: uniformOasOptions }[] = [
     { name: "8.enums" },
     { name: "11.objects-layouts" },
     { name: "12.page-paths", options: { operationPaths: "title" } },
+    { name: "13.tag-groups" },
 ];
 
 for (const { name, options } of cases) {
@@ -79,9 +83,13 @@ for (const { name, options } of cases) {
         return { pagePath: byCanonical, region };
     });
 
-    // The finishing pass over the generated navigation (the JS twin of the
-    // Rust `navigation::collapse_objects_group`, run by the fused endpoint).
-    const sidebar = collapseObjectsGroup(res.out.sidebar, doc, res.references, URL_PREFIX, options);
+    // The finishing passes over the generated navigation, in the fused
+    // endpoint's order (the JS twins of the Rust
+    // `navigation::collapse_objects_group` and `navigation::group_by_tag_groups`).
+    const sidebar = groupByTagGroups(
+        collapseObjectsGroup(res.out.sidebar, doc, res.references, URL_PREFIX, options),
+        doc,
+    );
 
     const golden = {
         urlPrefix: URL_PREFIX,

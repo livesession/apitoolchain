@@ -9,8 +9,11 @@
 //! and its ordering rule — and, with every grouped-layout golden, the
 //! `collapsed: true` flag on the top-level objects group; 12.page-paths the
 //! explicit `x-docs.path` and the title-derived canonicals (`operationPaths:
-//! title`), the links and the sidebar following the final paths. A case's
-//! converter options are the ones scripts/build-fused-goldens.ts lists for it.
+//! title`), the links and the sidebar following the final paths;
+//! 13.tag-groups the second finishing pass — the document's tag groups
+//! (`x-tagGroups`) as sections and the tags' display names (`x-displayName`)
+//! as labels. A case's converter options are the ones
+//! scripts/build-fused-goldens.ts lists for it.
 
 use apitoolchain_openapi::fused::{uniform_oas_pages, FusedInput};
 use apitoolchain_uniform::canon;
@@ -84,6 +87,7 @@ fused_case!(enums, "8.enums");
 fused_case!(xdocs_objects, "5.xdocs.objects", Some("per-area"));
 fused_case!(objects_layouts, "11.objects-layouts");
 fused_case!(page_paths, "12.page-paths", None, Some("title"));
+fused_case!(tag_groups, "13.tag-groups");
 
 /// The group names of a sidebar level, nested groups as `(name, pages)`.
 fn group_names(level: &[Value]) -> Vec<String> {
@@ -310,4 +314,46 @@ fn sidebar_mode_never_flags_a_group() {
     .expect("fused ok");
     assert!(!out.sidebar.is_empty());
     assert_eq!(collapsed_flags(&out.sidebar), 0);
+}
+
+/// The tag groups on 13.tag-groups (the fused golden pins the whole shape;
+/// this spells the rules out): each section takes the place of its first
+/// member and lists its members in the tag group's order, an ungrouped group
+/// keeps its place, a listed name without a top-level group adds nothing,
+/// every group named like a tag takes its display name at any depth (not the
+/// sections), and "Objects" stays last, the only collapsed entry.
+#[test]
+fn tag_groups_are_sections_and_display_names_are_labels() {
+    let fixtures =
+        apitoolchain_parity::fixtures_dir(env!("CARGO_MANIFEST_DIR"), "apitoolchain-openapi");
+    let out = uniform_oas_pages(&FusedInput {
+        source: fixtures
+            .join("13.tag-groups")
+            .join("input.yaml")
+            .to_string_lossy()
+            .to_string(),
+        url_prefix: "docs/api".into(),
+        ..Default::default()
+    })
+    .expect("fused ok");
+    assert_eq!(
+        group_names(&out.sidebar),
+        vec!["Core", "Audit log", "Admin", "Objects"]
+    );
+    assert_eq!(
+        group_names(pages_of(&out.sidebar, "Core")),
+        vec!["Store", "Pets"]
+    );
+    assert_eq!(group_names(pages_of(&out.sidebar, "Admin")), vec!["users"]);
+    let objects = pages_of(&out.sidebar, "Objects");
+    assert_eq!(objects[0]["page"], "docs/api/objects/Money");
+    assert_eq!(
+        group_names(&objects[1..]),
+        vec!["Pets", "Store", "users", "Reports"]
+    );
+    assert_eq!(out.sidebar[3]["collapsed"], Value::Bool(true));
+    assert_eq!(collapsed_flags(&out.sidebar), 1);
+    // The pages and their paths do not move.
+    assert!(out.page_front_matter.contains_key("docs/api/listPets"));
+    assert_eq!(out.pages.len(), 11);
 }

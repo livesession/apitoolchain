@@ -24,3 +24,6 @@ export {uniformPluginXDocsSidebar} from "./xdocs/pluginSidebar"
 
 export {collapseObjectsGroup, COLLAPSED_KEY} from "./xdocs/collapseObjectsGroup"
 export type {NavigationGroupEntry} from "./xdocs/collapseObjectsGroup"
+
+export {groupByTagGroups, TAG_GROUPS_KEY, DISPLAY_NAME_KEY} from "./xdocs/tagGroups"
+export type {TagGroup} from "./xdocs/tagGroups"

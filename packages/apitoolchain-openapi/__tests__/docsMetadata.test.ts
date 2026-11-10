@@ -10,15 +10,20 @@ import {
     collapseObjectsGroup,
     componentPagePath,
     deferencedOpenAPI,
+    DISPLAY_NAME_KEY,
     explicitPagePath,
+    groupByTagGroups,
     kebabCase,
     oapSchemaToReferences,
     objectsCollapsedOf,
     operationPagePath,
+    TAG_GROUPS_KEY,
     uniformPluginXDocsSidebar,
     verbOf,
     type NavigationGroupEntry,
 } from "../src/impl-js";
+// The package entry (what a consumer imports) — it re-exports a curated list.
+import * as packageEntry from "../index";
 
 function fixture(name: string) {
     return path.join(__dirname, "..", "__fixtures__", name, "input.yaml");
@@ -758,35 +763,36 @@ describe("docs metadata (JS impl)", () => {
     });
 });
 
-describe("the Objects group's collapsed flag (JS impl)", () => {
-    const URL_PREFIX = "docs/api";
+const URL_PREFIX = "docs/api";
 
-    /** The generated navigation in pluginNavigation's emitted shape — one
-     *  group node per `context.group` path, a `{virtual, page}` leaf per page
-     *  (the page path itself in store mode). pluginNavigation itself runs
-     *  natively only; the fused goldens pin the real output. */
-    function navigationOf(refs: Reference[], store = false): NavigationGroupEntry[] {
-        const root: NavigationGroupEntry[] = [];
-        for (const ref of refs) {
-            const group = Array.isArray(ref.context?.group) ? (ref.context!.group as string[]) : [];
-            if (!group.length) continue;
-            let level = root;
-            let node: NavigationGroupEntry | undefined;
-            for (const name of group) {
-                node = level.find(e => e.group === name);
-                if (!node) {
-                    node = {group: name, pages: []};
-                    level.push(node);
-                }
-                level = node.pages as NavigationGroupEntry[];
+/** The generated navigation in pluginNavigation's emitted shape — one group
+ *  node per `context.group` path, a `{virtual, page}` leaf per page (the page
+ *  path itself in store mode). pluginNavigation itself runs natively only;
+ *  the fused goldens pin the real output. */
+function navigationOf(refs: Reference[], store = false): NavigationGroupEntry[] {
+    const root: NavigationGroupEntry[] = [];
+    for (const ref of refs) {
+        const group = Array.isArray(ref.context?.group) ? (ref.context!.group as string[]) : [];
+        if (!group.length) continue;
+        let level = root;
+        let node: NavigationGroupEntry | undefined;
+        for (const name of group) {
+            node = level.find(e => e.group === name);
+            if (!node) {
+                node = {group: name, pages: []};
+                level.push(node);
             }
-            const page = path.join(URL_PREFIX, ref.canonical);
-            node!.pages!.push(store ? page : {virtual: path.join(".xyd/.cache/.content", page), page});
+            level = node.pages as NavigationGroupEntry[];
         }
-        return root;
+        const page = path.join(URL_PREFIX, ref.canonical);
+        node!.pages!.push(store ? page : {virtual: path.join(".xyd/.cache/.content", page), page});
     }
+    return root;
+}
 
-    const flagsIn = (sidebar: unknown) => (JSON.stringify(sidebar).match(/"collapsed"/g) ?? []).length;
+const flagsIn = (sidebar: unknown) => (JSON.stringify(sidebar).match(/"collapsed"/g) ?? []).length;
+
+describe("the Objects group's collapsed flag (JS impl)", () => {
 
     async function sidebarFor(options?: any, mutate?: (doc: any) => void, store = false) {
         const doc = await deferencedOpenAPI(fixture("5.xdocs.objects"));
@@ -866,5 +872,253 @@ describe("the Objects group's collapsed flag (JS impl)", () => {
         expect(objects.pages![0]).toBe("docs/api/objects/PartBase");
         expect(objects.collapsed).toBe(true);
         expect(flagsIn(sidebar)).toBe(1);
+    });
+});
+
+describe("tag groups and display names (JS impl)", () => {
+    const OBJECTS = "Objects";
+
+    const operation = (operationId: string, summary: string, tag: string) => ({
+        operationId, summary, tags: [tag], responses: {"200": {description: "ok"}},
+    });
+
+    const object = (name: string, group?: string) => ({
+        "x-docs": group ? {name: `The ${name} object`, group} : {name: `The ${name} object`},
+        type: "object",
+        properties: {id: {type: "string"}},
+    });
+
+    /** The twin of the Rust unit tests' store: one operation per tag — `pets`,
+     *  `store`, `users`, `audit`, the declared order — a `Money` object page
+     *  without an area, a `Pet` one in the `pets` area and a `Report` one in
+     *  `reports` (a declared tag with no operations). `displayNames` gives tags
+     *  an `x-displayName`; `root` merges document keys. */
+    function petstoreDoc(displayNames: Record<string, string> = {}, root: Record<string, unknown> = {}): any {
+        return {
+            openapi: "3.0.3",
+            info: {title: "Petstore", version: "1.0.0"},
+            tags: ["pets", "store", "users", "audit", "reports"].map(name =>
+                name in displayNames ? {name, [DISPLAY_NAME_KEY]: displayNames[name]} : {name}),
+            paths: {
+                "/pets": {get: operation("listPets", "List pets", "pets")},
+                "/store/inventory": {get: operation("getInventory", "Retrieve inventory", "store")},
+                "/users": {get: operation("listUsers", "List users", "users")},
+                "/audit": {get: operation("listAuditEvents", "List audit events", "audit")},
+            },
+            components: {
+                schemas: {
+                    Money: object("money"),
+                    Pet: object("pet", "pets"),
+                    Report: object("report", "reports"),
+                },
+            },
+            ...root,
+        };
+    }
+
+    const withTagGroups = (groups: unknown) => petstoreDoc({}, {[TAG_GROUPS_KEY]: groups});
+
+    function sidebarFor(doc: any, options?: any, store = false): NavigationGroupEntry[] {
+        const refs = uniform(oapSchemaToReferences(doc, options), {plugins: [uniformPluginXDocsSidebar]}).references;
+        return collapseObjectsGroup(navigationOf(refs, store), doc, refs, URL_PREFIX, options);
+    }
+
+    /** Both finishing passes, in the fused endpoint's order. */
+    function groupedFor(doc: any, options?: any, store = false): NavigationGroupEntry[] {
+        const base = sidebarFor(doc, options, store);
+        const before = JSON.stringify(base);
+        const out = groupByTagGroups(base, doc);
+        expect(JSON.stringify(base)).toBe(before); // the input is not mutated
+        return out;
+    }
+
+    const names = (level: unknown[]) => level
+        .filter((e): e is NavigationGroupEntry => !!e && typeof e === "object" && "group" in e)
+        .map(e => e.group);
+
+    const entry = (level: NavigationGroupEntry[], group: string) => {
+        const found = level.find(e => e.group === group);
+        if (!found) {
+            throw new Error(`no group ${group} in ${JSON.stringify(names(level))}`);
+        }
+        return found;
+    };
+
+    const pagesOf = (e: unknown) => (e as NavigationGroupEntry).pages as NavigationGroupEntry[];
+
+    const base = () => sidebarFor(petstoreDoc());
+
+    it("the baseline: four area groups in the tag order, then the collapsed objects group", () => {
+        const sidebar = base();
+        expect(names(sidebar)).toEqual(["pets", "store", "users", "audit", OBJECTS]);
+        const objects = entry(sidebar, OBJECTS);
+        expect((pagesOf(objects)[0] as any).page).toBe("docs/api/objects/Money");
+        expect(names(pagesOf(objects))).toEqual(["pets", "reports"]);
+    });
+
+    it("two sections take the place of their first member; members follow the tag group's order and move whole", () => {
+        const doc = () => withTagGroups([
+            {name: "Core", tags: ["store", "pets"]},
+            {name: "Admin", tags: ["audit", "users"]},
+        ]);
+        const before = sidebarFor(doc());
+        const sidebar = groupedFor(doc());
+        expect(names(sidebar)).toEqual(["Core", "Admin", OBJECTS]);
+        const core = entry(sidebar, "Core");
+        expect(Object.keys(core)).toEqual(["group", "pages"]);
+        expect(names(pagesOf(core))).toEqual(["store", "pets"]);
+        expect(pagesOf(core)[0]).toEqual(entry(before, "store"));
+        expect(pagesOf(core)[1]).toEqual(entry(before, "pets"));
+        expect(names(pagesOf(entry(sidebar, "Admin")))).toEqual(["audit", "users"]);
+        expect(entry(sidebar, OBJECTS)).toEqual(entry(before, OBJECTS));
+        expect(flagsIn(sidebar)).toBe(1);
+    });
+
+    it("an entry no tag group lists keeps its place", () => {
+        const sidebar = groupedFor(withTagGroups([{name: "Core", tags: ["store", "users"]}]));
+        expect(names(sidebar)).toEqual(["pets", "Core", "audit", OBJECTS]);
+        expect(names(pagesOf(entry(sidebar, "Core")))).toEqual(["store", "users"]);
+    });
+
+    it("a listed name without a top-level entry adds nothing; a section without members is not emitted", () => {
+        const sidebar = groupedFor(withTagGroups([
+            {name: "Core", tags: ["pets", "reports", "billing"]},
+            {name: "Admin", tags: ["billing"]},
+        ]));
+        expect(names(sidebar)).toEqual(["Core", "store", "users", "audit", OBJECTS]);
+        expect(names(pagesOf(entry(sidebar, "Core")))).toEqual(["pets"]);
+        expect(names(pagesOf(entry(sidebar, OBJECTS)))).toEqual(["pets", "reports"]);
+    });
+
+    it("the first tag group listing a name wins; a repeated section name is skipped", () => {
+        const sidebar = groupedFor(withTagGroups([
+            {name: "Core", tags: ["pets", "store"]},
+            {name: "Admin", tags: ["store", "users"]},
+            {name: "Core", tags: ["audit"]},
+        ]));
+        expect(names(sidebar)).toEqual(["Core", "Admin", "audit", OBJECTS]);
+        expect(names(pagesOf(entry(sidebar, "Core")))).toEqual(["pets", "store"]);
+        expect(names(pagesOf(entry(sidebar, "Admin")))).toEqual(["users"]);
+    });
+
+    it("a section never shares a name (or a display name) with a top-level entry that keeps its place", () => {
+        expect(groupedFor(withTagGroups([{name: "audit", tags: ["pets", "store"]}]))).toEqual(base());
+        expect(groupedFor(withTagGroups([
+            {name: "pets", tags: ["store"]},
+            {name: "store", tags: ["users"]},
+        ]))).toEqual(base());
+
+        const intoItself = groupedFor(withTagGroups([{name: "pets", tags: ["pets", "store"]}]));
+        expect(names(intoItself)).toEqual(["pets", "users", "audit", OBJECTS]);
+        expect(names(pagesOf(intoItself[0]))).toEqual(["pets", "store"]);
+
+        const elsewhere = groupedFor(withTagGroups([
+            {name: "Core", tags: ["pets"]},
+            {name: "pets", tags: ["store"]},
+        ]));
+        expect(names(elsewhere)).toEqual(["Core", "pets", "users", "audit", OBJECTS]);
+        expect(names(pagesOf(elsewhere[0]))).toEqual(["pets"]);
+        expect(names(pagesOf(elsewhere[1]))).toEqual(["store"]);
+
+        // Named like the display name of an entry that keeps its place: the
+        // tag group is skipped, so the navigation is the relabelled baseline.
+        const labelledLike = groupedFor(petstoreDoc({pets: "Core"}, {[TAG_GROUPS_KEY]: [{name: "Core", tags: ["store"]}]}));
+        expect(names(labelledLike)).toEqual(["Core", "store", "users", "audit", OBJECTS]);
+        expect(pagesOf(labelledLike[0])).toEqual(pagesOf(base()[0]));
+        expect(labelledLike[1]).toEqual(base()[1]);
+        expect(labelledLike).toEqual(groupedFor(petstoreDoc({pets: "Core"})));
+    });
+
+    it("display names label the groups at any depth; sections, page entries and key order are untouched", () => {
+        const displayNames = {pets: "Pets", store: "Store", reports: "Reports"};
+        const doc = () => petstoreDoc(displayNames, {[TAG_GROUPS_KEY]: [{name: "Core", tags: ["pets", "store"]}]});
+        const before = sidebarFor(doc());
+        const sidebar = groupedFor(doc());
+        expect(names(sidebar)).toEqual(["Core", "users", "audit", OBJECTS]);
+        const core = entry(sidebar, "Core");
+        expect(names(pagesOf(core))).toEqual(["Pets", "Store"]);
+        expect(pagesOf(pagesOf(core)[0])).toEqual(pagesOf(entry(before, "pets")));
+        const objects = entry(sidebar, OBJECTS);
+        expect(Object.keys(objects)).toEqual(["group", "collapsed", "pages"]);
+        expect(names(pagesOf(objects))).toEqual(["Pets", "Reports"]);
+        expect(pagesOf(objects)[0]).toEqual(pagesOf(entry(before, OBJECTS))[0]);
+
+        // Display names alone: the same navigation, relabelled.
+        expect(names(groupedFor(petstoreDoc(displayNames)))).toEqual(["Pets", "Store", "users", "audit", OBJECTS]);
+
+        // A section named like a display-named tag keeps its own name.
+        const namedLikeATag = groupedFor(petstoreDoc(displayNames, {[TAG_GROUPS_KEY]: [{name: "pets", tags: ["pets"]}]}));
+        expect(namedLikeATag[0].group).toBe("pets");
+        expect(names(pagesOf(namedLikeATag[0]))).toEqual(["Pets"]);
+
+        // The first tag of a name decides, with or without a display name.
+        const repeated = petstoreDoc({pets: "Pets"});
+        repeated.tags.push({name: "pets", [DISPLAY_NAME_KEY]: "Animals"}, {name: "store", [DISPLAY_NAME_KEY]: "Shop"});
+        expect(names(groupedFor(repeated))).toEqual(["Pets", "store", "users", "audit", OBJECTS]);
+    });
+
+    it("the per-area layout: an area moves into its section whole, its objects sub-group with it", () => {
+        const options = {objectsLayout: "per-area"};
+        const doc = () => withTagGroups([{name: "Core", tags: ["pets", "reports"]}]);
+        const before = sidebarFor(doc(), options);
+        expect(names(pagesOf(entry(before, "pets")))).toEqual([OBJECTS]);
+        const sidebar = groupedFor(doc(), options);
+        expect(names(sidebar)).toEqual(
+            names(before).filter(n => n !== "reports").map(n => n === "pets" ? "Core" : n));
+        expect(pagesOf(entry(sidebar, "Core"))).toEqual([entry(before, "pets"), entry(before, "reports")]);
+        expect(flagsIn(sidebar)).toBe(0);
+    });
+
+    it("store mode: the page paths inside a moved, relabelled group are untouched", () => {
+        const sidebar = groupedFor(petstoreDoc({pets: "Pets"}, {[TAG_GROUPS_KEY]: [{name: "Core", tags: ["pets"]}]}), undefined, true);
+        const core = entry(sidebar, "Core");
+        expect(names(pagesOf(core))).toEqual(["Pets"]);
+        expect(pagesOf(pagesOf(core)[0])).toEqual(["docs/api/listPets"]);
+    });
+
+    it("malformed tag groups are skipped; a well-formed one beside them still applies", () => {
+        const sidebar = groupedFor(withTagGroups([
+            42,
+            {name: "Admin"},
+            {tags: ["users"]},
+            {name: "", tags: ["users"]},
+            {name: 7, tags: ["users"]},
+            {name: "Ops", tags: "audit"},
+            {name: "Core", tags: ["store", 7, "", null, "pets"]},
+        ]));
+        expect(names(sidebar)).toEqual(["Core", "users", "audit", OBJECTS]);
+        expect(names(pagesOf(entry(sidebar, "Core")))).toEqual(["store", "pets"]);
+    });
+
+    it("without a well-formed tag group or a non-empty string display name the pass changes nothing", () => {
+        expect(groupedFor(petstoreDoc())).toEqual(base());
+        const malformed = petstoreDoc({pets: ""}, {[TAG_GROUPS_KEY]: [42, {name: "Core"}, {tags: ["pets"]}]});
+        malformed.tags[1][DISPLAY_NAME_KEY] = 7;
+        expect(groupedFor(malformed)).toEqual(base());
+        expect(groupedFor(withTagGroups({name: "Core", tags: ["pets"]}))).toEqual(base());
+        // A sidebar without either extension comes back as it is.
+        const sidebar = base();
+        expect(groupByTagGroups(sidebar, petstoreDoc())).toBe(sidebar);
+    });
+
+    it("sidebar mode is the author's navigation: untouched", () => {
+        const doc = () => petstoreDoc({pets: "Pets"}, {
+            [TAG_GROUPS_KEY]: [{name: "Core", tags: ["pets", "store"]}],
+            "x-docs": {
+                sidebar: [
+                    {group: "pets", pages: [{type: "endpoint", key: "listPets"}]},
+                    {group: "store", pages: [{type: "endpoint", key: "getInventory"}]},
+                ],
+            },
+        });
+        const before = sidebarFor(doc());
+        expect(names(before)).toEqual(["pets", "store"]);
+        expect(groupedFor(doc())).toEqual(before);
+    });
+
+    it("the package entry exports the pass and its keys", () => {
+        expect(packageEntry.groupByTagGroups).toBe(groupByTagGroups);
+        expect(packageEntry.TAG_GROUPS_KEY).toBe("x-tagGroups");
+        expect(packageEntry.DISPLAY_NAME_KEY).toBe("x-displayName");
     });
 });

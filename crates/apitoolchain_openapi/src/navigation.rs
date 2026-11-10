@@ -168,10 +168,10 @@ struct TagGroup {
 ///   other entry keeps its place — no page is ever hidden; the objects group
 ///   is not a tag and stays where it is. A listed name without an entry adds
 ///   nothing, and a section without members is not emitted. A tag group named
-///   like a top-level group that keeps its place is skipped, so no two
-///   top-level groups share a name. A section is a plain group entry: no
-///   flag is added — the groups moved into it become nested groups, which a
-///   renderer folds on its own.
+///   like a top-level group that keeps its place (its name or its display
+///   name) is skipped, so no two top-level groups share a name. A section is
+///   a plain group entry: no flag is added — the groups moved into it become
+///   nested groups, which a renderer folds on its own.
 /// - **Labels.** Every generated group entry, at any depth, whose name is a
 ///   document tag's `name` takes that tag's `x-displayName` (the first tag of
 ///   a name wins) — the groups inside a section and the sub-groups of the
@@ -187,7 +187,7 @@ pub fn group_by_tag_groups(sidebar: &mut Vec<Value>, doc: &Value) {
     if tag_groups.is_empty() && display_names.is_empty() {
         return;
     }
-    let owners = section_owners(sidebar, &tag_groups);
+    let owners = section_owners(sidebar, &tag_groups, &display_names);
 
     // Each section's slot in `out` (taken by its first member) and its
     // members with their rank in the tag group's `tags`.
@@ -289,10 +289,15 @@ fn display_names_of(doc: &Value) -> HashMap<String, String> {
 
 /// Per top-level entry: the tag group it moves into and its rank in that tag
 /// group's `tags`, or `None` when it keeps its place. A tag group named like
-/// an entry that keeps its place is dropped — which can leave more entries in
-/// place (the ones it held), so the assignment repeats until nothing more is
-/// dropped (at most once per tag group).
-fn section_owners(sidebar: &[Value], tag_groups: &[TagGroup]) -> Vec<Option<(usize, usize)>> {
+/// an entry that keeps its place (its name or its display name — the label it
+/// takes afterwards) is dropped — which can leave more entries in place (the
+/// ones it held), so the assignment repeats until nothing more is dropped (at
+/// most once per tag group).
+fn section_owners(
+    sidebar: &[Value],
+    tag_groups: &[TagGroup],
+    display_names: &HashMap<String, String>,
+) -> Vec<Option<(usize, usize)>> {
     let names: Vec<Option<&str>> = sidebar
         .iter()
         .map(|entry| entry.get("group").and_then(|g| g.as_str()))
@@ -314,10 +319,12 @@ fn section_owners(sidebar: &[Value], tag_groups: &[TagGroup]) -> Vec<Option<(usi
             .collect();
         let mut dropped = false;
         for (i, group) in tag_groups.iter().enumerate() {
-            let collides = names
-                .iter()
-                .zip(&owners)
-                .any(|(name, owner)| owner.is_none() && *name == Some(group.name.as_str()));
+            let collides = names.iter().zip(&owners).any(|(name, owner)| {
+                owner.is_none()
+                    && name.is_some_and(|n| {
+                        n == group.name || display_names.get(n).is_some_and(|l| *l == group.name)
+                    })
+            });
             if active[i] && collides {
                 active[i] = false;
                 dropped = true;
@@ -784,9 +791,10 @@ mod tests {
     }
 
     /// No two top-level groups share a name: a tag group named like an entry
-    /// that keeps its place is skipped — and so, in turn, is one named like an
-    /// entry that the skipped one would have moved. A tag group named like an
-    /// entry that moves (into it, or into another section) is kept.
+    /// that keeps its place (its name or its display name) is skipped — and so,
+    /// in turn, is one named like an entry that the skipped one would have
+    /// moved. A tag group named like an entry that moves (into it, or into
+    /// another section) is kept.
     #[test]
     fn a_section_never_shares_a_name_with_an_entry_that_stays() {
         let base = sidebar_for(&petstore_doc(&[], json!({})), &Options::default(), false);
@@ -819,6 +827,25 @@ mod tests {
         );
         assert_eq!(names(pages(&sidebar[0])), vec!["pets"]);
         assert_eq!(names(pages(&sidebar[1])), vec!["store"]);
+
+        // Named like the display name of an entry that keeps its place: the
+        // tag group is skipped, so the navigation is the relabelled baseline.
+        let labelled_like = petstore_doc(
+            &[("pets", "Core")],
+            json!({ TAG_GROUPS_KEY: [{ "name": "Core", "tags": ["store"] }] }),
+        );
+        let sidebar = grouped_for(&labelled_like, &Options::default(), false);
+        assert_eq!(
+            names(&sidebar),
+            vec!["Core", "store", "users", "audit", DEFAULT_OBJECTS_GROUP]
+        );
+        assert_eq!(pages(&sidebar[0]), pages(&base[0]));
+        assert_eq!(sidebar[1], base[1]);
+        let labels_only = petstore_doc(&[("pets", "Core")], json!({}));
+        assert_eq!(
+            sidebar,
+            grouped_for(&labels_only, &Options::default(), false)
+        );
     }
 
     /// Display names label every generated group at any depth — the areas in

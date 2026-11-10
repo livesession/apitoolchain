@@ -21,13 +21,14 @@ flag.
   name, at any depth (a section's members, a group left in place, the area
   sub-groups of `Objects`). Unlike Redoc, a group no tag group lists keeps its
   place (no page is ever hidden), `Objects` stays last, a tag group named like
-  a group that keeps its place is skipped (no two top-level groups share a
-  name), and malformed entries are skipped. A section is a plain group entry;
-  no flag is added. References are untouched — canonicals, links, page paths
-  and `context.group` keep the raw tag names — and no option is needed: a
-  document without either extension, or with an `x-docs.sidebar`, gets the
-  same navigation as before (every existing golden is unchanged). It is the
-  navigation's second finishing pass, after the `Objects` group's `collapsed`
+  a top-level group that keeps its place (its name or its display name) is
+  skipped (no two top-level groups share a name), and malformed entries are
+  skipped. A section is a plain group entry; no flag is added. References
+  are untouched — canonicals, links, page paths and `context.group` keep the
+  raw tag names — and no option is needed: a document without either
+  extension, or with an `x-docs.sidebar`, gets the same navigation as before
+  (every existing golden is unchanged). It is the navigation's second
+  finishing pass, after the `Objects` group's `collapsed`
   flag: the Rust `navigation::group_by_tag_groups` (with
   `navigation::TAG_GROUPS_KEY` / `navigation::DISPLAY_NAME_KEY`), run by the
   fused endpoint, and the JS twin `groupByTagGroups(sidebar, doc)` (with

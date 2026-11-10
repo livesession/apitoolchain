@@ -1001,7 +1001,7 @@ describe("tag groups and display names (JS impl)", () => {
         expect(names(pagesOf(entry(sidebar, "Admin")))).toEqual(["users"]);
     });
 
-    it("a section never shares a name with a top-level entry that keeps its place", () => {
+    it("a section never shares a name (or a display name) with a top-level entry that keeps its place", () => {
         expect(groupedFor(withTagGroups([{name: "audit", tags: ["pets", "store"]}]))).toEqual(base());
         expect(groupedFor(withTagGroups([
             {name: "pets", tags: ["store"]},
@@ -1019,6 +1019,14 @@ describe("tag groups and display names (JS impl)", () => {
         expect(names(elsewhere)).toEqual(["Core", "pets", "users", "audit", OBJECTS]);
         expect(names(pagesOf(elsewhere[0]))).toEqual(["pets"]);
         expect(names(pagesOf(elsewhere[1]))).toEqual(["store"]);
+
+        // Named like the display name of an entry that keeps its place: the
+        // tag group is skipped, so the navigation is the relabelled baseline.
+        const labelledLike = groupedFor(petstoreDoc({pets: "Core"}, {[TAG_GROUPS_KEY]: [{name: "Core", tags: ["store"]}]}));
+        expect(names(labelledLike)).toEqual(["Core", "store", "users", "audit", OBJECTS]);
+        expect(pagesOf(labelledLike[0])).toEqual(pagesOf(base()[0]));
+        expect(labelledLike[1]).toEqual(base()[1]);
+        expect(labelledLike).toEqual(groupedFor(petstoreDoc({pets: "Core"})));
     });
 
     it("display names label the groups at any depth; sections, page entries and key order are untouched", () => {

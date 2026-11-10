@@ -47,10 +47,10 @@ type ExtensionSchema = OpenAPIV3.Document & {
  *    keeps its place — no page is ever hidden; the objects group is not a tag
  *    and stays where it is. A listed name without an entry adds nothing, and
  *    a section without members is not emitted. A tag group named like a
- *    top-level group that keeps its place is skipped, so no two top-level
- *    groups share a name. A section is a plain group entry: no flag is added —
- *    the groups moved into it become nested groups, which a renderer folds on
- *    its own.
+ *    top-level group that keeps its place (its name or its display name) is
+ *    skipped, so no two top-level groups share a name. A section is a plain
+ *    group entry: no flag is added — the groups moved into it become nested
+ *    groups, which a renderer folds on its own.
  *  - **Labels.** Every generated group entry, at any depth, whose name is a
  *    document tag's `name` takes that tag's `x-displayName` (the first tag of
  *    a name wins) — the groups inside a section and the sub-groups of the
@@ -69,7 +69,7 @@ export function groupByTagGroups<T extends NavigationGroupEntry>(
     if (!tagGroups.length && !displayNames.size) {
         return sidebar
     }
-    const owners = sectionOwners(sidebar, tagGroups)
+    const owners = sectionOwners(sidebar, tagGroups, displayNames)
 
     // Each section's slot in `out` (taken by its first member) and its
     // members with their rank in the tag group's `tags`.
@@ -152,12 +152,14 @@ function displayNamesOf(schema: ExtensionSchema): Map<string, string> {
 
 /** Per top-level entry: the tag group it moves into and its rank in that tag
  *  group's `tags`, or `null` when it keeps its place. A tag group named like
- *  an entry that keeps its place is dropped — which can leave more entries in
- *  place (the ones it held), so the assignment repeats until nothing more is
- *  dropped (at most once per tag group). */
+ *  an entry that keeps its place (its name or its display name — the label it
+ *  takes afterwards) is dropped — which can leave more entries in place (the
+ *  ones it held), so the assignment repeats until nothing more is dropped (at
+ *  most once per tag group). */
 function sectionOwners(
     sidebar: NavigationGroupEntry[],
-    tagGroups: TagGroup[]
+    tagGroups: TagGroup[],
+    displayNames: Map<string, string>
 ): ({ section: number, rank: number } | null)[] {
     const names = sidebar.map(entry => typeof entry?.group === "string" ? entry.group : null)
     const active = tagGroups.map(() => true)
@@ -179,7 +181,8 @@ function sectionOwners(
         })
         let dropped = false
         tagGroups.forEach((group, i) => {
-            const collides = names.some((name, j) => owners[j] === null && name === group.name)
+            const collides = names.some((name, j) => owners[j] === null && name !== null
+                && (name === group.name || displayNames.get(name) === group.name))
             if (active[i] && collides) {
                 active[i] = false
                 dropped = true

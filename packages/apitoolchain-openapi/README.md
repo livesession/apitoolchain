@@ -367,11 +367,11 @@ tag group lists **keeps its place** — no page is ever hidden — and the
 top-level group adds nothing, a tag group without members emits no section,
 and malformed entries are skipped (an entry needs a non-empty string `name` and
 a `tags` array; non-string names in `tags` are ignored; a repeated section name
-is skipped). A tag group named like a top-level group that keeps its place is
-skipped too, so no two top-level groups share a name. A section is a plain
-group entry — no flag is added: the groups inside it are nested groups, which
-a renderer that folds nested groups (xyd does, unless one holds the active
-page) shows folded.
+is skipped). A tag group named like a top-level group that keeps its place
+(its name or its display name) is skipped too, so no two top-level groups
+share a name. A section is a plain group entry — no flag is added: the groups
+inside it are nested groups, which a renderer that folds nested groups (xyd
+does, unless one holds the active page) shows folded.
 
 **Display names** (`x-displayName` on a tag). Every generated group whose
 name is a tag's `name` — at any depth: a section's members, a group left in

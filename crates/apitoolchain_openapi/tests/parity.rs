@@ -8,7 +8,8 @@
 //! Skip-list for the plain conversion: fixtures whose oracle embeds
 //! JS-closure plugin post-processing — -2.complex.openai (uniformOpenAIMeta)
 //! and the uniformPluginXDocsSidebar fixtures 5.xdocs.sidebar,
-//! 5.xdocs.objects, 11.objects-layouts and 12.page-paths. The x-docs ones
+//! 5.xdocs.objects, 11.objects-layouts, 12.page-paths and 13.tag-groups (whose
+//! extensions leave the references untouched). The x-docs ones
 //! run below THROUGH the ported plugin (`xdocs_case!`, the whole reference
 //! list against the oracle) and natively through tests/fused.rs (the
 //! sidebar and the page map).
@@ -159,3 +160,4 @@ xdocs_case!(
         ..Default::default()
     }
 );
+xdocs_case!(tag_groups, "13.tag-groups", Options::default());

@@ -96,6 +96,13 @@ const tests: {
             uniformPluginXDocsSidebar
         ],
         options: {operationPaths: "title"}
+    },
+    {
+        name: "13.tag-groups",
+        description: "tag groups (x-tagGroups) and display names (x-displayName): no reference changes, the groups stay the raw tag names",
+        plugins: [
+            uniformPluginXDocsSidebar
+        ]
     }
 ]
 

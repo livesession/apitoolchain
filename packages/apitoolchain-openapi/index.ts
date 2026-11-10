@@ -1,5 +1,5 @@
 export type {uniformOasOptions, SelectorMethod} from "./src/impl-js/types";
-export type {NavigationGroupEntry} from "./src";
+export type {NavigationGroupEntry, TagGroup} from "./src";
 
 export {
     deferencedOpenAPI,
@@ -14,6 +14,10 @@ export {
     uniformPluginXDocsSidebar,
 
     collapseObjectsGroup,
-    COLLAPSED_KEY
+    COLLAPSED_KEY,
+
+    groupByTagGroups,
+    TAG_GROUPS_KEY,
+    DISPLAY_NAME_KEY
 } from "./src";
 

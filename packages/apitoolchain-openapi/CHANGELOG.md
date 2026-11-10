@@ -5,12 +5,35 @@
 Both halves of the converter (the Rust core in `crates/apitoolchain_openapi`
 and the JS impl in `src/impl-js`) change together; the fixtures `9.schema-links`,
 `5.xdocs.objects` (the per-area objects layout), `11.objects-layouts` (the
-grouped default) and `12.page-paths` (explicit and title-derived page paths)
-pin the new output on both sides, and the fused goldens of every
-grouped-layout case pin the `collapsed` flag.
+grouped default), `12.page-paths` (explicit and title-derived page paths) and
+`13.tag-groups` (tag groups and display names) pin the new output on both
+sides, and the fused goldens of every grouped-layout case pin the `collapsed`
+flag.
 
 ### Added
 
+- **Tag groups and display names** (minor, additive). The generated
+  navigation honours two extensions other OpenAPI renderers already read:
+  the document's `x-tagGroups: [{ name, tags }]` groups the top-level groups
+  into sections — a section takes the place of its first member and lists its
+  members in the tag group's `tags` order, the first tag group listing a name
+  wins — and a tag's `x-displayName` labels every generated group of that
+  name, at any depth (a section's members, a group left in place, the area
+  sub-groups of `Objects`). Unlike Redoc, a group no tag group lists keeps its
+  place (no page is ever hidden), `Objects` stays last, a tag group named like
+  a group that keeps its place is skipped (no two top-level groups share a
+  name), and malformed entries are skipped. A section is a plain group entry;
+  no flag is added. References are untouched — canonicals, links, page paths
+  and `context.group` keep the raw tag names — and no option is needed: a
+  document without either extension, or with an `x-docs.sidebar`, gets the
+  same navigation as before (every existing golden is unchanged). It is the
+  navigation's second finishing pass, after the `Objects` group's `collapsed`
+  flag: the Rust `navigation::group_by_tag_groups` (with
+  `navigation::TAG_GROUPS_KEY` / `navigation::DISPLAY_NAME_KEY`), run by the
+  fused endpoint, and the JS twin `groupByTagGroups(sidebar, doc)` (with
+  `TAG_GROUPS_KEY` / `DISPLAY_NAME_KEY` and the `TagGroup` type), exported
+  from the package entry — a renderer running the JS passes chains it as
+  `groupByTagGroups(collapseObjectsGroup(…), doc)`.
 - **Explicit page paths — `x-docs.path`** on an operation or a component
   schema (read on the schema or on the first `allOf` member that carries it):
   the page's canonical becomes that path, relative and without a leading

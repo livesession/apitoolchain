@@ -1,0 +1,206 @@
+# Tag groups (`x-tagGroups`) and display names (`x-displayName`), outside
+# sidebar mode, under the default grouped objects layout. Neither changes a
+# reference — output.json is the plain conversion through the x-docs plugin,
+# the groups are the raw tag names there; both act on the generated navigation
+# only, after the objects group's `collapsed` flag, and the fused golden pins
+# it:
+# - the tags are declared `pets`, `audit`, `store`, `users`, `reports`, so the
+#   navigation lists the groups in that order before the finishing passes
+# - "Core" lists `store`, then `pets`: the section takes the place of `pets`
+#   (its first member in the navigation) and lists `store` first (the tag
+#   group's order)
+# - "Admin" lists `users`, `reports` and `billing`: `reports` has no
+#   operations (object pages only — a sub-group of "Objects", which stays
+#   there) and `billing` is not a group at all; neither adds anything, so the
+#   section holds `users` alone, at its place
+# - `audit` is in no tag group: it keeps its place, between the two sections
+# - every tag but `users` has a display name: the groups inside the sections,
+#   the one left in place and the sub-groups of "Objects" (`reports` included)
+#   are labelled with it; `users` keeps its name, and so do the sections
+# - "Objects" is not a tag: it stays last, the only collapsed entry
+openapi: 3.0.3
+info:
+  title: Petstore
+  version: 1.0.0
+servers:
+  - url: https://api.example.com/v1
+tags:
+  - name: pets
+    description: Everything about the pets.
+    x-displayName: Pets
+  - name: audit
+    description: The audit trail.
+    x-displayName: Audit log
+  - name: store
+    description: Orders and inventory.
+    x-displayName: Store
+  - name: users
+    description: Customer accounts.
+  - name: reports
+    description: Periodic reports.
+    x-displayName: Reports
+x-tagGroups:
+  - name: Core
+    tags: [store, pets]
+  - name: Admin
+    tags: [users, reports, billing]
+paths:
+  /pets:
+    get:
+      operationId: listPets
+      summary: List pets
+      tags: [pets]
+      responses:
+        '200':
+          description: The pets.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Pet'
+    post:
+      operationId: createPet
+      summary: Create pet
+      tags: [pets]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Pet'
+      responses:
+        '201':
+          description: The pet that was created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pet'
+  /audit:
+    get:
+      operationId: listAuditEvents
+      summary: List audit events
+      tags: [audit]
+      responses:
+        '200':
+          description: The audit events.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    at:
+                      type: string
+                      format: date-time
+                    action:
+                      type: string
+  /store/orders:
+    post:
+      operationId: placeOrder
+      summary: Place order
+      tags: [store]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Order'
+      responses:
+        '201':
+          description: The order that was placed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+  /store/inventory:
+    get:
+      operationId: getInventory
+      summary: Retrieve inventory
+      tags: [store]
+      responses:
+        '200':
+          description: The stock per pet status.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: integer
+  /users:
+    get:
+      operationId: listUsers
+      summary: List users
+      tags: [users]
+      responses:
+        '200':
+          description: The users.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+components:
+  schemas:
+    Money:
+      type: object
+      required: [amount, currency]
+      properties:
+        amount:
+          type: integer
+          description: The amount in the currency's smallest unit.
+        currency:
+          type: string
+          description: The three-letter currency code.
+    Pet:
+      x-docs:
+        name: The pet object
+        group: pets
+      type: object
+      required: [id, name]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        status:
+          type: string
+          enum: [available, pending, sold]
+    Order:
+      x-docs:
+        name: The order object
+        group: store
+      type: object
+      required: [id, petId]
+      properties:
+        id:
+          type: string
+        petId:
+          type: string
+        total:
+          $ref: '#/components/schemas/Money'
+    User:
+      x-docs:
+        name: The user object
+        group: users
+      type: object
+      required: [id]
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+    Report:
+      x-docs:
+        name: The report object
+        group: reports
+      type: object
+      required: [id]
+      properties:
+        id:
+          type: string
+        period:
+          type: string
+          description: The month the report covers, `YYYY-MM`.

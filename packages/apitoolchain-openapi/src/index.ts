@@ -32,6 +32,8 @@ export { uniformPluginXDocsSidebar } from "./impl-js/xdocs/pluginSidebar";
 export * from "./impl-js/xdocs/pagePaths";
 export { collapseObjectsGroup, COLLAPSED_KEY } from "./impl-js/xdocs/collapseObjectsGroup";
 export type { NavigationGroupEntry } from "./impl-js/xdocs/collapseObjectsGroup";
+export { groupByTagGroups, TAG_GROUPS_KEY, DISPLAY_NAME_KEY } from "./impl-js/xdocs/tagGroups";
+export type { TagGroup } from "./impl-js/xdocs/tagGroups";
 export { oapExamples } from "./impl-js/converters/oas-examples";
 export type { uniformOasOptions, ObjectsLayout, OperationPaths, SelectorMethod, OasJSONSchema } from "./impl-js/types";
 

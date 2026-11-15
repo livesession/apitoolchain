@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import { opencliToReferences } from './converters';
+// The TypeScript twin itself, not the package entry: the entry prefers the
+// native addon, and a published addon can predate what this file pins. The
+// Rust twin is pinned by the crate's own tests; both by the shared goldens.
+import { opencliToReferencesJs as opencliToReferences } from './converters';
 import type { OpencliSpecJson } from './types';
 
 const spec: OpencliSpecJson = {
@@ -27,12 +30,13 @@ describe('opencliToReferences', () => {
   it('emits one reference per (visible) command, including nested', () => {
     const refs = opencliToReferences(spec);
     const titles = refs.map((r) => r.title).sort();
-    // 'install' owns a subcommand → "install <command>"; 'internal' (hidden) excluded
-    expect(titles).toEqual(['install <command>', 'install dev', 'list']);
+    // 'install' owns a subcommand and also runs on its own (it has an argument
+    // and options) → "install [command]"; 'internal' (hidden) excluded
+    expect(titles).toEqual(['install [command]', 'install dev', 'list']);
   });
 
   it('builds Arguments/Options/Commands definitions with required + alias info', () => {
-    const install = opencliToReferences(spec).find((r) => r.title === 'install <command>')!;
+    const install = opencliToReferences(spec).find((r) => r.title === 'install [command]')!;
     expect(install.canonical).toBe('install');
     expect(install.description).toBe('Install one or more packages.');
 
@@ -93,7 +97,7 @@ describe('opencliToReferences', () => {
     // a leaf top-level command sits directly under "Commands"
     expect(groupOf('list')).toEqual(['Commands']);
     // a command that owns subcommands becomes a nested group named after itself...
-    expect(groupOf('install <command>')).toEqual(['Commands', 'install']);
+    expect(groupOf('install [command]')).toEqual(['Commands', 'install']);
     // ...and its subcommand sits inside that same group
     expect(groupOf('install dev')).toEqual(['Commands', 'install']);
   });
@@ -274,5 +278,194 @@ describe('opencliToReferences', () => {
 
   it('returns [] for null spec', () => {
     expect(opencliToReferences(null)).toEqual([]);
+  });
+
+  // The same five cases as the Rust twin's unit tests in
+  // crates/apitoolchain_opencli_uniform/src/lib.rs.
+  const titles = (refs: { title: string }[]) => refs.map((r) => r.title);
+  const definitionTitles = (ref: { definitions: { title: string }[] }) => ref.definitions.map((d) => d.title);
+  const sample = (ref: ReturnType<typeof opencliToReferences>[number]) =>
+    ref.examples.groups[0].examples[0].codeblock.tabs[0].code;
+
+  it('runs a group with options of its own without a subcommand: [command], no placeholder in its sample', () => {
+    const refs = opencliToReferences({
+      opencli: '1.0.0',
+      info: { title: 'demo', version: '1.0.0' },
+      commands: [
+        { name: 'chat', options: [{ name: 'fast' }], commands: [{ name: 'log' }] },
+        { name: 'remote', commands: [{ name: 'add' }] },
+      ],
+    });
+    expect(refs[0].title).toBe('chat [command]');
+    expect(refs[0].context.fullPath).toBe('demo chat [command] [options]');
+    expect(sample(refs[0])).toBe('demo chat');
+    expect(refs[2].title).toBe('remote <command>');
+    expect(refs[2].context.fullPath).toBe('demo remote <command>');
+    expect(sample(refs[2])).toBe('demo remote <command>');
+  });
+
+  it('gives the root a page only for what it documents itself, answering the CLI title as its region', () => {
+    const quiet: OpencliSpecJson = {
+      opencli: '1.0.0',
+      info: { title: 'demo', version: '1.0.0' },
+      options: [{ name: 'version' }, { name: 'verbose', recursive: true }],
+      exitCodes: [{ code: 0, description: 'ok' }],
+      commands: [{ name: 'build' }],
+    };
+    expect(titles(opencliToReferences(quiet))).toEqual(['build', 'Global options']);
+
+    const documented: OpencliSpecJson = { ...quiet, examples: ['demo build', ''] };
+    const refs = opencliToReferences(documented);
+    expect(titles(refs)).toEqual(['demo [command]', 'build', 'Global options']);
+    const root = refs[0];
+    expect(root.canonical).toBe('demo');
+    expect(root.context.path).toBe('demo');
+    expect(root.context.group).toEqual(['Commands']);
+    // its own option, not the global one; its exit codes; its examples
+    expect(definitionTitles(root)).toEqual(['Options', 'Commands', 'Exit codes']);
+    expect(root.definitions[0].properties[0].name).toBe('--version');
+    expect(root.examples.groups[1].examples[0].codeblock.tabs[0].code).toBe('demo build');
+
+    expect(titles(opencliToReferences(documented, { regions: ['demo'] }))).toEqual(['demo [command]']);
+  });
+
+  it('takes exit codes from the nearest non-empty list, and only entries with a numeric code', () => {
+    const refs = opencliToReferences({
+      opencli: '1.0.0',
+      info: { title: 'demo', version: '1.0.0' },
+      exitCodes: [{ code: 0, description: 'ok' }],
+      commands: [
+        {
+          name: 'db',
+          exitCodes: [{ code: '3' as unknown as number, description: 'a string' }, { code: 5 }],
+          commands: [{ name: 'dump', exitCodes: [] }],
+        },
+        { name: 'build' },
+      ],
+    });
+    const codes = (i: number) => refs[i].definitions[refs[i].definitions.length - 1].properties;
+    expect(codes(1)).toEqual([{ name: '5', type: 'integer', description: '' }]);
+    expect(codes(2)).toEqual([{ name: '0', type: 'integer', description: 'ok' }]);
+  });
+
+  it('skips shadowed, hidden and root options when inheriting', () => {
+    const refs = opencliToReferences({
+      opencli: '1.0.0',
+      info: { title: 'demo', version: '1.0.0' },
+      options: [{ name: 'profile', recursive: true }],
+      commands: [
+        {
+          name: 'db',
+          options: [
+            { name: 'host', recursive: true },
+            { name: 'port', recursive: true },
+            { name: 'trace', recursive: true, hidden: true },
+          ],
+          commands: [{ name: 'dump', options: [{ name: 'port', description: 'own' }] }],
+        },
+      ],
+    });
+    const dump = refs[1];
+    expect(definitionTitles(dump)).toEqual(['Options', 'Inherited options']);
+    expect(dump.definitions[1].properties).toEqual([{ name: '--host', type: 'boolean', description: '' }]);
+  });
+
+  /** The rows of the definition titled `title` on the page at `path`; undefined when absent. */
+  const rows = (refs: ReturnType<typeof opencliToReferences>, path: string, title: string) => {
+    const page = refs.find((r) => r.context.path === path);
+    if (!page) throw new Error(`no page ${path}`);
+    return page.definitions.find((d) => d.title === title)?.properties;
+  };
+
+  it('resolves an inherited name to its nearest declaration', () => {
+    const refs = opencliToReferences({
+      opencli: '1.0.0',
+      info: { title: 'demo', version: '1.0.0' },
+      commands: [
+        {
+          name: 'a',
+          options: [
+            { name: 'host', recursive: true, description: 'A host' },
+            { name: 'color', recursive: true, description: 'A color' },
+          ],
+          commands: [
+            {
+              name: 'b',
+              options: [
+                {
+                  name: 'host',
+                  recursive: true,
+                  description: 'B host',
+                  arguments: [{ name: 'url', required: true }],
+                },
+              ],
+              commands: [{ name: 'c' }],
+            },
+            { name: 'b2', options: [{ name: 'host', description: 'B2 host' }], commands: [{ name: 'c2' }] },
+            { name: 'b3', options: [{ name: 'host', recursive: true, hidden: true }], commands: [{ name: 'c3' }] },
+          ],
+        },
+      ],
+    });
+    const color = { name: '--color', type: 'boolean', description: 'A color' };
+    // Outermost first: a's --color, then b's own --host.
+    expect(rows(refs, 'a b c', 'Inherited options')).toEqual([
+      color,
+      { name: '--host', type: 'string', description: 'B host' },
+    ]);
+    // b2's plain --host shadows a's and is not passed on.
+    expect(rows(refs, 'a b2 c2', 'Inherited options')).toEqual([color]);
+    // b3's hidden --host shadows a's and stays hidden.
+    expect(rows(refs, 'a b3 c3', 'Inherited options')).toEqual([color]);
+    // The redeclaring commands list their own --host, not a's.
+    expect(rows(refs, 'a b2', 'Inherited options')).toEqual([color]);
+  });
+
+  it('leaves a redeclared name out of the per-command global options', () => {
+    const refs = opencliToReferences(
+      {
+        opencli: '1.0.0',
+        info: { title: 'demo', version: '1.0.0' },
+        arguments: [{ name: 'prompt' }],
+        options: [
+          { name: 'verbose', recursive: true, description: 'root verbose' },
+          { name: 'quiet', recursive: true, description: 'root quiet' },
+        ],
+        commands: [
+          {
+            name: 'a',
+            options: [{ name: 'verbose', recursive: true, description: 'a verbose' }],
+            commands: [{ name: 'b' }],
+          },
+          { name: 'p', options: [{ name: 'quiet', description: 'p quiet' }], commands: [{ name: 'q' }] },
+        ],
+      },
+      { globalOptionsPerCommand: true },
+    );
+    const quiet = { name: '--quiet', type: 'boolean', description: 'root quiet' };
+    const verbose = { name: '--verbose', type: 'boolean', description: 'root verbose' };
+    const aVerbose = { name: '--verbose', type: 'boolean', description: 'a verbose' };
+
+    expect(rows(refs, 'demo', 'Global options')).toEqual([verbose, quiet]);
+    expect(rows(refs, 'a', 'Options')).toEqual([aVerbose]);
+    expect(rows(refs, 'a', 'Global options')).toEqual([quiet]);
+    expect(rows(refs, 'a b', 'Inherited options')).toEqual([aVerbose]);
+    expect(rows(refs, 'a b', 'Global options')).toEqual([quiet]);
+    // p's plain --quiet ends the root's chain: q gets neither.
+    expect(rows(refs, 'p q', 'Inherited options')).toBeUndefined();
+    expect(rows(refs, 'p q', 'Global options')).toEqual([verbose]);
+  });
+
+  it('renders a passthrough like any command', () => {
+    const plain: OpencliSpecJson = {
+      opencli: '1.0.0',
+      info: { title: 'demo', version: '1.0.0' },
+      commands: [{ name: 'agent', arguments: [{ name: 'prompt' }], commands: [{ name: 'resume' }] }],
+    };
+    const passthrough: OpencliSpecJson = {
+      ...plain,
+      commands: [{ ...plain.commands![0], 'x-passthrough': { program: 'demo-agent' } }],
+    };
+    expect(opencliToReferences(passthrough)).toEqual(opencliToReferences(plain));
   });
 });

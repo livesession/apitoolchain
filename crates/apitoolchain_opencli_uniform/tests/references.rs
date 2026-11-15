@@ -1,7 +1,9 @@
 //! Golden gate for the OpenCLI → Uniform converter.
 //!
-//! The oracle is `packages/opencli/__fixtures__/references/<case>/`, frozen
-//! from the TypeScript `opencliToReferences` (commit 3ad88386):
+//! The oracle is `packages/apitoolchain-opencli/__fixtures__/references/<case>/`,
+//! written by the TypeScript twin (`opencliToReferencesJs`; cases 1–7 frozen at
+//! commit 3ad88386, 8–9 added with the exit codes / examples / session /
+//! environment / inherited options sections):
 //!
 //! ```text
 //! input.json                   an OpenCLI document
@@ -169,7 +171,7 @@ fn fixture_cases_are_discovered() {
             case.display()
         );
     }
-    assert_eq!(cases.len(), 17, "expected the 17 committed fixture cases");
+    assert_eq!(cases.len(), 19, "expected the 19 committed fixture cases");
 }
 
 #[test]

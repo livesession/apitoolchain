@@ -1,0 +1,7 @@
+{
+  "description": "Where opencli-extensions.schema.json comes from. It is vendored byte for byte; re-vendor it from that path at a newer commit and update both fields, never edit it here.",
+  "from": "opensdk",
+  "path": "crates/opencli_model/schema/opencli-extensions.schema.json",
+  "commit": "86eeab4807a0d8700dabc9ec04dc9088e0a11eae",
+  "sha256": "faf109c71dc47abe33bcc614bb2511b805b8aa424de8b69aa8953113d811cd10"
+}

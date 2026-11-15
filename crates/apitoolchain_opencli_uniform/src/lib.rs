@@ -1126,6 +1126,170 @@ mod tests {
         );
     }
 
+    fn titles(refs: &[Value]) -> Vec<&str> {
+        refs.iter().map(|r| r["title"].as_str().unwrap()).collect()
+    }
+
+    fn definition_titles(reference: &Value) -> Vec<&str> {
+        reference["definitions"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|d| d["title"].as_str().unwrap())
+            .collect()
+    }
+
+    /// A group with an option of its own runs on its own: `[command]` in the
+    /// title and usage, no placeholder in its sample. One without keeps
+    /// `<command>` everywhere.
+    #[test]
+    fn a_group_with_options_of_its_own_runs_without_a_subcommand() {
+        let spec = json!({
+            "info": { "title": "demo" },
+            "commands": [
+                { "name": "chat", "options": [{ "name": "fast" }], "commands": [{ "name": "log" }] },
+                { "name": "remote", "commands": [{ "name": "add" }] },
+            ],
+        });
+        let refs = opencli_to_references(&spec, &OpencliToReferencesOptions::default());
+        let sample = |r: &Value| {
+            r["examples"]["groups"][0]["examples"][0]["codeblock"]["tabs"][0]["code"].clone()
+        };
+        assert_eq!(refs[0]["title"], json!("chat [command]"));
+        assert_eq!(
+            refs[0]["context"]["fullPath"],
+            json!("demo chat [command] [options]")
+        );
+        assert_eq!(sample(&refs[0]), json!("demo chat"));
+        assert_eq!(refs[2]["title"], json!("remote <command>"));
+        assert_eq!(
+            refs[2]["context"]["fullPath"],
+            json!("demo remote <command>")
+        );
+        assert_eq!(sample(&refs[2]), json!("demo remote <command>"));
+    }
+
+    /// Options or exit codes alone give the root no page; examples do, ahead of
+    /// the commands, answering the CLI's title as its region.
+    #[test]
+    fn the_root_gets_a_page_only_for_what_it_documents_itself() {
+        let quiet = json!({
+            "info": { "title": "demo" },
+            "options": [{ "name": "version" }, { "name": "verbose", "recursive": true }],
+            "exitCodes": [{ "code": 0, "description": "ok" }],
+            "commands": [{ "name": "build" }],
+        });
+        let refs = opencli_to_references(&quiet, &OpencliToReferencesOptions::default());
+        assert_eq!(titles(&refs), vec!["build", "Global options"]);
+
+        let mut documented = quiet.clone();
+        documented["examples"] = json!(["demo build", ""]);
+        let refs = opencli_to_references(&documented, &OpencliToReferencesOptions::default());
+        assert_eq!(
+            titles(&refs),
+            vec!["demo [command]", "build", "Global options"]
+        );
+        let root = &refs[0];
+        assert_eq!(root["canonical"], json!("demo"));
+        assert_eq!(root["context"]["path"], json!("demo"));
+        assert_eq!(root["context"]["group"], json!(["Commands"]));
+        // its own option, not the global one; its exit codes; its examples
+        assert_eq!(
+            definition_titles(root),
+            vec!["Options", "Commands", "Exit codes"]
+        );
+        assert_eq!(
+            root["definitions"][0]["properties"][0]["name"],
+            json!("--version")
+        );
+        assert_eq!(
+            root["examples"]["groups"][1]["examples"][0]["codeblock"]["tabs"][0]["code"],
+            json!("demo build")
+        );
+
+        let only_root = opencli_to_references(
+            &documented,
+            &OpencliToReferencesOptions {
+                regions: Some(vec!["demo".into()]),
+                global_options_per_command: false,
+            },
+        );
+        assert_eq!(titles(&only_root), vec!["demo [command]"]);
+    }
+
+    /// The nearest non-empty list wins, and an entry without a numeric code is
+    /// not a row.
+    #[test]
+    fn exit_codes_come_from_the_nearest_list_and_need_a_numeric_code() {
+        let spec = json!({
+            "info": { "title": "demo" },
+            "exitCodes": [{ "code": 0, "description": "ok" }],
+            "commands": [{
+                "name": "db",
+                "exitCodes": [{ "code": "3", "description": "a string" }, { "code": 5 }],
+                "commands": [{ "name": "dump", "exitCodes": [] }],
+            }, { "name": "build" }],
+        });
+        let refs = opencli_to_references(&spec, &OpencliToReferencesOptions::default());
+        let codes =
+            |r: &Value| r["definitions"].as_array().unwrap().last().unwrap()["properties"].clone();
+        assert_eq!(
+            codes(&refs[1]),
+            json!([{ "name": "5", "type": "integer", "description": "" }])
+        );
+        assert_eq!(
+            codes(&refs[2]),
+            json!([{ "name": "0", "type": "integer", "description": "ok" }])
+        );
+    }
+
+    /// A command's own option shadows an inherited one of the same name; a
+    /// hidden recursive option is not inherited; the root's are global options.
+    #[test]
+    fn inherited_options_skip_shadowed_hidden_and_root_options() {
+        let spec = json!({
+            "info": { "title": "demo" },
+            "options": [{ "name": "profile", "recursive": true }],
+            "commands": [{
+                "name": "db",
+                "options": [
+                    { "name": "host", "recursive": true },
+                    { "name": "port", "recursive": true },
+                    { "name": "trace", "recursive": true, "hidden": true },
+                ],
+                "commands": [{ "name": "dump", "options": [{ "name": "port", "description": "own" }] }],
+            }],
+        });
+        let refs = opencli_to_references(&spec, &OpencliToReferencesOptions::default());
+        let dump = &refs[1];
+        assert_eq!(
+            definition_titles(dump),
+            vec!["Options", "Inherited options"]
+        );
+        assert_eq!(
+            dump["definitions"][1]["properties"],
+            json!([
+                { "name": "--host", "type": "boolean", "description": "" },
+            ])
+        );
+    }
+
+    /// `x-passthrough` documents a handover, not a different page.
+    #[test]
+    fn a_passthrough_renders_like_any_command() {
+        let plain = json!({
+            "info": { "title": "demo" },
+            "commands": [{ "name": "agent", "arguments": [{ "name": "prompt" }], "commands": [{ "name": "resume" }] }],
+        });
+        let mut passthrough = plain.clone();
+        passthrough["commands"][0]["x-passthrough"] = json!({ "program": "demo-agent" });
+        let opts = OpencliToReferencesOptions::default();
+        assert_eq!(
+            opencli_to_references(&passthrough, &opts),
+            opencli_to_references(&plain, &opts)
+        );
+    }
+
     #[test]
     fn regions_filter_is_exact_match_on_the_space_joined_path() {
         let spec = json!({

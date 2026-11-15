@@ -1,0 +1,614 @@
+[
+  {
+    "title": "acme-agent [command]",
+    "canonical": "acme-agent",
+    "description": "Ask questions in a terminal UI, or once with -p.",
+    "category": "cli",
+    "context": {
+      "path": "acme-agent",
+      "fullPath": "acme-agent [command] [options] [prompt]",
+      "group": [
+        "Commands"
+      ]
+    },
+    "examples": {
+      "groups": [
+        {
+          "examples": [
+            {
+              "codeblock": {
+                "tabs": [
+                  {
+                    "title": "CLI Tool",
+                    "language": "shell",
+                    "code": "acme-agent"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "description": "Examples",
+          "examples": [
+            {
+              "codeblock": {
+                "tabs": [
+                  {
+                    "title": "CLI Tool",
+                    "language": "shell",
+                    "code": "acme agent\nacme agent \"Which pages are the slowest?\"\nacme agent -p \"How many orders came in today?\""
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "definitions": [
+      {
+        "title": "Arguments",
+        "properties": [
+          {
+            "name": "prompt",
+            "type": "string",
+            "description": "A question to ask right away."
+          }
+        ]
+      },
+      {
+        "title": "Options",
+        "properties": [
+          {
+            "name": "--print",
+            "type": "boolean",
+            "description": "Answer once and exit, without the UI. (alias: -p)"
+          },
+          {
+            "name": "--resume",
+            "type": "string",
+            "description": "Continue a conversation."
+          }
+        ]
+      },
+      {
+        "title": "Commands",
+        "properties": [
+          {
+            "name": "resume",
+            "type": "command",
+            "description": "Continue a conversation in the UI."
+          },
+          {
+            "name": "history",
+            "type": "command",
+            "description": "Past conversations."
+          }
+        ]
+      },
+      {
+        "title": "Global options",
+        "properties": [
+          {
+            "name": "--model",
+            "type": "string",
+            "description": "The model to answer with. (alias: -m)"
+          },
+          {
+            "name": "--profile",
+            "type": "string",
+            "description": "The profile to use."
+          }
+        ]
+      },
+      {
+        "title": "Interactive commands",
+        "properties": [
+          {
+            "name": "new",
+            "type": "command",
+            "description": "Start a new conversation. (alias: clear)"
+          },
+          {
+            "name": "model",
+            "type": "command",
+            "description": "Switch the model.",
+            "properties": [
+              {
+                "name": "name",
+                "type": "string",
+                "description": "The model; a picker when left out."
+              }
+            ]
+          },
+          {
+            "name": "export",
+            "type": "command",
+            "description": "Write the conversation to a file.",
+            "properties": [
+              {
+                "name": "path",
+                "type": "string",
+                "description": "Where to write it.",
+                "meta": [
+                  {
+                    "name": "required",
+                    "value": "true"
+                  }
+                ]
+              },
+              {
+                "name": "--format",
+                "type": "string",
+                "description": "The file format."
+              }
+            ]
+          },
+          {
+            "name": "memory",
+            "type": "command",
+            "description": "What the agent remembers.",
+            "properties": [
+              {
+                "name": "forget",
+                "type": "command",
+                "description": "Forget one memory.",
+                "properties": [
+                  {
+                    "name": "id",
+                    "type": "string",
+                    "description": "",
+                    "meta": [
+                      {
+                        "name": "required",
+                        "value": "true"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "exit",
+            "type": "command",
+            "description": "Leave the session. (alias: quit, q)"
+          }
+        ]
+      },
+      {
+        "title": "Keys",
+        "properties": [
+          {
+            "name": "enter",
+            "type": "key",
+            "description": "Send the question. (context: composer)"
+          },
+          {
+            "name": "shift+enter, ctrl+j",
+            "type": "key",
+            "description": "Start a new line. (context: composer)"
+          },
+          {
+            "name": "esc",
+            "type": "key",
+            "description": "Close the picker. (context: picker)"
+          },
+          {
+            "name": "ctrl+c",
+            "type": "key",
+            "description": "Interrupt the answer; press again to quit."
+          }
+        ]
+      },
+      {
+        "title": "Environment",
+        "properties": [
+          {
+            "name": "ACME_AGENT_COLOR",
+            "type": "string",
+            "description": "The colours the UI draws with.",
+            "meta": [
+              {
+                "name": "examples",
+                "value": [
+                  "truecolor",
+                  "256",
+                  "16",
+                  "none"
+                ]
+              }
+            ]
+          },
+          {
+            "name": "ACME_AGENT_HOME",
+            "type": "string",
+            "description": "Where conversations are kept."
+          }
+        ]
+      },
+      {
+        "title": "Exit codes",
+        "properties": [
+          {
+            "name": "0",
+            "type": "integer",
+            "description": "Success."
+          },
+          {
+            "name": "1",
+            "type": "integer",
+            "description": "The answer failed."
+          },
+          {
+            "name": "2",
+            "type": "integer",
+            "description": "A usage error."
+          },
+          {
+            "name": "130",
+            "type": "integer",
+            "description": "Interrupted."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "title": "resume",
+    "canonical": "resume",
+    "description": "Continue a conversation in the UI.",
+    "category": "cli",
+    "context": {
+      "path": "resume",
+      "fullPath": "acme-agent resume [id]",
+      "group": [
+        "Commands"
+      ]
+    },
+    "examples": {
+      "groups": [
+        {
+          "examples": [
+            {
+              "codeblock": {
+                "tabs": [
+                  {
+                    "title": "CLI Tool",
+                    "language": "shell",
+                    "code": "acme-agent resume"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "description": "Examples",
+          "examples": [
+            {
+              "codeblock": {
+                "tabs": [
+                  {
+                    "title": "CLI Tool",
+                    "language": "shell",
+                    "code": "acme agent resume\nacme agent resume 42"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "definitions": [
+      {
+        "title": "Arguments",
+        "properties": [
+          {
+            "name": "id",
+            "type": "string",
+            "description": "The conversation; the latest one when left out."
+          }
+        ]
+      },
+      {
+        "title": "Global options",
+        "properties": [
+          {
+            "name": "--model",
+            "type": "string",
+            "description": "The model to answer with. (alias: -m)"
+          },
+          {
+            "name": "--profile",
+            "type": "string",
+            "description": "The profile to use."
+          }
+        ]
+      },
+      {
+        "title": "Exit codes",
+        "properties": [
+          {
+            "name": "0",
+            "type": "integer",
+            "description": "Success."
+          },
+          {
+            "name": "1",
+            "type": "integer",
+            "description": "The answer failed."
+          },
+          {
+            "name": "2",
+            "type": "integer",
+            "description": "A usage error."
+          },
+          {
+            "name": "130",
+            "type": "integer",
+            "description": "Interrupted."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "title": "history <command>",
+    "canonical": "history",
+    "description": "Past conversations.",
+    "category": "cli",
+    "context": {
+      "path": "history",
+      "fullPath": "acme-agent history <command>",
+      "group": [
+        "Commands",
+        "history"
+      ]
+    },
+    "examples": {
+      "groups": [
+        {
+          "examples": [
+            {
+              "codeblock": {
+                "tabs": [
+                  {
+                    "title": "CLI Tool",
+                    "language": "shell",
+                    "code": "acme-agent history <command>"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "definitions": [
+      {
+        "title": "Commands",
+        "properties": [
+          {
+            "name": "list",
+            "type": "command",
+            "description": "List past conversations."
+          },
+          {
+            "name": "show",
+            "type": "command",
+            "description": "Print one conversation."
+          }
+        ]
+      },
+      {
+        "title": "Global options",
+        "properties": [
+          {
+            "name": "--model",
+            "type": "string",
+            "description": "The model to answer with. (alias: -m)"
+          },
+          {
+            "name": "--profile",
+            "type": "string",
+            "description": "The profile to use."
+          }
+        ]
+      },
+      {
+        "title": "Exit codes",
+        "properties": [
+          {
+            "name": "0",
+            "type": "integer",
+            "description": "Success."
+          },
+          {
+            "name": "1",
+            "type": "integer",
+            "description": "The answer failed."
+          },
+          {
+            "name": "2",
+            "type": "integer",
+            "description": "A usage error."
+          },
+          {
+            "name": "130",
+            "type": "integer",
+            "description": "Interrupted."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "title": "history list",
+    "canonical": "history/list",
+    "description": "List past conversations.",
+    "category": "cli",
+    "context": {
+      "path": "history list",
+      "fullPath": "acme-agent history list [options]",
+      "group": [
+        "Commands",
+        "history"
+      ]
+    },
+    "examples": {
+      "groups": [
+        {
+          "examples": [
+            {
+              "codeblock": {
+                "tabs": [
+                  {
+                    "title": "CLI Tool",
+                    "language": "shell",
+                    "code": "acme-agent history list"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "definitions": [
+      {
+        "title": "Options",
+        "properties": [
+          {
+            "name": "--limit",
+            "type": "string",
+            "description": "How many to show."
+          }
+        ]
+      },
+      {
+        "title": "Global options",
+        "properties": [
+          {
+            "name": "--model",
+            "type": "string",
+            "description": "The model to answer with. (alias: -m)"
+          },
+          {
+            "name": "--profile",
+            "type": "string",
+            "description": "The profile to use."
+          }
+        ]
+      },
+      {
+        "title": "Exit codes",
+        "properties": [
+          {
+            "name": "0",
+            "type": "integer",
+            "description": "Success."
+          },
+          {
+            "name": "1",
+            "type": "integer",
+            "description": "The answer failed."
+          },
+          {
+            "name": "2",
+            "type": "integer",
+            "description": "A usage error."
+          },
+          {
+            "name": "130",
+            "type": "integer",
+            "description": "Interrupted."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "title": "history show",
+    "canonical": "history/show",
+    "description": "Print one conversation.",
+    "category": "cli",
+    "context": {
+      "path": "history show",
+      "fullPath": "acme-agent history show <id>",
+      "group": [
+        "Commands",
+        "history"
+      ]
+    },
+    "examples": {
+      "groups": [
+        {
+          "examples": [
+            {
+              "codeblock": {
+                "tabs": [
+                  {
+                    "title": "CLI Tool",
+                    "language": "shell",
+                    "code": "acme-agent history show 'Example data'"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "definitions": [
+      {
+        "title": "Arguments",
+        "properties": [
+          {
+            "name": "id",
+            "type": "string",
+            "description": "The conversation.",
+            "meta": [
+              {
+                "name": "required",
+                "value": "true"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "title": "Global options",
+        "properties": [
+          {
+            "name": "--model",
+            "type": "string",
+            "description": "The model to answer with. (alias: -m)"
+          },
+          {
+            "name": "--profile",
+            "type": "string",
+            "description": "The profile to use."
+          }
+        ]
+      },
+      {
+        "title": "Exit codes",
+        "properties": [
+          {
+            "name": "0",
+            "type": "integer",
+            "description": "Printed."
+          },
+          {
+            "name": "4",
+            "type": "integer",
+            "description": "No such conversation."
+          }
+        ]
+      }
+    ]
+  }
+]

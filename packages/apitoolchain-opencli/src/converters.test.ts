@@ -329,6 +329,35 @@ describe('opencliToReferences', () => {
     expect(titles(opencliToReferences(documented, { regions: ['demo'] }))).toEqual(['demo [command]']);
   });
 
+  it("answers the root page by a URL path segment of the CLI's title, titled with the title itself", () => {
+    const titled = (title: string): OpencliSpecJson => ({
+      opencli: '1.0.0',
+      info: { title, version: '1.0.0' },
+      arguments: [{ name: 'prompt' }],
+      commands: [{ name: 'build' }],
+    });
+    const root = (title: string) => opencliToReferences(titled(title))[0];
+
+    const spaced = root('Acme Agent');
+    expect(spaced.canonical).toBe('acme-agent');
+    expect(spaced.context.path).toBe('acme-agent');
+    expect(spaced.title).toBe('Acme Agent [command]');
+    expect(spaced.context.fullPath).toBe('Acme Agent [command] [prompt]');
+
+    expect(root('@acme/agent').canonical).toBe('acme-agent');
+    expect(root('My_CLI v2.0').canonical).toBe('my_cli-v2-0');
+    expect(root('acme--agent').canonical).toBe('acme--agent');
+    expect(root('Ünï 工具 ✓').canonical).toBe('n');
+    expect(root('工具').canonical).toBe('cli');
+    expect(root('').canonical).toBe('cli');
+
+    // the id is the region; the raw title names no page
+    expect(titles(opencliToReferences(titled('Acme Agent'), { regions: ['acme-agent'] }))).toEqual([
+      'Acme Agent [command]',
+    ]);
+    expect(opencliToReferences(titled('Acme Agent'), { regions: ['Acme Agent'] })).toEqual([]);
+  });
+
   it('takes exit codes from the nearest non-empty list, and only entries with a numeric code', () => {
     const refs = opencliToReferences({
       opencli: '1.0.0',

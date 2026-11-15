@@ -100,7 +100,11 @@ export function opencliToReferences(
  * subcommands (definition order: Arguments, Options, Inherited options,
  * Commands, Global options, Interactive commands, Keys, Environment, Exit codes):
  * - "Inherited options": the recursive options of its ancestor COMMANDS,
- *   outermost first. The root's are the global options, not these.
+ *   outermost first. A name resolves to its nearest declaration (the
+ *   command's own, else the nearest ancestor's, recursive or not), and only a
+ *   recursive, visible one is inherited. The root's are the global options,
+ *   not these; per command, a global option a nearer declaration shadows is
+ *   left out.
  * - "Interactive commands" and "Keys", from `x-interactive`: the commands typed
  *   inside the session the command opens (each with its arguments and options
  *   as nested rows; never a page of their own) and its key bindings.
@@ -231,7 +235,7 @@ function pageReference(page: Page, cliTitle: string, globalOptions: Option[] = [
     subs.map((s) => ({ name: s.name, type: 'command', description: str(s.description) })),
   );
   // Global flags (root-level recursive options) available on every command.
-  pushDefinition(definitions, 'Global options', globalOptions.map(optionToProperty));
+  pushDefinition(definitions, 'Global options', pageGlobalOptions(page, globalOptions).map(optionToProperty));
   pushDefinition(definitions, 'Interactive commands', visible(session?.commands).map(interactiveCommandProperty));
   pushDefinition(definitions, 'Keys', visible(session?.keys).map(keyProperty));
   pushDefinition(definitions, 'Environment', visible(cmd['x-environment'] as EnvVar[] | undefined).map(environmentProperty));
@@ -304,23 +308,46 @@ function pushDefinition(definitions: OpencliRefDefinition[], title: string, prop
 }
 
 /**
- * The recursive, visible options of a command's ancestor commands, outermost
- * first. A name the command declares itself, or an outer ancestor already
- * gave, is skipped.
+ * The options a command inherits from its ancestor commands, outermost first.
+ *
+ * Each name resolves to its nearest declaration, the way a CLI library
+ * propagates a recursive option: the command's own, else the nearest ancestor
+ * that declares the name, recursive or not. Only a recursive, visible nearest
+ * declaration is inherited; a plain one ends the chain, and a redeclaration
+ * hides the outer one. The root's are the global options, not these.
  */
 function inheritedOptions(cmd: Command | OpencliSpecJson, ancestors: Command[]): Option[] {
-  const seen = new Set(arr<Option>(cmd.options).map((o) => str(o?.name)));
-  const out: Option[] = [];
-  for (const ancestor of ancestors) {
+  const taken = new Set(optionNames(cmd));
+  const nearestFirst: Option[][] = [];
+  for (const ancestor of [...ancestors].reverse()) {
+    const here: Option[] = [];
     for (const opt of arr<Option>(ancestor.options)) {
-      if (!opt?.recursive || opt.hidden) continue;
-      const name = str(opt.name);
-      if (seen.has(name)) continue;
-      seen.add(name);
-      out.push(opt);
+      const name = str(opt?.name);
+      if (taken.has(name)) continue;
+      taken.add(name);
+      if (opt?.recursive && !opt.hidden) here.push(opt);
     }
+    nearestFirst.push(here);
   }
-  return out;
+  return nearestFirst.reverse().flat();
+}
+
+/**
+ * The global options one page lists with `globalOptionsPerCommand`: the
+ * root's, less every name the command or one of its ancestor commands
+ * declares. That nearer declaration is the one the command gets (listed under
+ * Options or Inherited options), or, when it is not recursive, the end of the
+ * chain. The root's own page lists them all.
+ */
+function pageGlobalOptions(page: Page, globalOptions: Option[]): Option[] {
+  if (page.isRoot) return globalOptions;
+  const taken = new Set([page.cmd, ...page.ancestors].flatMap(optionNames));
+  return globalOptions.filter((o) => !taken.has(str(o?.name)));
+}
+
+/** The names of every option a command declares, hidden ones included. */
+function optionNames(cmd: Command | OpencliSpecJson): string[] {
+  return arr<Option>(cmd.options).map((o) => str(o?.name));
 }
 
 /** The exit codes a page shows: the command's own, else its nearest ancestor's, the root's last. */

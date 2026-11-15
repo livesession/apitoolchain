@@ -40,9 +40,9 @@ only when it has rows:
 | Section | From |
 |---|---|
 | Arguments, Options | the command's own |
-| Inherited options | the recursive options of its ancestor commands (the root's are the global options) |
+| Inherited options | the recursive options of its ancestor commands, each name resolved to its nearest declaration (recursive or not, so a plain redeclaration ends the chain); the root's are the global options |
 | Commands | its subcommands |
-| Global options | the root's recursive options, with `globalOptionsPerCommand` (else one "Global options" page) |
+| Global options | the root's recursive options, with `globalOptionsPerCommand` (else one "Global options" page), less any name the command or an ancestor command redeclares |
 | Interactive commands, Keys | `x-interactive`: session commands as rows with their arguments and options nested (never a page of their own), key bindings with their context |
 | Environment | `x-environment`, accepted values as an `examples` meta |
 | Exit codes | the command's own `exitCodes`, else its nearest ancestor's, the root's last |

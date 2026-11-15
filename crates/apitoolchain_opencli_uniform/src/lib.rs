@@ -25,7 +25,11 @@
 //! What a page carries beyond a command's own arguments, options and
 //! subcommands:
 //! - "Inherited options": the recursive options of its ancestor COMMANDS,
-//!   outermost first. The root's are the global options above, not these.
+//!   outermost first. A name resolves to its nearest declaration (the
+//!   command's own, else the nearest ancestor's, recursive or not), and only
+//!   a recursive, visible one is inherited. The root's are the global options
+//!   above, not these; per command, a global option a nearer declaration
+//!   shadows is left out.
 //! - "Interactive commands" and "Keys", from `x-interactive`: the commands typed
 //!   inside the session the command opens (each with its arguments and options
 //!   as nested rows; they never get a page of their own) and its key bindings.
@@ -273,7 +277,7 @@ fn page_reference(page: &Page, cli_title: &str, global_options: &[&Value]) -> Va
     push_definition(
         &mut definitions,
         "Global options",
-        global_options
+        page_global_options(page, global_options)
             .iter()
             .map(|o| option_to_property(o))
             .collect(),
@@ -428,29 +432,59 @@ fn subcommand_property(s: &Value) -> Value {
     Value::Object(p)
 }
 
-/// The recursive, visible options of a command's ancestor commands, outermost
-/// first. A name the command declares itself, or an outer ancestor already
-/// gave, is skipped.
+/// The options a command inherits from its ancestor commands, outermost first.
+///
+/// Each name resolves to its nearest declaration, the way a CLI library
+/// propagates a recursive option: the command's own, else the nearest
+/// ancestor that declares the name, recursive or not. Only a recursive,
+/// visible nearest declaration is inherited; a plain one ends the chain, and a
+/// redeclaration hides the outer one. The root's are the global options, not
+/// these.
 fn inherited_options<'a>(cmd: &'a Value, ancestors: &[&'a Value]) -> Vec<&'a Value> {
-    let mut seen: Vec<&str> = array(cmd.get("options"))
+    let mut taken: Vec<&str> = option_names(cmd).collect();
+    let mut nearest_first: Vec<Vec<&Value>> = Vec::new();
+    for ancestor in ancestors.iter().rev() {
+        let mut here: Vec<&Value> = Vec::new();
+        for opt in array(ancestor.get("options")) {
+            let name = str_or_empty(opt.get("name"));
+            if taken.contains(&name) {
+                continue;
+            }
+            taken.push(name);
+            if truthy(opt.get("recursive")) && !truthy(opt.get("hidden")) {
+                here.push(opt);
+            }
+        }
+        nearest_first.push(here);
+    }
+    nearest_first.into_iter().rev().flatten().collect()
+}
+
+/// The global options one page lists with `global_options_per_command`: the
+/// root's, less every name the command or one of its ancestor commands
+/// declares. That nearer declaration is the one the command gets (listed
+/// under Options or Inherited options), or, when it is not recursive, the end
+/// of the chain. The root's own page lists them all.
+fn page_global_options<'g>(page: &Page, global_options: &[&'g Value]) -> Vec<&'g Value> {
+    if page.is_root {
+        return global_options.to_vec();
+    }
+    let taken: Vec<&str> = std::iter::once(page.cmd)
+        .chain(page.ancestors.iter().copied())
+        .flat_map(option_names)
+        .collect();
+    global_options
+        .iter()
+        .copied()
+        .filter(|o| !taken.contains(&str_or_empty(o.get("name"))))
+        .collect()
+}
+
+/// The names of every option a command declares, hidden ones included.
+fn option_names(cmd: &Value) -> impl Iterator<Item = &str> {
+    array(cmd.get("options"))
         .iter()
         .map(|o| str_or_empty(o.get("name")))
-        .collect();
-    let mut out: Vec<&Value> = Vec::new();
-    for ancestor in ancestors {
-        for opt in array(ancestor.get("options")) {
-            if !truthy(opt.get("recursive")) || truthy(opt.get("hidden")) {
-                continue;
-            }
-            let name = str_or_empty(opt.get("name"));
-            if seen.contains(&name) {
-                continue;
-            }
-            seen.push(name);
-            out.push(opt);
-        }
-    }
-    out
 }
 
 /// The exit codes a page shows: the command's own, else its nearest
@@ -1272,6 +1306,141 @@ mod tests {
                 { "name": "--host", "type": "boolean", "description": "" },
             ])
         );
+    }
+
+    /// The page of `path` (space-joined) in `refs`.
+    fn page<'r>(refs: &'r [Value], path: &str) -> &'r Value {
+        refs.iter()
+            .find(|r| r["context"]["path"] == json!(path))
+            .unwrap_or_else(|| panic!("no page {path}"))
+    }
+
+    /// The rows of the definition titled `title` on a page; none when absent.
+    fn rows(reference: &Value, title: &str) -> Value {
+        reference["definitions"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|d| d["title"] == json!(title))
+            .map(|d| d["properties"].clone())
+            .unwrap_or(Value::Null)
+    }
+
+    /// The nearest declaration of a name wins, as a CLI library propagates a
+    /// recursive option: a nearer recursive redeclaration replaces the outer
+    /// one, and a nearer plain one ends the chain.
+    #[test]
+    fn inherited_options_resolve_each_name_to_its_nearest_declaration() {
+        let spec = json!({
+            "info": { "title": "demo" },
+            "commands": [{
+                "name": "a",
+                "options": [
+                    { "name": "host", "recursive": true, "description": "A host" },
+                    { "name": "color", "recursive": true, "description": "A color" },
+                ],
+                "commands": [
+                    {
+                        "name": "b",
+                        "options": [{
+                            "name": "host",
+                            "recursive": true,
+                            "description": "B host",
+                            "arguments": [{ "name": "url", "required": true }],
+                        }],
+                        "commands": [{ "name": "c" }],
+                    },
+                    {
+                        "name": "b2",
+                        "options": [{ "name": "host", "description": "B2 host" }],
+                        "commands": [{ "name": "c2" }],
+                    },
+                    {
+                        "name": "b3",
+                        "options": [{ "name": "host", "recursive": true, "hidden": true }],
+                        "commands": [{ "name": "c3" }],
+                    },
+                ],
+            }],
+        });
+        let refs = opencli_to_references(&spec, &OpencliToReferencesOptions::default());
+        // Outermost first: a's --color, then b's own --host.
+        assert_eq!(
+            rows(page(&refs, "a b c"), "Inherited options"),
+            json!([
+                { "name": "--color", "type": "boolean", "description": "A color" },
+                { "name": "--host", "type": "string", "description": "B host" },
+            ])
+        );
+        // b2's plain --host shadows a's and is not passed on.
+        assert_eq!(
+            rows(page(&refs, "a b2 c2"), "Inherited options"),
+            json!([{ "name": "--color", "type": "boolean", "description": "A color" }])
+        );
+        // b3's hidden --host shadows a's and stays hidden.
+        assert_eq!(
+            rows(page(&refs, "a b3 c3"), "Inherited options"),
+            json!([{ "name": "--color", "type": "boolean", "description": "A color" }])
+        );
+        // The redeclaring commands list their own --host, not a's.
+        assert_eq!(
+            rows(page(&refs, "a b2"), "Inherited options"),
+            json!([{ "name": "--color", "type": "boolean", "description": "A color" }])
+        );
+    }
+
+    /// Per command, a global option that the command or an ancestor command
+    /// redeclares is listed once: as that nearer declaration, or not at all
+    /// when it is plain and above the page. The root's own page keeps them all.
+    #[test]
+    fn per_command_global_options_leave_out_a_redeclared_name() {
+        let spec = json!({
+            "info": { "title": "demo" },
+            "arguments": [{ "name": "prompt" }],
+            "options": [
+                { "name": "verbose", "recursive": true, "description": "root verbose" },
+                { "name": "quiet", "recursive": true, "description": "root quiet" },
+            ],
+            "commands": [
+                {
+                    "name": "a",
+                    "options": [{ "name": "verbose", "recursive": true, "description": "a verbose" }],
+                    "commands": [{ "name": "b" }],
+                },
+                {
+                    "name": "p",
+                    "options": [{ "name": "quiet", "description": "p quiet" }],
+                    "commands": [{ "name": "q" }],
+                },
+            ],
+        });
+        let refs = opencli_to_references(
+            &spec,
+            &OpencliToReferencesOptions {
+                regions: None,
+                global_options_per_command: true,
+            },
+        );
+        let quiet = json!({ "name": "--quiet", "type": "boolean", "description": "root quiet" });
+        let verbose =
+            json!({ "name": "--verbose", "type": "boolean", "description": "root verbose" });
+        let a_verbose =
+            json!({ "name": "--verbose", "type": "boolean", "description": "a verbose" });
+
+        assert_eq!(
+            rows(page(&refs, "demo"), "Global options"),
+            json!([verbose, quiet])
+        );
+        assert_eq!(rows(page(&refs, "a"), "Options"), json!([a_verbose]));
+        assert_eq!(rows(page(&refs, "a"), "Global options"), json!([quiet]));
+        assert_eq!(
+            rows(page(&refs, "a b"), "Inherited options"),
+            json!([a_verbose])
+        );
+        assert_eq!(rows(page(&refs, "a b"), "Global options"), json!([quiet]));
+        // p's plain --quiet ends the root's chain: q gets neither.
+        assert_eq!(rows(page(&refs, "p q"), "Inherited options"), Value::Null);
+        assert_eq!(rows(page(&refs, "p q"), "Global options"), json!([verbose]));
     }
 
     /// `x-passthrough` documents a handover, not a different page.

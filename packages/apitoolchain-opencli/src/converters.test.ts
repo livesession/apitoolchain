@@ -370,6 +370,92 @@ describe('opencliToReferences', () => {
     expect(dump.definitions[1].properties).toEqual([{ name: '--host', type: 'boolean', description: '' }]);
   });
 
+  /** The rows of the definition titled `title` on the page at `path`; undefined when absent. */
+  const rows = (refs: ReturnType<typeof opencliToReferences>, path: string, title: string) => {
+    const page = refs.find((r) => r.context.path === path);
+    if (!page) throw new Error(`no page ${path}`);
+    return page.definitions.find((d) => d.title === title)?.properties;
+  };
+
+  it('resolves an inherited name to its nearest declaration', () => {
+    const refs = opencliToReferences({
+      opencli: '1.0.0',
+      info: { title: 'demo', version: '1.0.0' },
+      commands: [
+        {
+          name: 'a',
+          options: [
+            { name: 'host', recursive: true, description: 'A host' },
+            { name: 'color', recursive: true, description: 'A color' },
+          ],
+          commands: [
+            {
+              name: 'b',
+              options: [
+                {
+                  name: 'host',
+                  recursive: true,
+                  description: 'B host',
+                  arguments: [{ name: 'url', required: true }],
+                },
+              ],
+              commands: [{ name: 'c' }],
+            },
+            { name: 'b2', options: [{ name: 'host', description: 'B2 host' }], commands: [{ name: 'c2' }] },
+            { name: 'b3', options: [{ name: 'host', recursive: true, hidden: true }], commands: [{ name: 'c3' }] },
+          ],
+        },
+      ],
+    });
+    const color = { name: '--color', type: 'boolean', description: 'A color' };
+    // Outermost first: a's --color, then b's own --host.
+    expect(rows(refs, 'a b c', 'Inherited options')).toEqual([
+      color,
+      { name: '--host', type: 'string', description: 'B host' },
+    ]);
+    // b2's plain --host shadows a's and is not passed on.
+    expect(rows(refs, 'a b2 c2', 'Inherited options')).toEqual([color]);
+    // b3's hidden --host shadows a's and stays hidden.
+    expect(rows(refs, 'a b3 c3', 'Inherited options')).toEqual([color]);
+    // The redeclaring commands list their own --host, not a's.
+    expect(rows(refs, 'a b2', 'Inherited options')).toEqual([color]);
+  });
+
+  it('leaves a redeclared name out of the per-command global options', () => {
+    const refs = opencliToReferences(
+      {
+        opencli: '1.0.0',
+        info: { title: 'demo', version: '1.0.0' },
+        arguments: [{ name: 'prompt' }],
+        options: [
+          { name: 'verbose', recursive: true, description: 'root verbose' },
+          { name: 'quiet', recursive: true, description: 'root quiet' },
+        ],
+        commands: [
+          {
+            name: 'a',
+            options: [{ name: 'verbose', recursive: true, description: 'a verbose' }],
+            commands: [{ name: 'b' }],
+          },
+          { name: 'p', options: [{ name: 'quiet', description: 'p quiet' }], commands: [{ name: 'q' }] },
+        ],
+      },
+      { globalOptionsPerCommand: true },
+    );
+    const quiet = { name: '--quiet', type: 'boolean', description: 'root quiet' };
+    const verbose = { name: '--verbose', type: 'boolean', description: 'root verbose' };
+    const aVerbose = { name: '--verbose', type: 'boolean', description: 'a verbose' };
+
+    expect(rows(refs, 'demo', 'Global options')).toEqual([verbose, quiet]);
+    expect(rows(refs, 'a', 'Options')).toEqual([aVerbose]);
+    expect(rows(refs, 'a', 'Global options')).toEqual([quiet]);
+    expect(rows(refs, 'a b', 'Inherited options')).toEqual([aVerbose]);
+    expect(rows(refs, 'a b', 'Global options')).toEqual([quiet]);
+    // p's plain --quiet ends the root's chain: q gets neither.
+    expect(rows(refs, 'p q', 'Inherited options')).toBeUndefined();
+    expect(rows(refs, 'p q', 'Global options')).toEqual([verbose]);
+  });
+
   it('renders a passthrough like any command', () => {
     const plain: OpencliSpecJson = {
       opencli: '1.0.0',

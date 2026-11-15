@@ -48,10 +48,11 @@
 //! The root gets a page of its own, before the commands, only when it
 //! documents something of its own: arguments, examples, a session or
 //! environment variables. Its region and canonical are its id
-//! ([`root_page_id`]), the CLI's title as a URL path segment that no other
-//! page answers; its title and usage keep the title itself. Its options that
-//! are not global render there too. Options or exit codes alone do not make one: a root `--version` keeps
-//! a document's shape, and the commands inherit the exit codes.
+//! (`root_page_id`), the CLI's title as a URL path segment that no other page
+//! answers; its title and usage keep the title itself. Its options that are
+//! not global render there too. Options or exit codes alone do not make one:
+//! a root `--version` keeps a document's shape, and the commands inherit the
+//! exit codes.
 
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Map, Value};

@@ -15,3 +15,11 @@ serde = { workspace = true }
 serde_json = { workspace = true }
 thiserror = { workspace = true }
 apitoolchain_uniform = { path = "../apitoolchain_uniform" }
+
+[dev-dependencies]
+# The fixtures are validated against the base OpenCLI schema and the vendored
+# extensions schema (tests/schema.rs). No HTTP or file resolving: both schemas
+# are self-contained.
+jsonschema = { version = "0.61", default-features = false }
+# Pins the vendored extensions schema to the hash its source record states.
+sha2 = "0.10"

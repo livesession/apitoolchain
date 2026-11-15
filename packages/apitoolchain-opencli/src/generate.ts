@@ -9,7 +9,7 @@ export function generateUsage(
   _spec: OpencliSpecJson,
   command: Command,
   commandPath: string,
-  opts: { commandPlaceholder?: boolean } = {},
+  opts: { commandPlaceholder?: boolean | string } = {},
 ): string {
   const parts: string[] = [];
 
@@ -18,9 +18,10 @@ export function generateUsage(
 
   // A command that owns subcommands takes one as its next token. Opt-in, so
   // consumers that render a command's own usage (e.g. opencli-remark) keep their
-  // output — only api.cli asks for the placeholder.
+  // output — only api.cli asks for the placeholder. `true` is `<command>`; a
+  // string is the token itself (`[command]` for a group that also runs on its own).
   if (opts.commandPlaceholder && command.commands && command.commands.filter((c) => !c.hidden).length > 0) {
-    parts.push('<command>');
+    parts.push(typeof opts.commandPlaceholder === 'string' ? opts.commandPlaceholder : '<command>');
   }
 
   // Options indicator

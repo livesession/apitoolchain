@@ -16,9 +16,37 @@
 //!   default they become ONE extra trailing reference (`global-options`); with
 //!   [`OpencliToReferencesOptions::global_options_per_command`] they instead
 //!   become a "Global options" definition on every command.
-//! - Definition order is Arguments, Options, Commands, Global options.
+//! - Definition order is Arguments, Options, Inherited options, Commands,
+//!   Global options, Interactive commands, Keys, Environment, Exit codes. Each
+//!   appears only when it has rows.
 //! - When the LAST required argument (reverse-find) enumerates `acceptedValues`,
 //!   the "CLI Tool" group gets one example PER value, titled with it.
+//!
+//! What a page carries beyond a command's own arguments, options and
+//! subcommands:
+//! - "Inherited options": the recursive options of its ancestor COMMANDS,
+//!   outermost first. The root's are the global options above, not these.
+//! - "Interactive commands" and "Keys", from `x-interactive`: the commands typed
+//!   inside the session the command opens (each with its arguments and options
+//!   as nested rows; they never get a page of their own) and its key bindings.
+//! - "Environment", from `x-environment`.
+//! - "Exit codes": the command's own `exitCodes`, else its nearest ancestor's,
+//!   the root's last.
+//! - Its `examples`, as an "Examples" sample group after the "CLI Tool" one.
+//!
+//! A command group with arguments or options of its own also runs without a
+//! subcommand, so its placeholder reads `[command]` (title and usage) and its
+//! CLI Tool sample leaves the placeholder out; a group without them keeps
+//! `<command>`. `x-passthrough` changes nothing: the arguments, options and
+//! subcommands under it document the program it hands over to, and render
+//! like any other command's.
+//!
+//! The root gets a page of its own, before the commands, only when it
+//! documents something of its own: arguments, examples, a session or
+//! environment variables. Its region and canonical are the CLI's title, and
+//! its options that are not global render there too. Options or exit codes
+//! alone do not make one: a root `--version` keeps a document's shape, and the
+//! commands inherit the exit codes.
 
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Map, Value};
@@ -34,6 +62,7 @@ const GLOBAL_OPTIONS_REGION: &str = "global-options";
 pub struct OpencliToReferencesOptions {
     /// Restrict output to specific commands. Each region is a command path,
     /// space-joined from the CLI root (e.g. `"install"`, `"remote add"`).
+    /// The root's own page, when there is one, is the CLI's title (`"acme"`).
     /// An empty list means "no filter" (matching the TS `?.length` guard).
     pub regions: Option<Vec<String>>,
 
@@ -77,18 +106,34 @@ pub fn opencli_to_references(spec: &Value, options: &OpencliToReferencesOptions)
     let mut refs: Vec<Value> = Vec::new();
     let per_command_globals: &[&Value] = if per_command { &global_options } else { &[] };
 
+    // The CLI's own page, ahead of its commands — only when the root documents
+    // something of its own.
+    if root_has_own_page(spec) && in_regions(cli_title) {
+        let page = Page {
+            cmd: spec,
+            path: &[],
+            ancestors: &[],
+            doc: spec,
+            is_root: true,
+        };
+        refs.push(page_reference(&page, cli_title, per_command_globals));
+    }
+
     walk(
         spec.get("commands"),
         &mut Vec::new(),
-        &mut |cmd, cmd_path| {
+        &mut Vec::new(),
+        &mut |cmd, cmd_path, ancestors| {
             let region = cmd_path.join(" ");
             if in_regions(&region) {
-                refs.push(command_to_reference(
+                let page = Page {
                     cmd,
-                    cmd_path,
-                    cli_title,
-                    per_command_globals,
-                ));
+                    path: cmd_path,
+                    ancestors,
+                    doc: spec,
+                    is_root: false,
+                };
+                refs.push(page_reference(&page, cli_title, per_command_globals));
             }
         },
     );
@@ -102,10 +147,15 @@ pub fn opencli_to_references(spec: &Value, options: &OpencliToReferencesOptions)
 }
 
 /// Depth-first walk over the command tree, skipping hidden commands. The
-/// callback sees each visited command with its full path from the CLI root.
-fn walk<'a, F>(commands: Option<&'a Value>, parent_path: &mut Vec<&'a str>, visit: &mut F)
-where
-    F: FnMut(&'a Value, &[&'a str]),
+/// callback sees each visited command with its full path from the CLI root and
+/// its ancestor commands (outermost first; the root is not one).
+fn walk<'a, F>(
+    commands: Option<&'a Value>,
+    parent_path: &mut Vec<&'a str>,
+    ancestors: &mut Vec<&'a Value>,
+    visit: &mut F,
+) where
+    F: FnMut(&'a Value, &[&'a str], &[&'a Value]),
 {
     for cmd in array(commands) {
         if truthy(cmd.get("hidden")) {
@@ -114,12 +164,27 @@ where
         // `[...parentPath, cmd.name].join(' ')` — Array#join renders a missing
         // name as the empty string.
         parent_path.push(str_or_empty(cmd.get("name")));
-        visit(cmd, parent_path);
+        visit(cmd, parent_path, ancestors);
         if !array(cmd.get("commands")).is_empty() {
-            walk(cmd.get("commands"), parent_path, visit);
+            ancestors.push(cmd);
+            walk(cmd.get("commands"), parent_path, ancestors, visit);
+            ancestors.pop();
         }
         parent_path.pop();
     }
+}
+
+/// Whether the root documents something of its own, which earns it a page:
+/// arguments, examples, a session or environment variables. Options alone do
+/// not (a root `--version` or `--help` keeps a document's shape); its
+/// non-global ones render on the page once it exists.
+fn root_has_own_page(doc: &Value) -> bool {
+    let session = doc.get("x-interactive");
+    !visible(doc.get("arguments")).is_empty()
+        || !example_lines(doc).is_empty()
+        || !visible(session.and_then(|s| s.get("commands"))).is_empty()
+        || !visible(session.and_then(|s| s.get("keys"))).is_empty()
+        || !visible(doc.get("x-environment")).is_empty()
 }
 
 fn global_options_reference(global_options: &[&Value]) -> Value {
@@ -141,59 +206,117 @@ fn global_options_reference(global_options: &[&Value]) -> Value {
     })
 }
 
-fn command_to_reference(
-    cmd: &Value,
-    cmd_path: &[&str],
-    cli_title: &str,
-    global_options: &[&Value],
-) -> Value {
-    let region = cmd_path.join(" ");
-    let display_path = format!("{cli_title} {region}").trim().to_string();
+/// What one page documents: a command, or the document root.
+struct Page<'a> {
+    /// The command, or the document root.
+    cmd: &'a Value,
+    /// Its path from the CLI root; empty for the root.
+    path: &'a [&'a str],
+    /// Its ancestor commands, outermost first; the root is not one.
+    ancestors: &'a [&'a Value],
+    /// The document, where exit codes are looked up last.
+    doc: &'a Value,
+    is_root: bool,
+}
 
-    let mut definitions: Vec<Value> = Vec::new();
+fn page_reference(page: &Page, cli_title: &str, global_options: &[&Value]) -> Value {
+    let cmd = page.cmd;
+    let cmd_path = page.path;
+    // The root's page answers the CLI's title; a command's, its path.
+    let region = if page.is_root {
+        cli_title.to_string()
+    } else {
+        cmd_path.join(" ")
+    };
+    let display_path = if page.is_root {
+        cli_title.to_string()
+    } else {
+        format!("{cli_title} {region}").trim().to_string()
+    };
 
     let args = visible(cmd.get("arguments"));
-    if !args.is_empty() {
-        definitions.push(json!({
-            "title": "Arguments",
-            "properties": args.iter().map(|a| argument_to_property(a)).collect::<Vec<_>>(),
-        }));
-    }
-
-    let opts = visible(cmd.get("options"));
-    if !opts.is_empty() {
-        definitions.push(json!({
-            "title": "Options",
-            "properties": opts.iter().map(|o| option_to_property(o)).collect::<Vec<_>>(),
-        }));
-    }
-
+    // The root's recursive options are the global options, documented apart.
+    let opts: Vec<&Value> = visible(cmd.get("options"))
+        .into_iter()
+        .filter(|o| !page.is_root || !truthy(o.get("recursive")))
+        .collect();
     let subs = visible(cmd.get("commands"));
-    if !subs.is_empty() {
-        definitions.push(json!({
-            "title": "Commands",
-            "properties": subs.iter().map(|s| {
-                let mut p = Map::new();
-                insert_defined(&mut p, "name", s.get("name"));
-                p.insert("type".into(), json!("command"));
-                p.insert("description".into(), json!(str_or_empty(s.get("description"))));
-                Value::Object(p)
-            }).collect::<Vec<_>>(),
-        }));
-    }
+    let has_subcommands = !subs.is_empty();
+    // A group with arguments or options of its own also runs on its own.
+    let placeholder = command_placeholder(has_subcommands, !args.is_empty() || !opts.is_empty());
+    let session = cmd.get("x-interactive");
 
-    if !global_options.is_empty() {
-        definitions.push(json!({
-            "title": "Global options",
-            "properties": global_options.iter().map(|o| option_to_property(o)).collect::<Vec<_>>(),
-        }));
-    }
+    let mut definitions: Vec<Value> = Vec::new();
+    push_definition(
+        &mut definitions,
+        "Arguments",
+        args.iter().map(|a| argument_to_property(a)).collect(),
+    );
+    push_definition(
+        &mut definitions,
+        "Options",
+        opts.iter().map(|o| option_to_property(o)).collect(),
+    );
+    push_definition(
+        &mut definitions,
+        "Inherited options",
+        inherited_options(cmd, page.ancestors)
+            .iter()
+            .map(|o| option_to_property(o))
+            .collect(),
+    );
+    push_definition(
+        &mut definitions,
+        "Commands",
+        subs.iter().map(|s| subcommand_property(s)).collect(),
+    );
+    push_definition(
+        &mut definitions,
+        "Global options",
+        global_options
+            .iter()
+            .map(|o| option_to_property(o))
+            .collect(),
+    );
+    push_definition(
+        &mut definitions,
+        "Interactive commands",
+        visible(session.and_then(|s| s.get("commands")))
+            .iter()
+            .map(|c| interactive_command_property(c))
+            .collect(),
+    );
+    push_definition(
+        &mut definitions,
+        "Keys",
+        visible(session.and_then(|s| s.get("keys")))
+            .iter()
+            .map(|k| key_property(k))
+            .collect(),
+    );
+    push_definition(
+        &mut definitions,
+        "Environment",
+        visible(cmd.get("x-environment"))
+            .iter()
+            .map(|e| environment_property(e))
+            .collect(),
+    );
+    push_definition(
+        &mut definitions,
+        "Exit codes",
+        exit_codes(page)
+            .iter()
+            .filter(|e| e.get("code").is_some_and(Value::is_number))
+            .map(exit_code_property)
+            .collect(),
+    );
 
     // Sidebar grouping: a leaf top-level command sits directly under "Commands".
     // A command that owns subcommands becomes a nested group (named after
     // itself) under "Commands", and each of its subcommands sits inside that
-    // same group — e.g. `components` + `components install`.
-    let has_subcommands = !subs.is_empty();
+    // same group — e.g. `components` + `components install`. The root's page
+    // (an empty path) sits directly under "Commands".
     let group: Vec<&str> = if cmd_path.len() == 1 && !has_subcommands {
         vec!["Commands"]
     } else {
@@ -208,22 +331,26 @@ fn command_to_reference(
             .collect()
     };
 
-    // The runnable invocation ("CLI Tool") at groups[0], plus — when the OpenAPI
-    // binding carried one — an "Example response" group. Keep CLI Tool first.
+    // The runnable invocation ("CLI Tool") at groups[0], then the command's own
+    // examples, plus — when the OpenAPI binding carried one — an "Example
+    // response" group. Keep CLI Tool first.
     let mut groups: Vec<Value> = vec![json!({
-        "examples": cli_tool_examples(cli_title, cmd, cmd_path),
+        "examples": cli_tool_examples(cli_title, cmd, cmd_path, placeholder == Some(REQUIRED_SUBCOMMAND)),
     })];
+    if let Some(examples_group) = examples_group(cmd) {
+        groups.push(examples_group);
+    }
     if let Some(response_group) = response_example_group(cmd) {
         groups.push(response_group);
     }
 
-    // A command that owns subcommands reads as "<path> <command>" so it's
-    // distinct from its group and shows it takes a subcommand.
+    // A command that owns subcommands reads as "<path> <command>" (or
+    // "<path> [command]" when it also runs on its own) so it's distinct from
+    // its group and shows it takes a subcommand.
     let title = {
-        let t = if has_subcommands {
-            format!("{region} <command>")
-        } else {
-            region.clone()
+        let t = match placeholder {
+            Some(p) => format!("{region} {p}"),
+            None => region.clone(),
         };
         if t.is_empty() {
             cli_title.to_string()
@@ -232,26 +359,37 @@ fn command_to_reference(
         }
     };
     let canonical = {
-        let c = cmd_path.join("/");
+        let c = if page.is_root {
+            String::new()
+        } else {
+            cmd_path.join("/")
+        };
         if c.is_empty() {
             cli_title.to_string()
         } else {
             c
         }
     };
+    let description = if page.is_root {
+        nonempty_str(cmd.pointer("/info/description"))
+            .or_else(|| nonempty_str(cmd.pointer("/info/summary")))
+            .unwrap_or("")
+    } else {
+        str_or_empty(cmd.get("description"))
+    };
 
     json!({
         "title": title,
         "canonical": canonical,
-        "description": str_or_empty(cmd.get("description")),
+        "description": description,
         "category": "cli",
         // context.path is the region key the docs engine writes into the page
         // frontmatter (`cli: <spec>#<path>`) and reads back to re-resolve the
         // command. api.cli shows the more specific form — a command group
-        // carries `<command>`.
+        // carries its placeholder.
         "context": {
             "path": region,
-            "fullPath": generate_usage(cmd, &display_path, true),
+            "fullPath": generate_usage(cmd, &display_path, placeholder),
             "group": group,
         },
         "examples": { "groups": groups },
@@ -259,14 +397,197 @@ fn command_to_reference(
     })
 }
 
+const REQUIRED_SUBCOMMAND: &str = "<command>";
+const OPTIONAL_SUBCOMMAND: &str = "[command]";
+
+/// The subcommand placeholder of a page: `<command>` for a group that needs a
+/// subcommand, `[command]` for one that also runs on its own, none for a leaf.
+fn command_placeholder(has_subcommands: bool, runs_on_its_own: bool) -> Option<&'static str> {
+    match (has_subcommands, runs_on_its_own) {
+        (false, _) => None,
+        (true, true) => Some(OPTIONAL_SUBCOMMAND),
+        (true, false) => Some(REQUIRED_SUBCOMMAND),
+    }
+}
+
+/// A `{title, properties}` definition, left out when it has no rows.
+fn push_definition(definitions: &mut Vec<Value>, title: &str, properties: Vec<Value>) {
+    if !properties.is_empty() {
+        definitions.push(json!({ "title": title, "properties": properties }));
+    }
+}
+
+fn subcommand_property(s: &Value) -> Value {
+    let mut p = Map::new();
+    insert_defined(&mut p, "name", s.get("name"));
+    p.insert("type".into(), json!("command"));
+    p.insert(
+        "description".into(),
+        json!(str_or_empty(s.get("description"))),
+    );
+    Value::Object(p)
+}
+
+/// The recursive, visible options of a command's ancestor commands, outermost
+/// first. A name the command declares itself, or an outer ancestor already
+/// gave, is skipped.
+fn inherited_options<'a>(cmd: &'a Value, ancestors: &[&'a Value]) -> Vec<&'a Value> {
+    let mut seen: Vec<&str> = array(cmd.get("options"))
+        .iter()
+        .map(|o| str_or_empty(o.get("name")))
+        .collect();
+    let mut out: Vec<&Value> = Vec::new();
+    for ancestor in ancestors {
+        for opt in array(ancestor.get("options")) {
+            if !truthy(opt.get("recursive")) || truthy(opt.get("hidden")) {
+                continue;
+            }
+            let name = str_or_empty(opt.get("name"));
+            if seen.contains(&name) {
+                continue;
+            }
+            seen.push(name);
+            out.push(opt);
+        }
+    }
+    out
+}
+
+/// The exit codes a page shows: the command's own, else its nearest
+/// ancestor's, the root's last.
+fn exit_codes<'a>(page: &Page<'a>) -> &'a [Value] {
+    std::iter::once(page.cmd)
+        .chain(page.ancestors.iter().rev().copied())
+        .chain(std::iter::once(page.doc))
+        .map(|c| array(c.get("exitCodes")))
+        .find(|codes| !codes.is_empty())
+        .unwrap_or(EMPTY)
+}
+
+/// One "Exit codes" row; the caller keeps only entries whose `code` is a number.
+fn exit_code_property(entry: &Value) -> Value {
+    json!({
+        "name": entry.get("code").map(js_string).unwrap_or_default(),
+        "type": "integer",
+        "description": str_or_empty(entry.get("description")),
+    })
+}
+
+/// One "Interactive commands" row: a command typed inside the session, with
+/// its arguments, options and subcommands as nested rows. Its aliases are
+/// words, not flags.
+fn interactive_command_property(c: &Value) -> Value {
+    let aliases = array(c.get("aliases"));
+    let alias_note = if aliases.is_empty() {
+        String::new()
+    } else {
+        let rendered = aliases.iter().map(js_string).collect::<Vec<_>>().join(", ");
+        format!(" (alias: {rendered})")
+    };
+
+    let nested: Vec<Value> = visible(c.get("arguments"))
+        .iter()
+        .map(|a| argument_to_property(a))
+        .chain(
+            visible(c.get("options"))
+                .iter()
+                .map(|o| option_to_property(o)),
+        )
+        .chain(
+            visible(c.get("commands"))
+                .iter()
+                .map(|s| interactive_command_property(s)),
+        )
+        .collect();
+
+    let mut out = Map::new();
+    insert_defined(&mut out, "name", c.get("name"));
+    out.insert("type".into(), json!("command"));
+    out.insert(
+        "description".into(),
+        json!(format!(
+            "{}{alias_note}",
+            str_or_empty(c.get("description"))
+        )),
+    );
+    if !nested.is_empty() {
+        out.insert("properties".into(), Value::Array(nested));
+    }
+    Value::Object(out)
+}
+
+/// One "Keys" row: the keys (any one of them), what they do, and where, when
+/// the binding does not apply everywhere.
+fn key_property(binding: &Value) -> Value {
+    let keys = array(binding.get("keys"))
+        .iter()
+        .map(js_string)
+        .collect::<Vec<_>>()
+        .join(", ");
+    let context = nonempty_str(binding.get("context"))
+        .map(|c| format!(" (context: {c})"))
+        .unwrap_or_default();
+    json!({
+        "name": keys,
+        "type": "key",
+        "description": format!("{}{context}", str_or_empty(binding.get("description"))),
+    })
+}
+
+/// One "Environment" row. The values a variable accepts surface like an
+/// argument's accepted values: an `examples` meta.
+fn environment_property(var: &Value) -> Value {
+    let mut out = Map::new();
+    insert_defined(&mut out, "name", var.get("name"));
+    out.insert("type".into(), json!("string"));
+    out.insert(
+        "description".into(),
+        json!(str_or_empty(var.get("description"))),
+    );
+    let values = array(var.get("values"));
+    if !values.is_empty() {
+        out.insert(
+            "meta".into(),
+            json!([{ "name": "examples", "value": values }]),
+        );
+    }
+    Value::Object(out)
+}
+
+/// The non-empty string entries of a command's `examples`.
+fn example_lines(cmd: &Value) -> Vec<&str> {
+    array(cmd.get("examples"))
+        .iter()
+        .filter_map(Value::as_str)
+        .filter(|s| !s.is_empty())
+        .collect()
+}
+
+/// The "Examples" group: the command's own examples, one per line, in one
+/// shell sample. `None` when it has none.
+fn examples_group(cmd: &Value) -> Option<Value> {
+    let lines = example_lines(cmd);
+    if lines.is_empty() {
+        return None;
+    }
+    Some(json!({
+        "description": "Examples",
+        "examples": [{
+            "codeblock": {
+                "tabs": [{ "title": "CLI Tool", "language": "shell", "code": lines.join("\n") }],
+            },
+        }],
+    }))
+}
+
 /// Usage line for a command (`generateUsage` in `generate.ts`), with the
-/// `commandPlaceholder` opt-in `api.cli` asks for.
-fn generate_usage(command: &Value, command_path: &str, command_placeholder: bool) -> String {
+/// subcommand placeholder `api.cli` asks for.
+fn generate_usage(command: &Value, command_path: &str, placeholder: Option<&str>) -> String {
     let mut parts: Vec<String> = vec![command_path.to_string()];
 
     // A command that owns subcommands takes one as its next token.
-    if command_placeholder && !visible(command.get("commands")).is_empty() {
-        parts.push("<command>".to_string());
+    if let Some(p) = placeholder {
+        parts.push(p.to_string());
     }
 
     if !visible(command.get("options")).is_empty() {
@@ -396,7 +717,12 @@ fn arg_example_value(arg: &Value) -> Option<&str> {
 /// its accepted values (e.g. `completion <zsh|fish>`), each value becomes its
 /// own example (`codeblock.title` = the value) — so Atlas renders an
 /// example-level switcher rather than tabs inside one code block.
-fn cli_tool_examples(cli_title: &str, cmd: &Value, cmd_path: &[&str]) -> Vec<Value> {
+fn cli_tool_examples(
+    cli_title: &str,
+    cmd: &Value,
+    cmd_path: &[&str],
+    needs_subcommand: bool,
+) -> Vec<Value> {
     let req_args: Vec<&Value> = array(cmd.get("arguments"))
         .iter()
         .filter(|a| truthy(a.get("required")) && !truthy(a.get("hidden")))
@@ -423,7 +749,13 @@ fn cli_tool_examples(cli_title: &str, cmd: &Value, cmd_path: &[&str]) -> Vec<Val
         return values
             .into_iter()
             .map(|value| {
-                let code = generate_cli_example(cli_title, cmd, cmd_path, Some((arg_name, &value)));
+                let code = generate_cli_example(
+                    cli_title,
+                    cmd,
+                    cmd_path,
+                    needs_subcommand,
+                    Some((arg_name, &value)),
+                );
                 json!({
                     "codeblock": {
                         "title": value,
@@ -439,7 +771,7 @@ fn cli_tool_examples(cli_title: &str, cmd: &Value, cmd_path: &[&str]) -> Vec<Val
             "tabs": [{
                 "title": "CLI Tool",
                 "language": "shell",
-                "code": generate_cli_example(cli_title, cmd, cmd_path, None),
+                "code": generate_cli_example(cli_title, cmd, cmd_path, needs_subcommand, None),
             }],
         },
     })]
@@ -447,12 +779,15 @@ fn cli_tool_examples(cli_title: &str, cmd: &Value, cmd_path: &[&str]) -> Vec<Val
 
 /// A runnable, concrete CLI invocation — the command path plus its required
 /// arguments and options filled with example values, one option per line.
+/// `needs_subcommand` adds the `<command>` placeholder of a group that does not
+/// run on its own.
 /// `override_arg` pins a specific value for a named argument (used to render one
 /// example per accepted value).
 fn generate_cli_example(
     cli_title: &str,
     cmd: &Value,
     cmd_path: &[&str],
+    needs_subcommand: bool,
     override_arg: Option<(&str, &str)>,
 ) -> String {
     let mut head = std::iter::once(cli_title)
@@ -460,10 +795,12 @@ fn generate_cli_example(
         .collect::<Vec<_>>()
         .join(" ");
 
-    // A command group takes a subcommand — shown as a placeholder (unquoted,
-    // like the usage formula), e.g. `xyd components <command>`.
-    if !visible(cmd.get("commands")).is_empty() {
-        head.push_str(" <command>");
+    // A command group that needs a subcommand shows a placeholder (unquoted,
+    // like the usage formula), e.g. `xyd components <command>`. One that also
+    // runs on its own is invoked without one.
+    if needs_subcommand {
+        head.push(' ');
+        head.push_str(REQUIRED_SUBCOMMAND);
     }
 
     for arg in array(cmd.get("arguments"))

@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import { opencliToReferences } from './converters';
+// The TypeScript twin itself, not the package entry: the entry prefers the
+// native addon, and a published addon can predate what this file pins. The
+// Rust twin is pinned by the crate's own tests; both by the shared goldens.
+import { opencliToReferencesJs as opencliToReferences } from './converters';
 import type { OpencliSpecJson } from './types';
 
 const spec: OpencliSpecJson = {
@@ -27,12 +30,13 @@ describe('opencliToReferences', () => {
   it('emits one reference per (visible) command, including nested', () => {
     const refs = opencliToReferences(spec);
     const titles = refs.map((r) => r.title).sort();
-    // 'install' owns a subcommand → "install <command>"; 'internal' (hidden) excluded
-    expect(titles).toEqual(['install <command>', 'install dev', 'list']);
+    // 'install' owns a subcommand and also runs on its own (it has an argument
+    // and options) → "install [command]"; 'internal' (hidden) excluded
+    expect(titles).toEqual(['install [command]', 'install dev', 'list']);
   });
 
   it('builds Arguments/Options/Commands definitions with required + alias info', () => {
-    const install = opencliToReferences(spec).find((r) => r.title === 'install <command>')!;
+    const install = opencliToReferences(spec).find((r) => r.title === 'install [command]')!;
     expect(install.canonical).toBe('install');
     expect(install.description).toBe('Install one or more packages.');
 
@@ -93,7 +97,7 @@ describe('opencliToReferences', () => {
     // a leaf top-level command sits directly under "Commands"
     expect(groupOf('list')).toEqual(['Commands']);
     // a command that owns subcommands becomes a nested group named after itself...
-    expect(groupOf('install <command>')).toEqual(['Commands', 'install']);
+    expect(groupOf('install [command]')).toEqual(['Commands', 'install']);
     // ...and its subcommand sits inside that same group
     expect(groupOf('install dev')).toEqual(['Commands', 'install']);
   });

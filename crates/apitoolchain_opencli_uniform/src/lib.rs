@@ -47,10 +47,12 @@
 //!
 //! The root gets a page of its own, before the commands, only when it
 //! documents something of its own: arguments, examples, a session or
-//! environment variables. Its region and canonical are the CLI's title, and
-//! its options that are not global render there too. Options or exit codes
-//! alone do not make one: a root `--version` keeps a document's shape, and the
-//! commands inherit the exit codes.
+//! environment variables. Its region and canonical are its id
+//! (`root_page_id`), the CLI's title as a URL path segment that no other page
+//! answers; its title and usage keep the title itself. Its options that are
+//! not global render there too. Options or exit codes alone do not make one:
+//! a root `--version` keeps a document's shape, and the commands inherit the
+//! exit codes.
 
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Map, Value};
@@ -66,8 +68,11 @@ const GLOBAL_OPTIONS_REGION: &str = "global-options";
 pub struct OpencliToReferencesOptions {
     /// Restrict output to specific commands. Each region is a command path,
     /// space-joined from the CLI root (e.g. `"install"`, `"remote add"`).
-    /// The root's own page, when there is one, is the CLI's title (`"acme"`).
-    /// An empty list means "no filter" (matching the TS `?.length` guard).
+    /// The root's own page, when there is one, is its id: the CLI's title as
+    /// a URL path segment (`"acme"`, or `"acme-agent"` for the title
+    /// `Acme Agent`), suffixed `-1`, `-2`, … while a top-level command or the
+    /// Global options page answers it. An empty list means "no filter"
+    /// (matching the TS `?.length` guard).
     pub regions: Option<Vec<String>>,
 
     /// Render the CLI's global (root recursive) options on every command page.
@@ -112,13 +117,15 @@ pub fn opencli_to_references(spec: &Value, options: &OpencliToReferencesOptions)
 
     // The CLI's own page, ahead of its commands — only when the root documents
     // something of its own.
-    if root_has_own_page(spec) && in_regions(cli_title) {
+    let root_id = root_has_own_page(spec).then(|| root_page_id(spec, cli_title));
+    if let Some(root_id) = root_id.as_deref().filter(|id| in_regions(id)) {
         let page = Page {
             cmd: spec,
             path: &[],
             ancestors: &[],
             doc: spec,
             is_root: true,
+            root_id,
         };
         refs.push(page_reference(&page, cli_title, per_command_globals));
     }
@@ -136,6 +143,7 @@ pub fn opencli_to_references(spec: &Value, options: &OpencliToReferencesOptions)
                     ancestors,
                     doc: spec,
                     is_root: false,
+                    root_id: "",
                 };
                 refs.push(page_reference(&page, cli_title, per_command_globals));
             }
@@ -191,6 +199,60 @@ fn root_has_own_page(doc: &Value) -> bool {
         || !visible(doc.get("x-environment")).is_empty()
 }
 
+/// The id of the root's page: its region and its canonical, so a URL path
+/// segment. The CLI's title is free text (`Acme Agent`, `@acme/agent`), and a
+/// page's canonical becomes its route, its `.md` twin and its links, so the id
+/// is the title with ASCII letters lowercased and every run of anything but
+/// `a-z`, `0-9`, `_` and `-` one `-`, trimmed of `-`; `cli` when nothing is
+/// left.
+///
+/// No other page may answer it, or a page asking for it would render both and
+/// the sidebar would lose one. A one-segment id can only meet a top-level
+/// command (its region and canonical are its name) or the Global options page,
+/// so while one of those has it, the id takes the first free `-1`, `-2`, …
+/// suffix. The Global options id is kept free in either mode, so the root's id
+/// does not depend on `global_options_per_command`.
+fn root_page_id(doc: &Value, cli_title: &str) -> String {
+    let segment = path_segment(cli_title);
+    let base = if segment.is_empty() {
+        "cli".to_string()
+    } else {
+        segment
+    };
+    let taken: Vec<&str> = std::iter::once(GLOBAL_OPTIONS_REGION)
+        .chain(
+            array(doc.get("commands"))
+                .iter()
+                .filter(|cmd| !truthy(cmd.get("hidden")))
+                .map(|cmd| str_or_empty(cmd.get("name"))),
+        )
+        .collect();
+
+    let mut id = base.clone();
+    let mut n = 1;
+    while taken.contains(&id.as_str()) {
+        id = format!("{base}-{n}");
+        n += 1;
+    }
+    id
+}
+
+fn path_segment(text: &str) -> String {
+    let mut out = String::with_capacity(text.len());
+    let mut in_run = false;
+    for c in text.chars() {
+        let c = c.to_ascii_lowercase();
+        if c.is_ascii_lowercase() || c.is_ascii_digit() || c == '_' || c == '-' {
+            out.push(c);
+            in_run = false;
+        } else if !in_run {
+            out.push('-');
+            in_run = true;
+        }
+    }
+    out.trim_matches('-').to_string()
+}
+
 fn global_options_reference(global_options: &[&Value]) -> Value {
     json!({
         "title": "Global options",
@@ -221,21 +283,30 @@ struct Page<'a> {
     /// The document, where exit codes are looked up last.
     doc: &'a Value,
     is_root: bool,
+    /// The root's page id ([`root_page_id`]), its region and canonical; empty
+    /// for a command.
+    root_id: &'a str,
 }
 
 fn page_reference(page: &Page, cli_title: &str, global_options: &[&Value]) -> Value {
     let cmd = page.cmd;
     let cmd_path = page.path;
-    // The root's page answers the CLI's title; a command's, its path.
-    let region = if page.is_root {
+    // A command's page is named and answers by its path. The root's is named by
+    // the CLI's title and answers its id, a URL path segment of that title.
+    let name = if page.is_root {
         cli_title.to_string()
     } else {
         cmd_path.join(" ")
     };
+    let region = if page.is_root && !page.root_id.is_empty() {
+        page.root_id.to_string()
+    } else {
+        name.clone()
+    };
     let display_path = if page.is_root {
         cli_title.to_string()
     } else {
-        format!("{cli_title} {region}").trim().to_string()
+        format!("{cli_title} {name}").trim().to_string()
     };
 
     let args = visible(cmd.get("arguments"));
@@ -353,8 +424,8 @@ fn page_reference(page: &Page, cli_title: &str, global_options: &[&Value]) -> Va
     // its group and shows it takes a subcommand.
     let title = {
         let t = match placeholder {
-            Some(p) => format!("{region} {p}"),
-            None => region.clone(),
+            Some(p) => format!("{name} {p}"),
+            None => name.clone(),
         };
         if t.is_empty() {
             cli_title.to_string()
@@ -364,7 +435,7 @@ fn page_reference(page: &Page, cli_title: &str, global_options: &[&Value]) -> Va
     };
     let canonical = {
         let c = if page.is_root {
-            String::new()
+            region.clone()
         } else {
             cmd_path.join("/")
         };
@@ -1249,6 +1320,127 @@ mod tests {
             },
         );
         assert_eq!(titles(&only_root), vec!["demo [command]"]);
+    }
+
+    /// The root's page answers a URL path segment of the CLI's title, and is
+    /// titled with the title itself.
+    #[test]
+    fn the_root_page_answers_a_url_path_segment_of_the_title() {
+        let titled = |title: &str| {
+            json!({
+                "info": { "title": title },
+                "arguments": [{ "name": "prompt" }],
+                "commands": [{ "name": "build" }],
+            })
+        };
+        let default = OpencliToReferencesOptions::default();
+        let root = |title: &str| opencli_to_references(&titled(title), &default).remove(0);
+
+        let spaced = root("Acme Agent");
+        assert_eq!(spaced["canonical"], json!("acme-agent"));
+        assert_eq!(spaced["context"]["path"], json!("acme-agent"));
+        assert_eq!(spaced["title"], json!("Acme Agent [command]"));
+        assert_eq!(
+            spaced["context"]["fullPath"],
+            json!("Acme Agent [command] [prompt]")
+        );
+
+        assert_eq!(root("@acme/agent")["canonical"], json!("acme-agent"));
+        assert_eq!(root("My_CLI v2.0")["canonical"], json!("my_cli-v2-0"));
+        assert_eq!(root("acme--agent")["canonical"], json!("acme--agent"));
+        assert_eq!(root("Ünï 工具 ✓")["canonical"], json!("n"));
+        assert_eq!(root("工具")["canonical"], json!("cli"));
+        assert_eq!(root("")["canonical"], json!("cli"));
+
+        // the id is the region; the raw title names no page
+        let only = |region: &str| {
+            opencli_to_references(
+                &titled("Acme Agent"),
+                &OpencliToReferencesOptions {
+                    regions: Some(vec![region.into()]),
+                    global_options_per_command: false,
+                },
+            )
+        };
+        assert_eq!(titles(&only("acme-agent")), vec!["Acme Agent [command]"]);
+        assert!(only("Acme Agent").is_empty());
+    }
+
+    fn canonicals(refs: &[Value]) -> Vec<&str> {
+        refs.iter()
+            .map(|r| r["canonical"].as_str().unwrap_or(""))
+            .collect()
+    }
+
+    fn only_regions(regions: &[&str]) -> OpencliToReferencesOptions {
+        OpencliToReferencesOptions {
+            regions: Some(regions.iter().map(|r| r.to_string()).collect()),
+            global_options_per_command: false,
+        }
+    }
+
+    /// The root's page id never equals a top-level command's or the Global
+    /// options page's, so each region names one page.
+    #[test]
+    fn the_root_page_id_stays_apart_from_commands_and_global_options() {
+        let clashing = json!({
+            "info": { "title": "Acme" },
+            "arguments": [{ "name": "prompt" }],
+            "commands": [
+                { "name": "acme", "arguments": [{ "name": "x", "required": true }] },
+                { "name": "acme-1" },
+                { "name": "acme-2", "hidden": true },
+            ],
+        });
+        let default = OpencliToReferencesOptions::default();
+        let refs = opencli_to_references(&clashing, &default);
+        assert_eq!(titles(&refs), vec!["Acme [command]", "acme", "acme-1"]);
+        // a hidden command has no page, so it takes no id
+        assert_eq!(canonicals(&refs), vec!["acme-2", "acme", "acme-1"]);
+        assert_eq!(refs[0]["context"]["path"], json!("acme-2"));
+        assert_eq!(
+            titles(&opencli_to_references(&clashing, &only_regions(&["acme"]))),
+            vec!["acme"]
+        );
+        assert_eq!(
+            titles(&opencli_to_references(
+                &clashing,
+                &only_regions(&["acme-2"])
+            )),
+            vec!["Acme [command]"]
+        );
+
+        let globals = json!({
+            "info": { "title": "global-options" },
+            "arguments": [{ "name": "prompt" }],
+            "options": [{ "name": "verbose", "recursive": true }],
+            "commands": [{ "name": "build" }],
+        });
+        let paged = opencli_to_references(&globals, &default);
+        assert_eq!(
+            titles(&paged),
+            vec!["global-options [command]", "build", "Global options"]
+        );
+        assert_eq!(
+            canonicals(&paged),
+            vec!["global-options-1", "build", "global-options"]
+        );
+        assert_eq!(
+            titles(&opencli_to_references(
+                &globals,
+                &only_regions(&["global-options"])
+            )),
+            vec!["Global options"]
+        );
+        // the same id when the global options render on every command instead
+        let per_command = OpencliToReferencesOptions {
+            regions: None,
+            global_options_per_command: true,
+        };
+        assert_eq!(
+            opencli_to_references(&globals, &per_command)[0]["canonical"],
+            json!("global-options-1")
+        );
     }
 
     /// The nearest non-empty list wins, and an entry without a numeric code is

@@ -47,7 +47,10 @@ export interface OpencliToReferencesOptions {
   /**
    * Restrict output to specific commands. Each region is a command path,
    * space-joined from the CLI root (e.g. `"install"`, `"remote add"`). The
-   * root's own page, when there is one, is the CLI's title (`"acme"`).
+   * root's own page, when there is one, is its id: the CLI's title as a URL
+   * path segment (`"acme"`, or `"acme-agent"` for the title `Acme Agent`),
+   * suffixed `-1`, `-2`, … while a top-level command or the Global options
+   * page answers it.
    */
   regions?: string[];
 
@@ -120,9 +123,10 @@ export function opencliToReferences(
  *
  * The root gets a page of its own, ahead of the commands, only when it
  * documents something of its own: arguments, examples, a session or
- * environment variables. Its region and canonical are the CLI's title, and its
- * options that are not global render there too. Options or exit codes alone
- * do not make one.
+ * environment variables. Its region and canonical are its id (`rootPageId`),
+ * the CLI's title as a URL path segment that no other page answers; its title
+ * and usage keep the title itself. Its options that are not global render
+ * there too. Options or exit codes alone do not make one.
  */
 export function opencliToReferencesJs(
   spec: OpencliSpecJson | null | undefined,
@@ -143,8 +147,11 @@ export function opencliToReferencesJs(
 
   // The CLI's own page, ahead of its commands — only when the root documents
   // something of its own.
-  if (rootHasOwnPage(spec) && (!regionSet || regionSet.has(cliTitle))) {
-    refs.push(pageReference({ cmd: spec, path: [], ancestors: [], doc: spec, isRoot: true }, cliTitle, perCommandGlobals));
+  const rootId = rootHasOwnPage(spec) ? rootPageId(spec, cliTitle) : null;
+  if (rootId && (!regionSet || regionSet.has(rootId))) {
+    refs.push(
+      pageReference({ cmd: spec, path: [], ancestors: [], doc: spec, isRoot: true, rootId }, cliTitle, perCommandGlobals),
+    );
   }
 
   const walk = (commands: Command[] | undefined, parentPath: string[], ancestors: Command[]) => {
@@ -185,6 +192,39 @@ function rootHasOwnPage(doc: OpencliSpecJson): boolean {
   );
 }
 
+/**
+ * The id of the root's page: its region and its canonical, so a URL path
+ * segment. The CLI's title is free text (`Acme Agent`, `@acme/agent`), and a
+ * page's canonical becomes its route, its `.md` twin and its links, so the id
+ * is the title with ASCII letters lowercased and every run of anything but
+ * `a-z`, `0-9`, `_` and `-` one `-`, trimmed of `-`; `cli` when nothing is left.
+ *
+ * No other page may answer it, or a page asking for it would render both and
+ * the sidebar would lose one. A one-segment id can only meet a top-level
+ * command (its region and canonical are its name) or the Global options page,
+ * so while one of those has it, the id takes the first free `-1`, `-2`, …
+ * suffix. The Global options id is kept free in either mode, so the root's id
+ * does not depend on `globalOptionsPerCommand`.
+ */
+function rootPageId(doc: OpencliSpecJson, cliTitle: string): string {
+  const base = pathSegment(String(cliTitle)) || 'cli';
+  const taken = new Set<string>([GLOBAL_OPTIONS_REGION]);
+  for (const cmd of doc.commands || []) {
+    if (!cmd.hidden) taken.add(str(cmd.name));
+  }
+
+  let id = base;
+  for (let n = 1; taken.has(id); n++) id = `${base}-${n}`;
+  return id;
+}
+
+function pathSegment(text: string): string {
+  return text
+    .replace(/[A-Z]/g, (c) => c.toLowerCase())
+    .replace(/[^a-z0-9_-]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
 function globalOptionsReference(globalOptions: Option[]): OpencliReference {
   return {
     title: 'Global options',
@@ -208,13 +248,17 @@ interface Page {
   /** The document, where exit codes are looked up last. */
   doc: OpencliSpecJson;
   isRoot: boolean;
+  /** The root's page id (`rootPageId`), its region and canonical; unset for a command. */
+  rootId?: string;
 }
 
 function pageReference(page: Page, cliTitle: string, globalOptions: Option[] = []): OpencliReference {
   const { cmd, path: cmdPath } = page;
-  // The root's page answers the CLI's title; a command's, its path.
-  const region = page.isRoot ? cliTitle : cmdPath.join(' ');
-  const displayPath = page.isRoot ? cliTitle : `${cliTitle} ${region}`.trim();
+  // A command's page is named and answers by its path. The root's is named by
+  // the CLI's title and answers its id, a URL path segment of that title.
+  const name = page.isRoot ? cliTitle : cmdPath.join(' ');
+  const region = page.isRoot && page.rootId ? page.rootId : name;
+  const displayPath = page.isRoot ? cliTitle : `${cliTitle} ${name}`.trim();
 
   const args = visible(cmd.arguments);
   // The root's recursive options are the global options, documented apart.
@@ -276,8 +320,8 @@ function pageReference(page: Page, cliTitle: string, globalOptions: Option[] = [
     // A command that owns subcommands reads as "<path> <command>" (or
     // "<path> [command]" when it also runs on its own) so it's distinct from
     // its group and shows it takes a subcommand.
-    title: (placeholder ? `${region} ${placeholder}` : region) || cliTitle,
-    canonical: (page.isRoot ? '' : cmdPath.join('/')) || cliTitle,
+    title: (placeholder ? `${name} ${placeholder}` : name) || cliTitle,
+    canonical: (page.isRoot ? region : cmdPath.join('/')) || cliTitle,
     description,
     category: 'cli',
     // context.path is the region key the docs engine writes into the page

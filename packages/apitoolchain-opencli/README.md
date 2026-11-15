@@ -57,8 +57,10 @@ The root gets a page of its own, ahead of the commands, only when it documents
 arguments, examples, a session or environment variables. Its region and canonical are
 its id, the CLI's title as a URL path segment: ASCII letters lowercased, every run of
 anything but `a-z`, `0-9`, `_` and `-` one `-` (`Acme Agent` and `@acme/agent` →
-`acme-agent`), `cli` when nothing is left. Its title and usage keep the title itself.
-Options or exit codes alone do not make one.
+`acme-agent`), `cli` when nothing is left. No other page answers it: while a top-level
+command or the Global options page has that id, it takes the first free `-1`, `-2`, …
+suffix. Its title and usage keep the title itself. Options or exit codes alone do not
+make one.
 
 Two implementations produce these pages: the TypeScript in `src/converters.ts`
 (`opencliToReferencesJs`) and its Rust twin in `crates/apitoolchain_opencli_uniform`,

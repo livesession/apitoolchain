@@ -358,6 +358,41 @@ describe('opencliToReferences', () => {
     expect(opencliToReferences(titled('Acme Agent'), { regions: ['Acme Agent'] })).toEqual([]);
   });
 
+  it('keeps the root page id apart from a top-level command and the Global options page', () => {
+    const clashing: OpencliSpecJson = {
+      opencli: '1.0.0',
+      info: { title: 'Acme', version: '1.0.0' },
+      arguments: [{ name: 'prompt' }],
+      commands: [
+        { name: 'acme', arguments: [{ name: 'x', required: true }] },
+        { name: 'acme-1' },
+        { name: 'acme-2', hidden: true },
+      ],
+    };
+    const refs = opencliToReferences(clashing);
+    expect(titles(refs)).toEqual(['Acme [command]', 'acme', 'acme-1']);
+    // a hidden command has no page, so it takes no id
+    expect(refs.map((r) => r.canonical)).toEqual(['acme-2', 'acme', 'acme-1']);
+    expect(refs.map((r) => r.context.path)).toEqual(['acme-2', 'acme', 'acme-1']);
+    // each region names one page
+    expect(titles(opencliToReferences(clashing, { regions: ['acme'] }))).toEqual(['acme']);
+    expect(titles(opencliToReferences(clashing, { regions: ['acme-2'] }))).toEqual(['Acme [command]']);
+
+    const globals: OpencliSpecJson = {
+      opencli: '1.0.0',
+      info: { title: 'global-options', version: '1.0.0' },
+      arguments: [{ name: 'prompt' }],
+      options: [{ name: 'verbose', recursive: true }],
+      commands: [{ name: 'build' }],
+    };
+    const paged = opencliToReferences(globals);
+    expect(titles(paged)).toEqual(['global-options [command]', 'build', 'Global options']);
+    expect(paged.map((r) => r.canonical)).toEqual(['global-options-1', 'build', 'global-options']);
+    expect(titles(opencliToReferences(globals, { regions: ['global-options'] }))).toEqual(['Global options']);
+    // the same id when the global options render on every command instead
+    expect(opencliToReferences(globals, { globalOptionsPerCommand: true })[0].canonical).toBe('global-options-1');
+  });
+
   it('takes exit codes from the nearest non-empty list, and only entries with a numeric code', () => {
     const refs = opencliToReferences({
       opencli: '1.0.0',

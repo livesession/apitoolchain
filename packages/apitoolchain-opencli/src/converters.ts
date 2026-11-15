@@ -48,7 +48,9 @@ export interface OpencliToReferencesOptions {
    * Restrict output to specific commands. Each region is a command path,
    * space-joined from the CLI root (e.g. `"install"`, `"remote add"`). The
    * root's own page, when there is one, is its id: the CLI's title as a URL
-   * path segment (`"acme"`, or `"acme-agent"` for the title `Acme Agent`).
+   * path segment (`"acme"`, or `"acme-agent"` for the title `Acme Agent`),
+   * suffixed `-1`, `-2`, … while a top-level command or the Global options
+   * page answers it.
    */
   regions?: string[];
 
@@ -122,9 +124,9 @@ export function opencliToReferences(
  * The root gets a page of its own, ahead of the commands, only when it
  * documents something of its own: arguments, examples, a session or
  * environment variables. Its region and canonical are its id (`rootPageId`),
- * the CLI's title as a URL path segment; its title and usage keep the title
- * itself. Its options that are not global render there too. Options or exit
- * codes alone do not make one.
+ * the CLI's title as a URL path segment that no other page answers; its title
+ * and usage keep the title itself. Its options that are not global render
+ * there too. Options or exit codes alone do not make one.
  */
 export function opencliToReferencesJs(
   spec: OpencliSpecJson | null | undefined,
@@ -145,7 +147,7 @@ export function opencliToReferencesJs(
 
   // The CLI's own page, ahead of its commands — only when the root documents
   // something of its own.
-  const rootId = rootHasOwnPage(spec) ? rootPageId(cliTitle) : null;
+  const rootId = rootHasOwnPage(spec) ? rootPageId(spec, cliTitle) : null;
   if (rootId && (!regionSet || regionSet.has(rootId))) {
     refs.push(
       pageReference({ cmd: spec, path: [], ancestors: [], doc: spec, isRoot: true, rootId }, cliTitle, perCommandGlobals),
@@ -196,9 +198,24 @@ function rootHasOwnPage(doc: OpencliSpecJson): boolean {
  * page's canonical becomes its route, its `.md` twin and its links, so the id
  * is the title with ASCII letters lowercased and every run of anything but
  * `a-z`, `0-9`, `_` and `-` one `-`, trimmed of `-`; `cli` when nothing is left.
+ *
+ * No other page may answer it, or a page asking for it would render both and
+ * the sidebar would lose one. A one-segment id can only meet a top-level
+ * command (its region and canonical are its name) or the Global options page,
+ * so while one of those has it, the id takes the first free `-1`, `-2`, …
+ * suffix. The Global options id is kept free in either mode, so the root's id
+ * does not depend on `globalOptionsPerCommand`.
  */
-function rootPageId(cliTitle: string): string {
-  return pathSegment(String(cliTitle)) || 'cli';
+function rootPageId(doc: OpencliSpecJson, cliTitle: string): string {
+  const base = pathSegment(String(cliTitle)) || 'cli';
+  const taken = new Set<string>([GLOBAL_OPTIONS_REGION]);
+  for (const cmd of doc.commands || []) {
+    if (!cmd.hidden) taken.add(str(cmd.name));
+  }
+
+  let id = base;
+  for (let n = 1; taken.has(id); n++) id = `${base}-${n}`;
+  return id;
 }
 
 function pathSegment(text: string): string {
